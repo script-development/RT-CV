@@ -1,6 +1,8 @@
-## WIP
+# WIP
 
-This project is still a WIP and should not be used in a production environment
+This project is still a WIP and should not be used in a production environment.
+
+Documentation is also not yet available due to this
 
 # `RT-CV` matcher
 
