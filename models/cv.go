@@ -1,5 +1,13 @@
 package models
 
+import (
+	"bytes"
+	"html/template"
+	"os"
+
+	"github.com/SebastiaanKlippert/go-wkhtmltopdf"
+)
+
 type Period struct {
 	Start   string `json:"start"` // iso 8601 time
 	End     string `json:"end"`   // iso 8601 time
@@ -81,7 +89,7 @@ type PersonalDetails struct {
 	FirstName         string `json:"firstName"`
 	SurNamePrefix     string `json:"surNamePrefix"`
 	SurName           string `json:"surName"`
-	Dob               string `json:"dob"` // iso 8601 time
+	DateOfBirth       string `json:"dob"` // iso 8601 time
 	Gender            string `json:"gender"`
 	StreetName        string `json:"streetName"`
 	HouseNumber       string `json:"houseNumber"`
@@ -91,4 +99,67 @@ type PersonalDetails struct {
 	Country           string `json:"country"`
 	PhoneNumber       string `json:"phoneNumber"`
 	Email             string `json:"email"`
+}
+
+// GetHtml generates a HTML document from the input cv
+func (cv *Cv) GetHtml(profile Profile, matchText string) (*bytes.Buffer, error) {
+	tmpl, err := template.ParseFiles("./assets/email-template.html")
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return nil, err
+		}
+
+		// For testing perposes
+		tmpl, err = template.ParseFiles("../assets/email-template.html")
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	input := struct {
+		Profile   Profile
+		Cv        *Cv
+		MatchText string
+		LogoUrl   string
+	}{
+		Profile:   profile,
+		Cv:        cv,
+		MatchText: matchText,
+		LogoUrl:   os.Getenv("LOGO"),
+	}
+
+	buff := bytes.NewBuffer(nil)
+	err = tmpl.Execute(buff, input)
+	return buff, err
+}
+
+// GetPDF generates a PDF from a cv that can be send
+func (cv *Cv) GetPDF(profile Profile, matchText string) ([]byte, error) {
+	generator, err := wkhtmltopdf.NewPDFGenerator()
+	if err != nil {
+		return nil, err
+	}
+
+	generator.MarginBottom.Set(50)
+	generator.MarginTop.Set(0)
+	generator.MarginLeft.Set(0)
+	generator.MarginRight.Set(0)
+	generator.ImageQuality.Set(100)
+
+	html, err := cv.GetHtml(profile, matchText)
+	if err != nil {
+		return nil, err
+	}
+
+	page := wkhtmltopdf.NewPageReader(html)
+	page.PageOptions = wkhtmltopdf.NewPageOptions()
+	page.DisableSmartShrinking.Set(true)
+	generator.AddPage(page)
+
+	err = generator.Create()
+	if err != nil {
+		return nil, err
+	}
+
+	return generator.Bytes(), nil
 }

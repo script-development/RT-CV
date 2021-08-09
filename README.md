@@ -21,3 +21,20 @@ This is an api for CV scrapers to upload found CVs to where this tries to match 
 - Easy to understand API for uploading scraped CVs to and to set search profiles
 - GDPR compliant
 - Fast
+
+# Auth
+
+How to generate a token:
+
+```js
+// On init
+apiKey = fetchApiKey();
+salt = random(32);
+key = sha512(apiKey + salt);
+
+// For every message
+key = sha512(key);
+return "Authorization: Basic " + base64(`sha512:${keyID}:${salt}:${key}`);
+```
+
+_sha256 can also be used, to use make sure replace sha512 with sha256 everywhere above_

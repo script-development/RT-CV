@@ -1,3 +1,5 @@
+github.com/SebastiaanKlippert/go-wkhtmltopdf v1.7.1 h1:U3c/t0AA0x1vx8aDIWAOBtqU000m5wSV7l6xBovk9P0=
+github.com/SebastiaanKlippert/go-wkhtmltopdf v1.7.1/go.mod h1:Yowiac2wF/l7oRlRrB12z11V7kYfUumM4dsacKNAfNo=
 github.com/agnivade/levenshtein v1.1.1 h1:QY8M92nrzkmr798gCo3kmMyqXFzdQVpxLlGPRBij0P8=
 github.com/agnivade/levenshtein v1.1.1/go.mod h1:veldBMzWxcCG2ZvUTKD2kJNRdCk5hVbJomOvKkmgYbo=
 github.com/andybalholm/brotli v1.0.2/go.mod h1:loMXtMfwqflxFJPmdbJO0a3KNoPuLBgiu3qAvBg8x/Y=
