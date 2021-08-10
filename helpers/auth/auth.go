@@ -8,6 +8,8 @@ import (
 	"encoding/hex"
 	"errors"
 	"strconv"
+
+	"github.com/script-development/RT-CV/models"
 )
 
 type Auth map[int]key
@@ -24,15 +26,7 @@ type rollingHash struct {
 	value []byte
 }
 
-type Keys struct{}
-
-type DbKey struct {
-	ID     int
-	SiteID int
-	Key    string
-}
-
-func New(keys []DbKey) *Auth {
+func New(keys []models.ApiKey) *Auth {
 	res := Auth{}
 	for _, dbKey := range keys {
 		res[dbKey.ID] = key{

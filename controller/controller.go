@@ -65,7 +65,12 @@ func InsertData() fiber.Handler {
 		log.Fatal(err.Error())
 	}
 	ctx := context.WithValue(context.Background(), Profiles(0), &profiles)
-	ctx = context.WithValue(ctx, Auth(0), auth.New())
+
+	keys, err := models.GetApiKeys()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	ctx = context.WithValue(ctx, Auth(0), auth.New(keys))
 
 	return func(c *fiber.Ctx) error {
 		c.SetUserContext(ctx)
