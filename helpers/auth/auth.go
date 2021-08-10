@@ -29,7 +29,11 @@ type rollingHash struct {
 func New(keys []models.ApiKey) *Auth {
 	res := Auth{}
 	for _, dbKey := range keys {
+		if !dbKey.Enabled {
+			continue
+		}
 		res[dbKey.ID] = key{
+			siteId: dbKey.SiteId,
 			key:    []byte(dbKey.Key),
 			sha512: []rollingHash{},
 			sha256: []rollingHash{},
@@ -41,16 +45,18 @@ func New(keys []models.ApiKey) *Auth {
 var errorInvalidKey = errors.New("invalid key")
 
 func (a *Auth) Authenticate(authorizationHeader []byte) (siteID int, err error) {
-	if !bytes.Equal([]byte("Basic "), authorizationHeader) {
-		return 0, errors.New("authorization must be of type basic")
+	if len(authorizationHeader) < 7 {
+		return 0, errors.New("invalid authorization value, must be of type Basic and contain data")
 	}
 
-	auth := make([]byte, base64.RawStdEncoding.DecodedLen(len(authorizationHeader)-6))
-	n, err := base64.RawStdEncoding.Decode(auth, authorizationHeader[6:])
+	if !bytes.Equal([]byte("Basic "), authorizationHeader[:6]) {
+		return 0, errors.New("authorization must be of type Basic")
+	}
+
+	auth, err := base64.RawStdEncoding.DecodeString(string(authorizationHeader[6:]))
 	if err != nil {
 		return 0, err
 	}
-	auth = auth[:n]
 
 	parts := bytes.Split(auth, []byte(":"))
 	if len(parts) != 4 {
@@ -76,7 +82,7 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (siteID int, err error) 
 	if len(key) == 0 {
 		return 0, errors.New("key cannot be empty")
 	}
-	n, err = hex.Decode(key, key)
+	n, err := hex.Decode(key, key)
 	if err != nil {
 		return 0, errors.New("invalid key hash")
 	}
@@ -147,5 +153,6 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (siteID int, err error) 
 		})
 	}
 
+	(*a)[siteId] = knownKey
 	return knownKey.siteId, nil
 }
