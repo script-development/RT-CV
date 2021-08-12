@@ -1,4 +1,4 @@
-package main
+package controller
 
 import (
 	"io/ioutil"
@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/script-development/RT-CV/controller"
 	"github.com/script-development/RT-CV/models"
 	. "github.com/stretchr/testify/assert"
 )
@@ -59,7 +58,7 @@ func TestCannotAccessCriticalRoutesWithoutCredentials(t *testing.T) {
 	}
 
 	app := fiber.New()
-	controller.Routes(app)
+	Routes(app)
 
 	for _, s := range scenarios {
 		s := s
@@ -75,12 +74,12 @@ func TestCannotAccessCriticalRoutesWithoutCredentials(t *testing.T) {
 			res, err := app.Test(req, -1)
 			NoError(t, err)
 
+			// 401 = Unauthorized
+			Equal(t, 401, res.StatusCode)
+
 			body, err := ioutil.ReadAll(res.Body)
 			NoError(t, err)
 			Equal(t, "missing authorization header of type Basic", string(body))
-
-			// 401 = Unauthorized
-			Equal(t, 401, res.StatusCode)
 		})
 	}
 }

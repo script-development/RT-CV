@@ -1,12 +1,9 @@
 package controller
 
 import (
-	"context"
 	"fmt"
 
-	"github.com/apex/log"
 	"github.com/gofiber/fiber/v2"
-	"github.com/script-development/RT-CV/helpers/auth"
 	"github.com/script-development/RT-CV/helpers/match"
 	"github.com/script-development/RT-CV/models"
 )
@@ -66,52 +63,3 @@ const (
 	KeyCtxKey      = KeyCtx(0)
 	LoggerCtxKey   = LoggerCtx(0)
 )
-
-// InsertData adds the profiles to every route
-func InsertData() fiber.Handler {
-	profiles, err := models.GetProfiles()
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	ctx := context.WithValue(context.Background(), ProfilesCtxKey, &profiles)
-
-	keys, err := models.GetApiKeys()
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	ctx = context.WithValue(ctx, AuthCtxKey, auth.New(keys))
-
-	return func(c *fiber.Ctx) error {
-		c.SetUserContext(context.WithValue(ctx, LoggerCtxKey, log.NewEntry(log.Log.(*log.Logger))))
-		return c.Next()
-	}
-}
-
-func requiresAuth(requiredRoles models.ApiKeyRole) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		ctx := c.UserContext()
-		auth := ctx.Value(AuthCtxKey).(*auth.Auth)
-		logger := ctx.Value(LoggerCtxKey).(*log.Entry)
-
-		authorizationHeader := []byte(c.Get("Authorization"))
-		key, salt, err := auth.Authenticate(authorizationHeader)
-		if err != nil {
-			return c.Status(401).SendString(err.Error())
-		}
-
-		if !key.Roles.ContainsSome(requiredRoles) {
-			return c.Status(401).SendString("you do not have the permissions to access this route")
-		}
-
-		ctx = context.WithValue(ctx, KeyCtxKey, key)
-
-		*logger = *logger.WithFields(log.Fields{
-			"apiKey":     key.Key,
-			"apiKeySalt": string(salt),
-			"site":       key.Site.Domain,
-		})
-
-		c.SetUserContext(ctx)
-		return c.Next()
-	}
-}
