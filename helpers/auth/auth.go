@@ -45,8 +45,12 @@ func New(keys []models.ApiKey) *Auth {
 var errorInvalidKey = errors.New("invalid key")
 
 func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.ApiKey, salt []byte, err error) {
-	if len(authorizationHeader) < 7 {
-		return nil, salt, errors.New("invalid authorization value, must be of type Basic and contain data")
+	authorizationHeaderLen := len(authorizationHeader)
+	if authorizationHeaderLen < 7 {
+		if authorizationHeaderLen == 0 {
+			return nil, salt, errors.New("missing authorization header of type Basic")
+		}
+		return nil, salt, errors.New("invalid authorization header, must be of type Basic and contain data")
 	}
 
 	if !bytes.Equal([]byte("Basic "), authorizationHeader[:6]) {

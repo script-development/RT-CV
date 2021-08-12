@@ -17,7 +17,11 @@ func (ApiKey) TableName() string {
 	return "api_keys"
 }
 
-func GetApiKeys() ([]ApiKey, error) {
+var GetApiKeys = func() ([]ApiKey, error) {
+	if Testing {
+		return []ApiKey{}, nil
+	}
+
 	keys := []ApiKey{}
 	err := db.DB.
 		Preload("Site").

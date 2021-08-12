@@ -1,5 +1,8 @@
 package models
 
+// Toggle this to true in a test to use mock data
+var Testing = false
+
 type Site struct {
 	ID     uint `gorm:"primaryKey"`
 	Domain string

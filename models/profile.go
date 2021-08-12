@@ -38,6 +38,10 @@ func (Profile) TableName() string {
 }
 
 func GetProfiles() ([]Profile, error) {
+	if Testing {
+		return []Profile{}, nil
+	}
+
 	profiles := []Profile{}
 	err := db.DB.
 		Preload("DesiredProfessions.Profession").
