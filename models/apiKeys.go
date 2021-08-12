@@ -7,7 +7,7 @@ import (
 type ApiKey struct {
 	ID      int `gorm:"primaryKey"`
 	Enabled bool
-	SiteId  int
+	SiteId  uint
 	Site    Site
 	Key     string
 	Roles   ApiKeyRole

@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 
@@ -15,7 +16,7 @@ func Routes(app *fiber.App) {
 	v1 := app.Group(`/v1`, InsertData())
 
 	// Scraper routes
-	scraper := v1.Group(`/scraper`, requiresAuth("scraper"))
+	scraper := v1.Group(`/scraper`, requiresAuth(models.ApiKeyRoleScraper))
 	scraper.Post("/scanCV", func(c *fiber.Ctx) error {
 		body := models.Cv{}
 		err := c.BodyParser(&body)
@@ -23,7 +24,7 @@ func Routes(app *fiber.App) {
 			return err
 		}
 
-		profiles := c.UserContext().Value(Profiles(0)).(*[]models.Profile)
+		profiles := c.UserContext().Value(ProfilesCtxKey).(*[]models.Profile)
 		matchedProfiles := match.Match("werk.nl", *profiles, body)
 		if len(matchedProfiles) > 0 {
 			for _, profile := range matchedProfiles {
@@ -41,9 +42,9 @@ func Routes(app *fiber.App) {
 	})
 
 	// Control routes
-	control := v1.Group(`/control`, requiresAuth("admin"))
+	control := v1.Group(`/control`, requiresAuth(models.ApiKeyRoleAdmin|models.ApiKeyRoleController))
 	control.Get("/reloadProfiles", func(c *fiber.Ctx) error {
-		profiles := c.UserContext().Value(Profiles(0)).(*[]models.Profile)
+		profiles := c.UserContext().Value(ProfilesCtxKey).(*[]models.Profile)
 
 		newProfiles, err := models.GetProfiles()
 		if err != nil {
@@ -57,6 +58,15 @@ func Routes(app *fiber.App) {
 
 type Profiles uint8
 type Auth uint8
+type Salt uint8
+type Roles uint8
+
+const (
+	ProfilesCtxKey = Profiles(0)
+	AuthCtxKey     = Auth(0)
+	SaltCtxKey     = Salt(0)
+	RolesCtxKey    = Roles(0)
+)
 
 // InsertData adds the profiles to every route
 func InsertData() fiber.Handler {
@@ -64,13 +74,13 @@ func InsertData() fiber.Handler {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	ctx := context.WithValue(context.Background(), Profiles(0), &profiles)
+	ctx := context.WithValue(context.Background(), ProfilesCtxKey, &profiles)
 
 	keys, err := models.GetApiKeys()
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	ctx = context.WithValue(ctx, Auth(0), auth.New(keys))
+	ctx = context.WithValue(ctx, AuthCtxKey, auth.New(keys))
 
 	return func(c *fiber.Ctx) error {
 		c.SetUserContext(ctx)
@@ -78,8 +88,26 @@ func InsertData() fiber.Handler {
 	}
 }
 
-func requiresAuth(requiredRoles ...string) fiber.Handler {
+func requiresAuth(requiredRoles models.ApiKeyRole) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		ctx := c.UserContext()
+		auth := ctx.Value(AuthCtxKey).(*auth.Auth)
+
+		authorizationHeader := []byte(c.Get("Authorization"))
+		key, salt, err := auth.Authenticate(authorizationHeader)
+		if err != nil {
+			return err
+		}
+
+		if !key.Roles.ContainsSome(requiredRoles) {
+			return errors.New("you do not have the permissions to access this route")
+		}
+
+		ctx = context.WithValue(ctx, RolesCtxKey, key.Roles)
+		ctx = context.WithValue(ctx, SaltCtxKey, salt)
+
+		c.SetUserContext(ctx)
+
 		return c.Next()
 	}
 }
