@@ -102,7 +102,7 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (siteID int, err error) 
 				return 0, errorInvalidKey
 			}
 
-			hash := sha512.Sum512(entry.value)
+			hash := sha512.Sum512(append(append(entry.value, knownKey.key...), entry.salt...))
 			entry.value = hash[:]
 			knownKey.sha512[idx] = entry
 
@@ -110,13 +110,14 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (siteID int, err error) 
 		}
 
 		hash := sha512.Sum512(append(knownKey.key, salt...))
-		hash = sha512.Sum512(hash[:])
+		hash = sha512.Sum512(append(append(hash[:], knownKey.key...), salt...))
 
 		if !bytes.Equal(hash[:], key) {
 			return 0, errorInvalidKey
 		}
 
-		hash = sha512.Sum512(hash[:])
+		// Pre calculate next hash in the chain
+		hash = sha512.Sum512(append(append(hash[:], knownKey.key...), salt...))
 
 		knownKey.sha512 = append(knownKey.sha512, rollingHash{
 			salt:  salt,
@@ -131,7 +132,7 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (siteID int, err error) 
 				return 0, errorInvalidKey
 			}
 
-			hash := sha256.Sum256(entry.value)
+			hash := sha256.Sum256(append(append(entry.value, knownKey.key...), entry.salt...))
 			entry.value = hash[:]
 			knownKey.sha256[idx] = entry
 
@@ -139,13 +140,14 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (siteID int, err error) 
 		}
 
 		hash := sha256.Sum256(append(knownKey.key, salt...))
-		hash = sha256.Sum256(hash[:])
+		hash = sha256.Sum256(append(append(hash[:], knownKey.key...), salt...))
 
 		if !bytes.Equal(hash[:], key) {
 			return 0, errorInvalidKey
 		}
 
-		hash = sha256.Sum256(hash[:])
+		// Pre calculate next hash in the chain
+		hash = sha256.Sum256(append(append(hash[:], knownKey.key...), salt...))
 
 		knownKey.sha256 = append(knownKey.sha256, rollingHash{
 			salt:  salt,

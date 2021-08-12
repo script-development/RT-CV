@@ -33,7 +33,7 @@ salt = random(32);
 key = sha512(apiKey + salt);
 
 // For every message
-key = sha512(key);
+key = sha512(key + apiKey + salt);
 return "Authorization: Basic " + base64(`sha512:${keyID}:${salt}:${key}`);
 ```
 

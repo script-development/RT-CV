@@ -14,7 +14,8 @@ import (
 
 type accessor struct {
 	rollingKey []byte
-	salt       []byte
+	keyBytes   []byte
+	saltBytes  []byte
 	keyId      int
 }
 
@@ -22,18 +23,19 @@ func newAccessorHelper(keyId int, key, salt string) *accessor {
 	h := sha512.Sum512([]byte(key + salt))
 	return &accessor{
 		rollingKey: h[:],
-		salt:       []byte(salt),
+		keyBytes:   []byte(key),
+		saltBytes:  []byte(salt),
 		keyId:      keyId,
 	}
 }
 
 func (a *accessor) key() []byte {
-	newRollingKey := sha512.Sum512(a.rollingKey)
+	newRollingKey := sha512.Sum512(append(append(a.rollingKey, a.keyBytes...), a.saltBytes...))
 	a.rollingKey = newRollingKey[:]
 
 	src := bytes.Join([][]byte{
 		[]byte("sha512:" + strconv.Itoa(a.keyId)),
-		a.salt,
+		a.saltBytes,
 		[]byte(hex.EncodeToString(a.rollingKey)),
 	}, []byte(":"))
 
