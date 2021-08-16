@@ -23,8 +23,18 @@ func InsertData() fiber.Handler {
 	}
 	ctx = context.WithValue(ctx, AuthCtxKey, auth.New(keys))
 
+	// Pre define loggerEntity so we only take once memory
+	loggerEntity := log.Entry{
+		Logger: log.Log.(*log.Logger),
+	}
+
 	return func(c *fiber.Ctx) error {
-		c.SetUserContext(context.WithValue(ctx, LoggerCtxKey, log.NewEntry(log.Log.(*log.Logger))))
+		// reset loggerEntity
+		loggerEntity = log.Entry{
+			Logger: loggerEntity.Logger,
+		}
+
+		c.SetUserContext(context.WithValue(ctx, LoggerCtxKey, loggerEntity))
 		return c.Next()
 	}
 }
