@@ -86,7 +86,7 @@ func Match(domain string, profiles []models.Profile, cv models.Cv) []models.Prof
 			if len(cv.Educations) > 0 {
 			educationLoop:
 				for _, profileEducation := range profile.Educations {
-					if len(profileEducation.Education.Name) == 0 {
+					if len(profileEducation.Name) == 0 {
 						// We don't want those yee yee ass fake educations!
 						continue
 					}
@@ -100,7 +100,7 @@ func Match(domain string, profiles []models.Profile, cv models.Cv) []models.Prof
 							continue
 						}
 
-						if !wordvalidator.IsSame(cvEducation.Name, profileEducation.Education.Name) {
+						if !wordvalidator.IsSame(cvEducation.Name, profileEducation.Name) {
 							// Not a equal education title
 							continue
 						}
@@ -114,7 +114,7 @@ func Match(domain string, profiles []models.Profile, cv models.Cv) []models.Prof
 			if !matchedAnEducationOrCourse && len(cv.Courses) > 0 {
 			coursesLoop:
 				for _, profileCourse := range profile.Educations {
-					if len(profileCourse.Education.Name) == 0 {
+					if len(profileCourse.Name) == 0 {
 						continue
 					}
 
@@ -123,7 +123,7 @@ func Match(domain string, profiles []models.Profile, cv models.Cv) []models.Prof
 							continue
 						}
 
-						if !wordvalidator.IsSame(cvCourse.Name, profileCourse.Education.Name) {
+						if !wordvalidator.IsSame(cvCourse.Name, profileCourse.Name) {
 							// Not a equal education/course title
 							continue
 						}
@@ -146,7 +146,7 @@ func Match(domain string, profiles []models.Profile, cv models.Cv) []models.Prof
 		if checkedForDesiredProfession {
 		professionLoop:
 			for _, profileProfession := range profile.DesiredProfessions {
-				profileName := normalizeString(profileProfession.Profession.Name)
+				profileName := normalizeString(profileProfession.Name)
 				if len(profileName) == 0 {
 					continue
 				}
@@ -176,7 +176,7 @@ func Match(domain string, profiles []models.Profile, cv models.Cv) []models.Prof
 		if checkedForProfessionExperienced {
 		professionExperiencedProfileLoop:
 			for _, profileProfession := range profile.ProfessionExperienced {
-				profileName := normalizeString(profileProfession.Profession.Name)
+				profileName := normalizeString(profileProfession.Name)
 				if len(profileName) == 0 {
 					continue
 				}
@@ -232,7 +232,7 @@ func Match(domain string, profiles []models.Profile, cv models.Cv) []models.Prof
 		if checkedForDriversLicense {
 		driversLicensesLoop:
 			for _, profileDriversLicense := range profile.DriversLicenses {
-				profileName := normalizeString(profileDriversLicense.DriversLicense.Name)
+				profileName := normalizeString(profileDriversLicense.Name)
 				if len(profileName) == 0 {
 					continue
 				}
@@ -275,11 +275,12 @@ func Match(domain string, profiles []models.Profile, cv models.Cv) []models.Prof
 				// Client has invalid zipcode
 				continue
 			}
+			cvZipNrUint16 := uint16(cvZipNr)
 
 			cvZipInRange := false
 			for _, zipcode := range profile.Zipcodes {
-				checkFrom := zipcode.Zipcode.From
-				checkTo := zipcode.Zipcode.To
+				checkFrom := zipcode.From
+				checkTo := zipcode.To
 				if checkFrom == 0 && checkTo == 0 {
 					continue
 				}
@@ -291,7 +292,7 @@ func Match(domain string, profiles []models.Profile, cv models.Cv) []models.Prof
 					checkTo = originalFrom
 				}
 
-				if cvZipNr >= checkFrom && cvZipNr <= checkTo {
+				if cvZipNrUint16 >= checkFrom && cvZipNrUint16 <= checkTo {
 					cvZipInRange = true
 					break
 				}

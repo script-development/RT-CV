@@ -51,14 +51,14 @@ func TestMatchZipCode(t *testing.T) {
 		// Valid 1 to 1 match
 		MustMatchSingle(
 			t,
-			models.Profile{Zipcodes: []models.ProfileZipcode{{Zipcode: models.Zipcode{From: 1000, To: 2000}}}},
+			models.Profile{Zipcodes: []models.Zipcode{{From: 1000, To: 2000}}},
 			models.Cv{PersonalDetails: models.PersonalDetails{Zip: case_}},
 		)
 
 		// Outside of range
 		MustNotMatchSingle(
 			t,
-			models.Profile{Zipcodes: []models.ProfileZipcode{{Zipcode: models.Zipcode{From: 6000, To: 9000}}}},
+			models.Profile{Zipcodes: []models.Zipcode{{From: 6000, To: 9000}}},
 			models.Cv{PersonalDetails: models.PersonalDetails{Zip: case_}},
 		)
 	}
@@ -66,18 +66,18 @@ func TestMatchZipCode(t *testing.T) {
 	// invalid CV zip code
 	MustNotMatchSingle(
 		t,
-		models.Profile{Zipcodes: []models.ProfileZipcode{{Zipcode: models.Zipcode{From: 1000, To: 2000}}}},
+		models.Profile{Zipcodes: []models.Zipcode{{From: 1000, To: 2000}}},
 		models.Cv{PersonalDetails: models.PersonalDetails{Zip: "AAAAAA"}},
 	)
 
 	// Multiple zip codes
 	MustMatchSingle(
 		t,
-		models.Profile{Zipcodes: []models.ProfileZipcode{
-			{Zipcode: models.Zipcode{From: 1000, To: 2000}},
-			{Zipcode: models.Zipcode{From: 3000, To: 3500}},
-			{Zipcode: models.Zipcode{From: 4000, To: 5000}},
-			{Zipcode: models.Zipcode{From: 6000, To: 8000}},
+		models.Profile{Zipcodes: []models.Zipcode{
+			{From: 1000, To: 2000},
+			{From: 3000, To: 3500},
+			{From: 4000, To: 5000},
+			{From: 6000, To: 8000},
 		}},
 		models.Cv{PersonalDetails: models.PersonalDetails{Zip: "4100AB"}},
 	)
@@ -85,9 +85,7 @@ func TestMatchZipCode(t *testing.T) {
 	// Reverse zip code
 	MustMatchSingle(
 		t,
-		models.Profile{Zipcodes: []models.ProfileZipcode{
-			{Zipcode: models.Zipcode{From: 6000, To: 2000}},
-		}},
+		models.Profile{Zipcodes: []models.Zipcode{{From: 6000, To: 2000}}},
 		models.Cv{PersonalDetails: models.PersonalDetails{Zip: "4100AB"}},
 	)
 }
@@ -96,30 +94,30 @@ func TestMatchEducation(t *testing.T) {
 	// No educations in CV
 	MustNotMatchSingle(
 		t,
-		models.Profile{MustEducation: true, Educations: []models.ProfileEducation{{}}},
+		models.Profile{MustEducation: true, Educations: []models.DBEducation{{}}},
 		models.Cv{},
 	)
 
 	// No educations in CV
 	MustNotMatchSingle(
 		t,
-		models.Profile{Educations: []models.ProfileEducation{{}}},
+		models.Profile{Educations: []models.DBEducation{{}}},
 		models.Cv{},
 	)
 
 	// Match on education
 	MustMatchSingle(
 		t,
-		models.Profile{Educations: []models.ProfileEducation{{Education: models.DBEducation{Name: "Bananenplukker"}}}},
+		models.Profile{Educations: []models.DBEducation{{Name: "Bananenplukker"}}},
 		models.Cv{Educations: []models.Education{{Name: "Bananenplukker"}}},
 	)
 
 	// Match with multiple educations
 	MustMatchSingle(
 		t,
-		models.Profile{Educations: []models.ProfileEducation{
-			{Education: models.DBEducation{Name: "professioneel peren eten"}},
-			{Education: models.DBEducation{Name: "Bananenplukker"}},
+		models.Profile{Educations: []models.DBEducation{
+			{Name: "professioneel peren eten"},
+			{Name: "Bananenplukker"},
 		}},
 		models.Cv{Educations: []models.Education{
 			{Name: "Pro gangster"},
@@ -130,7 +128,7 @@ func TestMatchEducation(t *testing.T) {
 	// Match on courses
 	MustMatchSingle(
 		t,
-		models.Profile{Educations: []models.ProfileEducation{{Education: models.DBEducation{Name: "Bananenplukker"}}}},
+		models.Profile{Educations: []models.DBEducation{{Name: "Bananenplukker"}}},
 		models.Cv{Courses: []models.Course{{Name: "Bananenplukker"}}},
 	)
 
@@ -139,9 +137,7 @@ func TestMatchEducation(t *testing.T) {
 		t,
 		models.Profile{
 			MustEducation: true,
-			Educations: []models.ProfileEducation{
-				{Education: models.DBEducation{Name: "Peren Plukker"}},
-			},
+			Educations:    []models.DBEducation{{Name: "Peren Plukker"}},
 		},
 		models.Cv{
 			Educations: []models.Education{{Name: "Bananenplukker"}},
@@ -156,7 +152,7 @@ func TestMatchEducationMustFinish(t *testing.T) {
 		t,
 		models.Profile{
 			MustEducationFinished: true,
-			Educations:            []models.ProfileEducation{{Education: models.DBEducation{Name: "Bananenplukker"}}},
+			Educations:            []models.DBEducation{{Name: "Bananenplukker"}},
 		},
 		models.Cv{Educations: []models.Education{{Name: "Bananenplukker"}}},
 	)
@@ -166,7 +162,7 @@ func TestMatchEducationMustFinish(t *testing.T) {
 		t,
 		models.Profile{
 			MustEducationFinished: true,
-			Educations:            []models.ProfileEducation{{Education: models.DBEducation{Name: "Bananenplukker"}}},
+			Educations:            []models.DBEducation{{Name: "Bananenplukker"}},
 		},
 		models.Cv{Educations: []models.Education{{Name: "Bananenplukker", HasDiploma: true}}},
 	)
@@ -242,7 +238,7 @@ func TestMatchDesiredProfession(t *testing.T) {
 		t,
 		models.Profile{
 			MustDesiredProfession: true,
-			DesiredProfessions:    []models.ProfileDesiredProfession{{Profession: models.Profession{Name: "Bananenplukker"}}},
+			DesiredProfessions:    []models.Profession{{Name: "Bananenplukker"}},
 		},
 		models.Cv{PreferredJobs: []string{"Bananenplukker"}},
 	)
@@ -252,7 +248,7 @@ func TestMatchDesiredProfession(t *testing.T) {
 		t,
 		models.Profile{
 			MustDesiredProfession: true,
-			DesiredProfessions:    []models.ProfileDesiredProfession{{Profession: models.Profession{Name: "Real gangster"}}},
+			DesiredProfessions:    []models.Profession{{Name: "Real gangster"}},
 		},
 		models.Cv{PreferredJobs: []string{"Bananenplukker"}},
 	)
@@ -264,7 +260,7 @@ func TestMatchDesiredProfessionExperienced(t *testing.T) {
 		t,
 		models.Profile{
 			MustExpProfession:     true,
-			ProfessionExperienced: []models.ProfileProfessionExperience{{Profession: models.Profession{Name: "Bananenplukker"}}},
+			ProfessionExperienced: []models.Profession{{Name: "Bananenplukker"}},
 		},
 		models.Cv{WorkExperiences: []models.WorkExperience{{Profession: "Bananenplukker"}}},
 	)
@@ -274,7 +270,7 @@ func TestMatchDesiredProfessionExperienced(t *testing.T) {
 		t,
 		models.Profile{
 			MustExpProfession:     true,
-			ProfessionExperienced: []models.ProfileProfessionExperience{{Profession: models.Profession{Name: "Real gangster stuff"}}},
+			ProfessionExperienced: []models.Profession{{Name: "Real gangster stuff"}},
 		},
 		models.Cv{WorkExperiences: []models.WorkExperience{{Profession: "Bananenplukker"}}},
 	)
@@ -302,7 +298,7 @@ func TestMatchDriversLicense(t *testing.T) {
 		t,
 		models.Profile{
 			MustDriversLicense: true,
-			DriversLicenses:    []models.ProfileDriversLicense{{DriversLicense: models.DriversLicense{Name: "A"}}},
+			DriversLicenses:    []models.DriversLicense{{Name: "A"}},
 		},
 		models.Cv{DriversLicenses: []string{"A"}},
 	)
@@ -312,7 +308,7 @@ func TestMatchDriversLicense(t *testing.T) {
 		t,
 		models.Profile{
 			MustDriversLicense: true,
-			DriversLicenses:    []models.ProfileDriversLicense{{DriversLicense: models.DriversLicense{Name: "A"}}},
+			DriversLicenses:    []models.DriversLicense{{Name: "A"}},
 		},
 		models.Cv{DriversLicenses: []string{"B"}},
 	)

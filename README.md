@@ -22,7 +22,21 @@ This is an api for CV scrapers to upload found CVs to where this tries to match 
 - GDPR compliant
 - Fast
 
-# Auth
+## Setup
+
+Requirements:
+
+- GoLang 1.15+
+- Mongodb _(mongodb compass is a great db viewer)_
+
+```sh
+cp .env.example .env
+vim .env
+
+go run .
+```
+
+## Auth
 
 How to generate a token:
 

@@ -7,12 +7,13 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
-	"strconv"
 
 	"github.com/script-development/RT-CV/models"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type Auth map[int]key
+// TODO we should avoid string maps as they are slow
+type Auth map[string]key
 
 type key struct {
 	keyBytes []byte
@@ -32,7 +33,8 @@ func New(keys []models.ApiKey) *Auth {
 		if !dbKey.Enabled {
 			continue
 		}
-		res[dbKey.ID] = key{
+
+		res[dbKey.ID.Hex()] = key{
 			apiKey:   dbKey,
 			keyBytes: []byte(dbKey.Key),
 			sha512:   []rollingHash{},
@@ -72,9 +74,9 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.ApiKey, sa
 		return nil, salt, errors.New("only sha512 and sha256 are supported")
 	}
 
-	siteId, err := strconv.Atoi(string(parts[1]))
-	if err != nil || siteId < 1 {
-		return nil, salt, errors.New("site id is not a positive number")
+	siteId := string(parts[1])
+	if !primitive.IsValidObjectID(siteId) {
+		return nil, salt, errors.New("invalid site ID")
 	}
 
 	salt = parts[2]

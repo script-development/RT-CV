@@ -117,15 +117,17 @@ func (cv *Cv) GetHtml(profile Profile, matchText string) (*bytes.Buffer, error) 
 	}
 
 	input := struct {
-		Profile   Profile
-		Cv        *Cv
-		MatchText string
-		LogoUrl   string
+		Profile      Profile
+		ProfileIdHex string // The normal `Profile.ID.String()`` is more of a debug value than a real id value so we add the hex to this field
+		Cv           *Cv
+		MatchText    string
+		LogoUrl      string
 	}{
-		Profile:   profile,
-		Cv:        cv,
-		MatchText: matchText,
-		LogoUrl:   os.Getenv("LOGO"),
+		Profile:      profile,
+		ProfileIdHex: profile.ID.Hex(),
+		Cv:           cv,
+		MatchText:    matchText,
+		LogoUrl:      os.Getenv("LOGO"),
 	}
 
 	buff := bytes.NewBuffer(nil)

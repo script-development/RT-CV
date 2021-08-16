@@ -1,33 +1,41 @@
 package models
 
 import (
+	"context"
+
 	"github.com/script-development/RT-CV/db"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
+func ApiKeysCollection() *mongo.Collection {
+	return db.DB.Collection("apiKeys")
+}
+
 type ApiKey struct {
-	ID      int `gorm:"primaryKey"`
+	ID      primitive.ObjectID `bson:"_id"`
 	Enabled bool
-	SiteId  uint
-	Site    Site
+	Domains []string
 	Key     string
 	Roles   ApiKeyRole
 }
 
-func (ApiKey) TableName() string {
-	return "api_keys"
-}
-
-var GetApiKeys = func() ([]ApiKey, error) {
+func GetApiKeys() ([]ApiKey, error) {
 	if Testing {
-		return []ApiKey{}, nil
+		panic("FIXME")
 	}
 
-	keys := []ApiKey{}
-	err := db.DB.
-		Preload("Site").
-		Where("enabled = 1").
-		Find(&keys).Error
+	c, err := ApiKeysCollection().Find(db.Ctx(), bson.M{
+		"enabled": true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer c.Close(context.Background())
 
+	keys := []ApiKey{}
+	err = c.All(db.Ctx(), &keys)
 	return keys, err
 }
 

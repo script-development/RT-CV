@@ -1,29 +1,27 @@
 package models
 
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
+
 // Toggle this to true in a test to use mock data
 var Testing = false
 
 type Site struct {
-	ID     uint `gorm:"primaryKey"`
+	ID     primitive.ObjectID `bson:"_id"`
 	Domain string
 }
 
-func (Site) TableName() string {
-	return "sites"
-}
-
 type User struct {
-	ID           int `gorm:"primaryKey"`
+	ID           primitive.ObjectID `bson:"_id"`
 	Username     string
-	Password     string `gorm:"column:PASSWORD"`
+	Password     string
 	Active       bool
-	Session      string `gorm:"column:SESSION"`
-	InUse        bool   `gorm:"column:in_use"`
+	Session      string
+	InUse        bool
 	Consumer     string
-	LastModified interface{} `gorm:"column:last_modified;type:time"`
-	SiteID       int         `gorm:"column:site_id"`
-}
-
-func (User) TableName() string {
-	return "accounts"
+	LastModified *time.Time
+	SiteID       int
 }

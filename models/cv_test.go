@@ -1,11 +1,11 @@
 package models
 
 import (
-	"strconv"
 	"testing"
 	"time"
 
 	. "github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func TestGetHtml(t *testing.T) {
@@ -33,8 +33,9 @@ func TestGetHtml(t *testing.T) {
 		},
 	}
 
+	profileObjectID := primitive.NewObjectID()
 	profile := Profile{
-		ID:   223344,
+		ID:   profileObjectID,
 		Name: "profile name",
 		Site: Site{
 			Domain: "test.com",
@@ -54,5 +55,5 @@ func TestGetHtml(t *testing.T) {
 	Contains(t, html, cv.PersonalDetails.PhoneNumber)
 	Contains(t, html, profile.Name)
 	Contains(t, html, cv.ReferenceNumber)
-	Contains(t, html, strconv.Itoa(profile.ID))
+	Contains(t, html, profile.ID.Hex())
 }

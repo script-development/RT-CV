@@ -34,7 +34,7 @@ func requiresAuth(requiredRoles models.ApiKeyRole) fiber.Handler {
 		*logger = *logger.WithFields(log.Fields{
 			"apiKey":     key.Key,
 			"apiKeySalt": string(salt),
-			"site":       key.Site.Domain,
+			"domains":    key.Domains,
 		})
 
 		c.SetUserContext(ctx)
