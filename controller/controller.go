@@ -11,6 +11,12 @@ import (
 func Routes(app *fiber.App) {
 	v1 := app.Group(`/v1`, InsertData())
 
+	auth := v1.Group(`/auth`)
+	auth.Get(`/salt`, func(c *fiber.Ctx) error {
+		// TODO: Implement me
+		return nil
+	})
+
 	// Scraper routes
 	scraper := v1.Group(`/scraper`, requiresAuth(models.ApiKeyRoleScraper))
 	scraper.Post("/scanCV", func(c *fiber.Ctx) error {
