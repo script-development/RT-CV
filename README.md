@@ -26,15 +26,36 @@ This is an api for CV scrapers to upload found CVs to where this tries to match 
 
 How to generate a token:
 
-```js
-// On init
-apiKey = fetchApiKey();
-salt = random(32);
-key = sha512(apiKey + salt);
+_sha256 can also be used, use use replace sha512 with sha256 everywhere below_
 
-// For every message
-key = sha512(key + apiKey + salt);
-return "Authorization: Basic " + base64(`sha512:${keyID}:${salt}:${key}`);
+#### On app init
+
+```js
+{apiKey, apiKeyID} = getApiKey(); // User defined
+salt = fetch("/v1/auth/salt");
+key = sha512(apiKey + salt);
 ```
 
-_sha256 can also be used, to use make sure replace sha512 with sha256 everywhere above_
+#### For every request
+
+```js
+key = sha512(key + apiKey + salt);
+return "Authorization: Basic " + base64(`sha512:${apiKeyID}:${salt}:${key}`);
+```
+
+#### If auth fails while having a theoretically valid key
+
+1: just retry it (the server might be offline or whatever)
+
+```js
+return "Authorization: Basic " + base64(`sha512:${apiKeyID}:${salt}:${key}`);
+```
+
+2: Get a new salt and start over (basically going back to "on init")
+
+```js
+salt = fetch("/v1/auth/salt");
+key = sha512(apiKey + salt);
+key = sha512(key + apiKey + salt);
+return "Authorization: Basic " + base64(`sha512:${apiKeyID}:${salt}:${key}`);
+```
