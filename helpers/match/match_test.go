@@ -9,9 +9,7 @@ import (
 )
 
 func MustMatchSingle(t *testing.T, p models.Profile, cv models.Cv) {
-	p.Site.Domain = "werk.nl"
-	siteId := 1
-	p.SiteId = &siteId
+	p.Domains = []string{"werk.nl"}
 	p.Active = true
 
 	matches := Match("werk.nl", []models.Profile{p}, cv)
@@ -19,7 +17,7 @@ func MustMatchSingle(t *testing.T, p models.Profile, cv models.Cv) {
 }
 
 func MustNotMatchSingle(t *testing.T, p models.Profile, cv models.Cv) {
-	p.Site.Domain = "werk.nl"
+	p.Domains = []string{"werk.nl"}
 	p.Active = true
 
 	matches := Match("werk.nl", []models.Profile{p}, cv)
@@ -27,11 +25,9 @@ func MustNotMatchSingle(t *testing.T, p models.Profile, cv models.Cv) {
 }
 
 func TestMatchSiteMismatch(t *testing.T) {
-	siteId := 1
 	matches := Match("werk.nl", []models.Profile{{
-		Site:   models.Site{Domain: "gangster_at_work.crib"},
-		SiteId: &siteId,
-		Active: true,
+		Domains: []string{"gangster_at_work.crib"},
+		Active:  true,
 	}}, models.Cv{})
 	Equal(t, 0, len(matches), matches)
 }

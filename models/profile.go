@@ -23,12 +23,8 @@ type Profile struct {
 	MustEducation         bool
 	MustEducationFinished bool
 	MustDriversLicense    bool
-	CreatedAt             *time.Time
-	UpdatedAt             *time.Time
-	DeletedAt             *time.Time
-	SiteId                *int
-	Site                  Site
-	ListProfile           bool
+	Domains               []string
+	ListProfile           bool // TODO find out what this is
 	YearsSinceEducation   int
 
 	DesiredProfessions    []Profession
@@ -41,7 +37,7 @@ type Profile struct {
 
 func GetProfiles() ([]Profile, error) {
 	if Testing {
-		panic("FIXME")
+		return mockGetProfiles, nil
 	}
 
 	c, err := ProfilesCollection().Find(db.Ctx(), bson.M{
@@ -81,7 +77,7 @@ type DBEducation struct {
 }
 
 type Email struct {
-	Name string
+	Email string
 }
 
 // type ProfileProfession struct {
@@ -93,4 +89,62 @@ type Email struct {
 type Zipcode struct {
 	From uint16
 	To   uint16
+}
+
+var now = time.Now()
+
+var mockGetProfiles = []Profile{
+	{
+		ID:                    primitive.NewObjectID(),
+		Name:                  "Mock profile 1",
+		YearsSinceWork:        nil,
+		Active:                true,
+		MustExpProfession:     true,
+		MustDesiredProfession: false,
+		MustEducation:         true,
+		MustEducationFinished: true,
+		MustDriversLicense:    true,
+		Domains:               []string{"werk.nl"},
+		ListProfile:           true,
+		YearsSinceEducation:   1,
+		DesiredProfessions: []Profession{{
+			Name: "Rapper",
+		}},
+		ProfessionExperienced: []Profession{{
+			Name: "Dancer",
+		}},
+		DriversLicenses: []DriversLicense{{
+			Name: "A",
+		}},
+		Educations: []DBEducation{{
+			Name: "Default",
+		}},
+		Emails: []Email{{
+			Email: "abc@example.com",
+		}},
+		Zipcodes: []Zipcode{{
+			From: 2000,
+			To:   8000,
+		}},
+	},
+	{
+		ID:                    primitive.NewObjectID(),
+		Name:                  "Mock profile 2",
+		YearsSinceWork:        nil,
+		Active:                true,
+		MustExpProfession:     false,
+		MustDesiredProfession: false,
+		MustEducation:         false,
+		MustEducationFinished: false,
+		MustDriversLicense:    false,
+		Domains:               []string{"werk.nl"},
+		ListProfile:           false,
+		YearsSinceEducation:   0,
+		DesiredProfessions:    nil,
+		ProfessionExperienced: nil,
+		DriversLicenses:       nil,
+		Educations:            nil,
+		Emails:                nil,
+		Zipcodes:              nil,
+	},
 }

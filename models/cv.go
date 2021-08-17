@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"html/template"
 	"os"
+	"strings"
 
 	"github.com/SebastiaanKlippert/go-wkhtmltopdf"
 )
@@ -116,18 +117,25 @@ func (cv *Cv) GetHtml(profile Profile, matchText string) (*bytes.Buffer, error) 
 		}
 	}
 
+	domains := "onbekend"
+	if len(profile.Domains) > 0 {
+		domains = strings.Join(profile.Domains, ", ")
+	}
+
 	input := struct {
 		Profile      Profile
 		ProfileIdHex string // The normal `Profile.ID.String()`` is more of a debug value than a real id value so we add the hex to this field
 		Cv           *Cv
 		MatchText    string
 		LogoUrl      string
+		Domains      string
 	}{
 		Profile:      profile,
 		ProfileIdHex: profile.ID.Hex(),
 		Cv:           cv,
 		MatchText:    matchText,
 		LogoUrl:      os.Getenv("LOGO"),
+		Domains:      domains,
 	}
 
 	buff := bytes.NewBuffer(nil)

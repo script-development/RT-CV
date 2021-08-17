@@ -35,11 +35,9 @@ func TestGetHtml(t *testing.T) {
 
 	profileObjectID := primitive.NewObjectID()
 	profile := Profile{
-		ID:   profileObjectID,
-		Name: "profile name",
-		Site: Site{
-			Domain: "test.com",
-		},
+		ID:      profileObjectID,
+		Name:    "profile name",
+		Domains: []string{"test.com"},
 	}
 
 	htmlBuff, err := cv.GetHtml(profile, matchTest)

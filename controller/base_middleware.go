@@ -34,7 +34,7 @@ func InsertData() fiber.Handler {
 			Logger: loggerEntity.Logger,
 		}
 
-		c.SetUserContext(context.WithValue(ctx, LoggerCtxKey, loggerEntity))
+		c.SetUserContext(context.WithValue(ctx, LoggerCtxKey, &loggerEntity))
 		return c.Next()
 	}
 }

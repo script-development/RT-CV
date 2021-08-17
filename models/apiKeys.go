@@ -23,7 +23,7 @@ type ApiKey struct {
 
 func GetApiKeys() ([]ApiKey, error) {
 	if Testing {
-		panic("FIXME")
+		return mockGetApiKeys, nil
 	}
 
 	c, err := ApiKeysCollection().Find(db.Ctx(), bson.M{
@@ -78,4 +78,14 @@ func (a ApiKeyRole) ContainsAll(other ApiKeyRole) bool {
 
 func (a ApiKeyRole) ContainsSome(other ApiKeyRole) bool {
 	return a&other > 0
+}
+
+var mockGetApiKeys = []ApiKey{
+	{
+		ID:      primitive.NewObjectID(),
+		Enabled: true,
+		Domains: []string{"werk.nl"},
+		Key:     "abc",
+		Roles:   ApiKeyRoleScraper,
+	},
 }

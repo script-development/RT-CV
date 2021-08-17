@@ -24,9 +24,15 @@ func Match(domain string, profiles []models.Profile, cv models.Cv) []models.Prof
 
 	for _, profile := range profiles {
 		// Check domain
-		if profile.SiteId != nil && *profile.SiteId > 0 && len(formattedDomain) != 0 {
-			if normalizeString(profile.Site.Domain) != formattedDomain {
-				// Domain doesn't match
+		if len(profile.Domains) > 0 {
+			foundMatch := false
+			for _, domain := range profile.Domains {
+				if normalizeString(domain) == formattedDomain {
+					foundMatch = true
+					break
+				}
+			}
+			if !foundMatch {
 				continue
 			}
 		}
