@@ -36,6 +36,8 @@ vim .env
 go run .
 ```
 
+Before you start fiddling around with the code make sure to read [DEV.md](/DEV.md)
+
 ## Auth
 
 How to generate a token:

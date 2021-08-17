@@ -17,6 +17,7 @@ func main() {
 
 	// Connect to the database using the env variables
 	db.ConnectToDB()
+	db.InitDB()
 
 	// Create a new fiber instance (http server)
 	// do not use fiber Prefork!, this app is not written to support it

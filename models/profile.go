@@ -6,12 +6,7 @@ import (
 	"github.com/script-development/RT-CV/db"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
-
-func ProfilesCollection() *mongo.Collection {
-	return db.DB.Collection("profiles")
-}
 
 type Profile struct {
 	ID                    primitive.ObjectID `bson:"_id"`
@@ -40,7 +35,7 @@ func GetProfiles() ([]Profile, error) {
 		return mockGetProfiles, nil
 	}
 
-	c, err := ProfilesCollection().Find(db.Ctx(), bson.M{
+	c, err := db.Profiles.Collection().Find(db.Ctx(), bson.M{
 		"active": true,
 	})
 	if err != nil {

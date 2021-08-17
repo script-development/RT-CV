@@ -6,12 +6,7 @@ import (
 	"github.com/script-development/RT-CV/db"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
-
-func ApiKeysCollection() *mongo.Collection {
-	return db.DB.Collection("apiKeys")
-}
 
 type ApiKey struct {
 	ID      primitive.ObjectID `bson:"_id"`
@@ -26,7 +21,7 @@ func GetApiKeys() ([]ApiKey, error) {
 		return mockGetApiKeys, nil
 	}
 
-	c, err := ApiKeysCollection().Find(db.Ctx(), bson.M{
+	c, err := db.ApiKeys.Collection().Find(db.Ctx(), bson.M{
 		"enabled": true,
 	})
 	if err != nil {
