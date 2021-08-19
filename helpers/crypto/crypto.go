@@ -1,86 +1,55 @@
 package crypto
 
 import (
-	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
 	"crypto/sha256"
 	"errors"
 	"io"
-	"time"
 )
 
-type Encrypter struct {
-	// This can be used to identify if data is encrypted using this encryption instance
-	// This is a random value separate from the nonce and chiper so this can only be used to identify the encryption instance
-	MasterKeyID []byte
-
-	chiper cipher.AEAD
-
-	// A random sha256 hash that is hashed by itself every encryption
-	//
-	// Why hasing it by itself?
-	// rand.Reader is often very slow so we hash this value by itself to get a pseudo-random string back
-	//
-	// Is the above secure?
-	// Reading https://en.wikipedia.org/wiki/Cryptographic_nonce#Definition we are allowed to use pseudo-random nonce values
-	fullNonce [32]byte
+func NormalizeKey(key []byte) []byte {
+	// Sum256 returns a bytes array of exactly 32 bytes, the length we also need for AES-256
+	hashedKey := sha256.Sum256(key)
+	return hashedKey[:]
 }
 
-func Init() (Encrypter, error) {
-	res := Encrypter{}
-
-	// generate master key id
-	fullMashterKeyId := sha256.Sum256([]byte(time.Now().Format(time.RFC3339Nano)))
-	res.MasterKeyID = fullMashterKeyId[:16]
-
-	// generate nonce
-	nonceSeed := make([]byte, 32)
-	_, err := io.ReadFull(rand.Reader, nonceSeed)
+func Encrypt(data, key []byte) ([]byte, error) {
+	c, err := aes.NewCipher(NormalizeKey(key))
 	if err != nil {
-		return res, err
+		return nil, err
 	}
-	res.fullNonce = sha256.Sum256(nonceSeed)
 
-	// Generate key
-	key := make([]byte, 32)
-	_, err = io.ReadFull(rand.Reader, key)
+	gcm, err := cipher.NewGCM(c)
 	if err != nil {
-		return res, err
+		return nil, err
 	}
-	c, err := aes.NewCipher(key)
-	if err != nil {
-		return res, err
-	}
-	res.chiper, err = cipher.NewGCM(c)
 
-	return res, err
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+		return nil, err
+	}
+
+	return gcm.Seal(nonce, nonce, data, nil), nil
 }
 
-// Encrypt encrypts the input data
-// Returns:
-// [16 KeyID] + [12 nonce] + [... encrypted data]
-func (e *Encrypter) Encrypt(data []byte) []byte {
-	e.fullNonce = sha256.Sum256(e.fullNonce[:])
-	return append(
-		e.MasterKeyID,
-		append(
-			e.fullNonce[:12],
-			e.chiper.Seal(nil, e.fullNonce[:12], data, nil)...,
-		)...,
-	)
-}
-
-func (e *Encrypter) Decrypt(data []byte) ([]byte, error) {
-	masterKeyLen := len(e.MasterKeyID)
-	if len(data) < masterKeyLen+12+1 {
-		return nil, errors.New("invalid data length")
+func Decrypt(ciphertext, key []byte) ([]byte, error) {
+	c, err := aes.NewCipher(NormalizeKey(key))
+	if err != nil {
+		return nil, err
 	}
 
-	if !bytes.Equal(data[0:masterKeyLen], e.MasterKeyID) {
-		return nil, errors.New("encrypted using another key")
+	gcm, err := cipher.NewGCM(c)
+	if err != nil {
+		return nil, err
 	}
 
-	return e.chiper.Open(nil, data[masterKeyLen:masterKeyLen+12], data[masterKeyLen+12:], nil)
+	nonceSize := gcm.NonceSize()
+	if len(ciphertext) < nonceSize {
+		return nil, errors.New("ciphertext too short")
+	}
+
+	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
+	return gcm.Open(nil, nonce, ciphertext, nil)
 }

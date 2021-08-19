@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/script-development/RT-CV/models"
 	. "github.com/stretchr/testify/assert"
 )
 
@@ -38,7 +37,6 @@ func (m Method) String() string {
 }
 
 func TestCannotAccessCriticalRoutesWithoutCredentials(t *testing.T) {
-	models.Testing = true
 
 	scenarios := []struct {
 		name   string

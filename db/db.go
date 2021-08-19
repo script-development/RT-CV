@@ -1,83 +1,67 @@
 package db
 
 import (
-	"context"
-	"fmt"
-	"os"
-	"time"
-
-	"github.com/apex/log"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-var DB *mongo.Database
-
-func Ctx() context.Context {
-	return context.Background()
+// Connection is a abstract interface for a database connection
+// There are 2 main implementations of this:
+// - MongoConnection (For the MongoDB driver)
+// - TestConnection (For a fake temp database)
+type Connection interface {
+	RegisterEntries(entries ...Entry)
+	FindOne(result Entry, filters bson.M) error
+	Find(entry Entry, results interface{}, filters bson.M) error
+	Insert(data Entry) error
+	UpdateByID(data Entry) error
+	DeleteByID(data Entry) error
 }
 
-func ConnectToDB() {
-	fmt.Println("Connecting to database...")
-	client, err := mongo.NewClient(options.Client().ApplyURI(os.Getenv("MONGODB_URI")))
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	ctx, ctxCancel := context.WithTimeout(context.Background(), 10*time.Second)
-	err = client.Connect(ctx)
-	ctxCancel()
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	ctx, ctxCancel = context.WithTimeout(context.Background(), 10*time.Second)
-	err = client.Ping(ctx, readpref.Primary())
-	ctxCancel()
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	DB = client.Database(os.Getenv("MONGODB_DATABASE"))
-	fmt.Println("Connected to database")
+// Entry are the functions required to put/get things in/from the database
+// To implement use:
+//
+// type User struct {
+//     // Adds the _id field and implements the remaining functions from Entry
+//     M `bson:",inline"`
+//
+//     Username string
+// }
+// func (*User) CollectionName() {
+//     return "users"
+// }
+type Entry interface {
+	GetID() primitive.ObjectID
+	SetID(primitive.ObjectID)
+	CollectionName() string
+	DefaultFindFilters() bson.M
 }
 
-type Collection string
-
-const (
-	ApiKeys  = Collection("apiKeys")
-	Profiles = Collection("profiles")
-)
-
-var AllCollections = []Collection{
-	ApiKeys,
-	Profiles,
+// M is a struct that adds an _id field and implements from Entry:
+// - GetID
+// - SetID
+// - DefaultFindFilters
+type M struct {
+	ID primitive.ObjectID `bson:"_id"`
 }
 
-func (c Collection) Collection() *mongo.Collection {
-	return DB.Collection(string(c))
+func NewM() M {
+	return M{
+		ID: primitive.NewObjectID(),
+	}
 }
 
-func InitDB() {
-	fmt.Println("Checking if all db collections exist")
+// GetID implements Entry
+func (m *M) GetID() primitive.ObjectID {
+	return m.ID
+}
 
-	names, err := DB.ListCollectionNames(Ctx(), bson.D{})
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	namesMap := map[string]bool{}
-	for _, name := range names {
-		namesMap[name] = true
-	}
-	for _, collection := range AllCollections {
-		collectionName := string(collection)
-		if !namesMap[collectionName] {
-			fmt.Println("Creating collection", collectionName)
-			DB.CreateCollection(Ctx(), collectionName)
-		}
-	}
+// SetID implements Entry
+func (m *M) SetID(id primitive.ObjectID) {
+	m.ID = id
+}
 
-	fmt.Println("Database collection check succeeded")
+// DefaultFindFilters implements Entry
+func (m *M) DefaultFindFilters() bson.M {
+	return nil
 }

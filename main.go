@@ -6,6 +6,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/script-development/RT-CV/controller"
 	"github.com/script-development/RT-CV/db"
+	"github.com/script-development/RT-CV/models"
 )
 
 func main() {
@@ -16,15 +17,19 @@ func main() {
 	}
 
 	// Connect to the database using the env variables
-	db.ConnectToDB()
-	db.InitDB()
+	dbConn := db.ConnectToDB()
+	dbConn.RegisterEntries(
+		&models.ApiKey{},
+		&models.Profile{},
+		&models.Secret{},
+	)
 
 	// Create a new fiber instance (http server)
 	// do not use fiber Prefork!, this app is not written to support it
 	app := fiber.New()
 
 	// Setup the app routes
-	controller.Routes(app)
+	controller.Routes(app, dbConn)
 
 	// Start the webserver
 	log.Fatal(app.Listen(":3000").Error())

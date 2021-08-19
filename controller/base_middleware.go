@@ -5,23 +5,26 @@ import (
 
 	"github.com/apex/log"
 	"github.com/gofiber/fiber/v2"
+	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/auth"
 	"github.com/script-development/RT-CV/models"
 )
 
 // InsertData adds the profiles to every route
-func InsertData() fiber.Handler {
-	profiles, err := models.GetProfiles()
+func InsertData(dbConn db.Connection) fiber.Handler {
+	profiles, err := models.GetProfiles(dbConn)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	ctx := context.WithValue(context.Background(), ProfilesCtxKey, &profiles)
+	ctx := context.WithValue(context.Background(), profilesCtxKey, &profiles)
 
-	keys, err := models.GetApiKeys()
+	keys, err := models.GetApiKeys(dbConn)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	ctx = context.WithValue(ctx, AuthCtxKey, auth.New(keys))
+	ctx = context.WithValue(ctx, authCtxKey, auth.New(keys))
+
+	ctx = context.WithValue(ctx, dbConnCtxKey, dbConn)
 
 	// Pre define loggerEntity so we only take once memory
 	loggerEntity := log.Entry{
@@ -34,7 +37,7 @@ func InsertData() fiber.Handler {
 			Logger: loggerEntity.Logger,
 		}
 
-		c.SetUserContext(context.WithValue(ctx, LoggerCtxKey, &loggerEntity))
+		c.SetUserContext(context.WithValue(ctx, loggerCtxKey, &loggerEntity))
 		return c.Next()
 	}
 }

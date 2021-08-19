@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"testing"
 
+	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/models"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -55,21 +56,21 @@ func TestAuthenticate(t *testing.T) {
 
 	auth := New([]models.ApiKey{
 		{
-			ID:      key1ID,
+			M:       db.M{ID: key1ID},
 			Enabled: true,
 			Domains: []string{"a", "b"},
 			Key:     "abc",
 			Roles:   models.ApiKeyRoleScraper,
 		},
 		{
-			ID:      key2ID,
+			M:       db.M{ID: key2ID},
 			Enabled: true,
 			Domains: []string{"c", "d"},
 			Key:     "def",
 			Roles:   models.ApiKeyRoleInformationObtainer,
 		},
 		{
-			ID:      key3ID,
+			M:       db.M{ID: key3ID},
 			Enabled: true,
 			Domains: []string{"e", "f"},
 			Key:     "ghi",

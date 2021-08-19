@@ -1,36 +1,31 @@
 package models
 
 import (
-	"context"
-
 	"github.com/script-development/RT-CV/db"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type ApiKey struct {
-	ID      primitive.ObjectID `bson:"_id"`
+	db.M    `bson:"inline"`
 	Enabled bool
 	Domains []string
 	Key     string
 	Roles   ApiKeyRole
 }
 
-func GetApiKeys() ([]ApiKey, error) {
-	if Testing {
-		return mockGetApiKeys, nil
-	}
+func (a *ApiKey) CollectionName() string {
+	return "apiKeys"
+}
 
-	c, err := db.ApiKeys.Collection().Find(db.Ctx(), bson.M{
+func (m *ApiKey) DefaultFindFilters() bson.M {
+	return bson.M{
 		"enabled": true,
-	})
-	if err != nil {
-		return nil, err
 	}
-	defer c.Close(context.Background())
+}
 
+func GetApiKeys(conn db.Connection) ([]ApiKey, error) {
 	keys := []ApiKey{}
-	err = c.All(db.Ctx(), &keys)
+	err := conn.Find(&ApiKey{}, &keys, nil)
 	return keys, err
 }
 
@@ -75,12 +70,12 @@ func (a ApiKeyRole) ContainsSome(other ApiKeyRole) bool {
 	return a&other > 0
 }
 
-var mockGetApiKeys = []ApiKey{
-	{
-		ID:      primitive.NewObjectID(),
-		Enabled: true,
-		Domains: []string{"werk.nl"},
-		Key:     "abc",
-		Roles:   ApiKeyRoleScraper,
-	},
-}
+// var mockGetApiKeys = []ApiKey{
+// 	{
+// 		M:       db.NewM(),
+// 		Enabled: true,
+// 		Domains: []string{"werk.nl"},
+// 		Key:     "abc",
+// 		Roles:   ApiKeyRoleScraper,
+// 	},
+// }

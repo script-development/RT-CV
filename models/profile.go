@@ -1,15 +1,12 @@
 package models
 
 import (
-	"time"
-
 	"github.com/script-development/RT-CV/db"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Profile struct {
-	ID                    primitive.ObjectID `bson:"_id"`
+	db.M                  `bson:"inline"`
 	Name                  string
 	YearsSinceWork        *int
 	Active                bool
@@ -30,21 +27,18 @@ type Profile struct {
 	Zipcodes              []Zipcode
 }
 
-func GetProfiles() ([]Profile, error) {
-	if Testing {
-		return mockGetProfiles, nil
-	}
-
-	c, err := db.Profiles.Collection().Find(db.Ctx(), bson.M{
+func (*Profile) CollectionName() string {
+	return "profiles"
+}
+func (*Profile) DefaultFindFilters() bson.M {
+	return bson.M{
 		"active": true,
-	})
-	if err != nil {
-		return nil, err
 	}
-	defer c.Close(db.Ctx())
+}
 
+func GetProfiles(conn db.Connection) ([]Profile, error) {
 	profiles := []Profile{}
-	err = c.All(db.Ctx(), &profiles)
+	err := conn.Find(&Profile{}, &profiles, nil)
 	return profiles, err
 }
 
@@ -86,60 +80,59 @@ type Zipcode struct {
 	To   uint16
 }
 
-var now = time.Now()
-
-var mockGetProfiles = []Profile{
-	{
-		ID:                    primitive.NewObjectID(),
-		Name:                  "Mock profile 1",
-		YearsSinceWork:        nil,
-		Active:                true,
-		MustExpProfession:     true,
-		MustDesiredProfession: false,
-		MustEducation:         true,
-		MustEducationFinished: true,
-		MustDriversLicense:    true,
-		Domains:               []string{"werk.nl"},
-		ListProfile:           true,
-		YearsSinceEducation:   1,
-		DesiredProfessions: []Profession{{
-			Name: "Rapper",
-		}},
-		ProfessionExperienced: []Profession{{
-			Name: "Dancer",
-		}},
-		DriversLicenses: []DriversLicense{{
-			Name: "A",
-		}},
-		Educations: []DBEducation{{
-			Name: "Default",
-		}},
-		Emails: []Email{{
-			Email: "abc@example.com",
-		}},
-		Zipcodes: []Zipcode{{
-			From: 2000,
-			To:   8000,
-		}},
-	},
-	{
-		ID:                    primitive.NewObjectID(),
-		Name:                  "Mock profile 2",
-		YearsSinceWork:        nil,
-		Active:                true,
-		MustExpProfession:     false,
-		MustDesiredProfession: false,
-		MustEducation:         false,
-		MustEducationFinished: false,
-		MustDriversLicense:    false,
-		Domains:               []string{"werk.nl"},
-		ListProfile:           false,
-		YearsSinceEducation:   0,
-		DesiredProfessions:    nil,
-		ProfessionExperienced: nil,
-		DriversLicenses:       nil,
-		Educations:            nil,
-		Emails:                nil,
-		Zipcodes:              nil,
-	},
-}
+// var now = time.Now()
+// var mockGetProfiles = []Profile{
+// 	{
+// 		ID:                    primitive.NewObjectID(),
+// 		Name:                  "Mock profile 1",
+// 		YearsSinceWork:        nil,
+// 		Active:                true,
+// 		MustExpProfession:     true,
+// 		MustDesiredProfession: false,
+// 		MustEducation:         true,
+// 		MustEducationFinished: true,
+// 		MustDriversLicense:    true,
+// 		Domains:               []string{"werk.nl"},
+// 		ListProfile:           true,
+// 		YearsSinceEducation:   1,
+// 		DesiredProfessions: []Profession{{
+// 			Name: "Rapper",
+// 		}},
+// 		ProfessionExperienced: []Profession{{
+// 			Name: "Dancer",
+// 		}},
+// 		DriversLicenses: []DriversLicense{{
+// 			Name: "A",
+// 		}},
+// 		Educations: []DBEducation{{
+// 			Name: "Default",
+// 		}},
+// 		Emails: []Email{{
+// 			Email: "abc@example.com",
+// 		}},
+// 		Zipcodes: []Zipcode{{
+// 			From: 2000,
+// 			To:   8000,
+// 		}},
+// 	},
+// 	{
+// 		ID:                    primitive.NewObjectID(),
+// 		Name:                  "Mock profile 2",
+// 		YearsSinceWork:        nil,
+// 		Active:                true,
+// 		MustExpProfession:     false,
+// 		MustDesiredProfession: false,
+// 		MustEducation:         false,
+// 		MustEducationFinished: false,
+// 		MustDriversLicense:    false,
+// 		Domains:               []string{"werk.nl"},
+// 		ListProfile:           false,
+// 		YearsSinceEducation:   0,
+// 		DesiredProfessions:    nil,
+// 		ProfessionExperienced: nil,
+// 		DriversLicenses:       nil,
+// 		Educations:            nil,
+// 		Emails:                nil,
+// 		Zipcodes:              nil,
+// 	},
+// }
