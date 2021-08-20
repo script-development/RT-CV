@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/script-development/RT-CV/db"
+	"github.com/script-development/RT-CV/db/dbInterfaces"
 	. "github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -36,7 +36,7 @@ func TestGetHtml(t *testing.T) {
 
 	profileObjectID := primitive.NewObjectID()
 	profile := Profile{
-		M:       db.M{ID: profileObjectID},
+		M:       dbInterfaces.M{ID: profileObjectID},
 		Name:    "profile name",
 		Domains: []string{"test.com"},
 	}

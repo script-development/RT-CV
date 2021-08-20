@@ -5,13 +5,13 @@ import (
 
 	"github.com/apex/log"
 	"github.com/gofiber/fiber/v2"
-	"github.com/script-development/RT-CV/db"
+	"github.com/script-development/RT-CV/db/dbInterfaces"
 	"github.com/script-development/RT-CV/helpers/auth"
 	"github.com/script-development/RT-CV/models"
 )
 
 // InsertData adds the profiles to every route
-func InsertData(dbConn db.Connection) fiber.Handler {
+func InsertData(dbConn dbInterfaces.Connection) fiber.Handler {
 	profiles, err := models.GetProfiles(dbConn)
 	if err != nil {
 		log.Fatal(err.Error())

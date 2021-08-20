@@ -1,9 +1,13 @@
-package db
+package dbInterfaces
 
 import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+type FakeConn struct {
+	Defer Connection
+}
 
 // Connection is a abstract interface for a database connection
 // There are 2 main implementations of this:
@@ -37,7 +41,7 @@ type Entry interface {
 	DefaultFindFilters() bson.M
 }
 
-// M is a struct that adds an _id field and implements from Entry:
+// M is a struct that adds an _id field and implements from dbInterfaces.Entry:
 // - GetID
 // - SetID
 // - DefaultFindFilters

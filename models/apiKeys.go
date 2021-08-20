@@ -1,16 +1,16 @@
 package models
 
 import (
-	"github.com/script-development/RT-CV/db"
+	"github.com/script-development/RT-CV/db/dbInterfaces"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 type ApiKey struct {
-	db.M    `bson:"inline"`
-	Enabled bool
-	Domains []string
-	Key     string
-	Roles   ApiKeyRole
+	dbInterfaces.M `bson:"inline"`
+	Enabled        bool
+	Domains        []string
+	Key            string
+	Roles          ApiKeyRole
 }
 
 func (a *ApiKey) CollectionName() string {
@@ -23,7 +23,7 @@ func (m *ApiKey) DefaultFindFilters() bson.M {
 	}
 }
 
-func GetApiKeys(conn db.Connection) ([]ApiKey, error) {
+func GetApiKeys(conn dbInterfaces.Connection) ([]ApiKey, error) {
 	keys := []ApiKey{}
 	err := conn.Find(&ApiKey{}, &keys, nil)
 	return keys, err

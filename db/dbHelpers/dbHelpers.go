@@ -1,4 +1,4 @@
-package db
+package dbHelpers
 
 import (
 	"context"
@@ -6,8 +6,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-// mergeFilters merges a list of filters into a single filter
-func mergeFilters(filtersList ...bson.M) bson.M {
+// MergeFilters merges a list of filters into a single filter
+func MergeFilters(filtersList ...bson.M) bson.M {
 	res := filtersList[0]
 
 	for _, filters := range filtersList[1:] {
@@ -27,7 +27,7 @@ func mergeFilters(filtersList ...bson.M) bson.M {
 	return res
 }
 
-// dbCtx
-func dbCtx() context.Context {
+// Ctx
+func Ctx() context.Context {
 	return context.Background()
 }

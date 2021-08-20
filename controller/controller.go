@@ -3,12 +3,12 @@ package controller
 import (
 	"github.com/apex/log"
 	"github.com/gofiber/fiber/v2"
-	"github.com/script-development/RT-CV/db"
+	"github.com/script-development/RT-CV/db/dbInterfaces"
 	"github.com/script-development/RT-CV/helpers/auth"
 	"github.com/script-development/RT-CV/models"
 )
 
-func Routes(app *fiber.App, dbConn db.Connection) {
+func Routes(app *fiber.App, dbConn dbInterfaces.Connection) {
 	v1 := app.Group(`/v1`, InsertData(dbConn))
 
 	authRoutes(v1)
@@ -45,6 +45,6 @@ func GetKey(c *fiber.Ctx) *models.ApiKey {
 func GetLogger(c *fiber.Ctx) *log.Entry {
 	return GetCtxValue(c, loggerCtxKey).(*log.Entry)
 }
-func GetDbConn(c *fiber.Ctx) db.Connection {
-	return GetCtxValue(c, dbConnCtxKey).(db.Connection)
+func GetDbConn(c *fiber.Ctx) dbInterfaces.Connection {
+	return GetCtxValue(c, dbConnCtxKey).(dbInterfaces.Connection)
 }

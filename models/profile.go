@@ -1,12 +1,12 @@
 package models
 
 import (
-	"github.com/script-development/RT-CV/db"
+	"github.com/script-development/RT-CV/db/dbInterfaces"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 type Profile struct {
-	db.M                  `bson:"inline"`
+	dbInterfaces.M        `bson:"inline"`
 	Name                  string
 	YearsSinceWork        *int
 	Active                bool
@@ -36,7 +36,7 @@ func (*Profile) DefaultFindFilters() bson.M {
 	}
 }
 
-func GetProfiles(conn db.Connection) ([]Profile, error) {
+func GetProfiles(conn dbInterfaces.Connection) ([]Profile, error) {
 	profiles := []Profile{}
 	err := conn.Find(&Profile{}, &profiles, nil)
 	return profiles, err
