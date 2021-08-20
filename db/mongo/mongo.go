@@ -66,6 +66,10 @@ func (c *MongoConnection) Find(e dbInterfaces.Entry, results interface{}, filter
 	}
 	defer cur.Close(context.Background())
 	err = cur.All(dbHelpers.Ctx(), results)
+
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return nil
+	}
 	return err
 }
 func (c *MongoConnection) Insert(e dbInterfaces.Entry) error {

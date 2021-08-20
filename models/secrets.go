@@ -25,20 +25,29 @@ func (*Secret) DefaultFindFilters() bson.M {
 	return bson.M{}
 }
 
-func CreateSecret(keyID primitive.ObjectID, key string, encryptionKey string, value []byte) (Secret, error) {
+func CreateSecret(keyID primitive.ObjectID, key string, encryptionKey string, value []byte) (*Secret, error) {
 	data, err := crypto.Encrypt(value, []byte(encryptionKey))
 	if err != nil {
-		return Secret{}, err
+		return nil, err
 	}
 	if !json.Valid(value) {
-		return Secret{}, errors.New("expected json value")
+		return nil, errors.New("expected json value")
 	}
-	return Secret{
+	return &Secret{
 		M:     dbInterfaces.NewM(),
 		KeyID: keyID,
 		Key:   key,
 		Value: base64.RawStdEncoding.EncodeToString(data),
 	}, nil
+}
+
+// UnsafeMustCreateSecret Creates a secret and panics if an error is returned
+func UnsafeMustCreateSecret(keyID primitive.ObjectID, key string, encryptionKey string, value []byte) *Secret {
+	s, err := CreateSecret(keyID, key, encryptionKey, value)
+	if err != nil {
+		panic(err)
+	}
+	return s
 }
 
 func (secret Secret) Decrypt(key string) (json.RawMessage, error) {

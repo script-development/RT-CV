@@ -4,21 +4,20 @@ import (
 	"errors"
 	"reflect"
 
-	"github.com/script-development/RT-CV/db/dbHelpers"
 	"github.com/script-development/RT-CV/db/dbInterfaces"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 func (c *TestConnection) FindOne(placeInto dbInterfaces.Entry, filters bson.M) error {
-	mergedFilters := dbHelpers.MergeFilters(placeInto.DefaultFindFilters(), filters)
-	if len(mergedFilters) > 0 {
-		panic("TODO impl filters")
-	}
+	itemsFilter := newFilter(placeInto.DefaultFindFilters(), filters)
 
 	c.m.Lock()
 	defer c.m.Unlock()
 
 	for _, item := range c.getCollectionFromEntry(placeInto).data {
+		if !itemsFilter.matches(item) {
+			continue
+		}
 
 		// We use elem here to get passed the pointer into the underlaying data
 		placeIntoRefl := reflect.ValueOf(placeInto).Elem()
@@ -30,10 +29,7 @@ func (c *TestConnection) FindOne(placeInto dbInterfaces.Entry, filters bson.M) e
 }
 
 func (c *TestConnection) Find(base dbInterfaces.Entry, results interface{}, filters bson.M) error {
-	mergedFilters := dbHelpers.MergeFilters(base.DefaultFindFilters(), filters)
-	if len(mergedFilters) > 0 {
-		panic("TODO impl filters")
-	}
+	itemsFilter := newFilter(base.DefaultFindFilters(), filters)
 
 	c.m.Lock()
 	defer c.m.Unlock()
@@ -47,6 +43,10 @@ func (c *TestConnection) Find(base dbInterfaces.Entry, results interface{}, filt
 	resultIsSliceOfPtrs := resultsSliceContentType.Kind() == reflect.Ptr
 
 	for _, item := range c.getCollectionFromEntry(base).data {
+		if !itemsFilter.matches(item) {
+			continue
+		}
+
 		itemRefl := reflect.ValueOf(item)
 		if resultIsSliceOfPtrs {
 			resultRefl = reflect.Append(resultRefl, itemRefl)

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/script-development/RT-CV/mock"
 	. "github.com/stretchr/testify/assert"
 )
 
@@ -55,8 +56,9 @@ func TestCannotAccessCriticalRoutesWithoutCredentials(t *testing.T) {
 		},
 	}
 
+	db := mock.NewMockDB()
 	app := fiber.New()
-	Routes(app)
+	Routes(app, db)
 
 	for _, s := range scenarios {
 		s := s

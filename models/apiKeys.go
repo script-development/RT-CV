@@ -69,13 +69,3 @@ func (a ApiKeyRole) ContainsAll(other ApiKeyRole) bool {
 func (a ApiKeyRole) ContainsSome(other ApiKeyRole) bool {
 	return a&other > 0
 }
-
-// var mockGetApiKeys = []ApiKey{
-// 	{
-// 		M:       db.NewM(),
-// 		Enabled: true,
-// 		Domains: []string{"werk.nl"},
-// 		Key:     "abc",
-// 		Roles:   ApiKeyRoleScraper,
-// 	},
-// }

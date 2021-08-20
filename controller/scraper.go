@@ -26,7 +26,7 @@ func scraperRoutes(base fiber.Router) {
 				if err != nil {
 					return fmt.Errorf("unable to generate PDF from CV, err: %s", err.Error())
 				}
-				fmt.Println("")
+				fmt.Println(profile.Emails)
 				// for _, email := range profile.Emails {
 				// 	email.Email.Name
 				// }
@@ -62,7 +62,7 @@ func scraperRoutes(base fiber.Router) {
 			return err
 		}
 
-		err = GetDbConn(c).Insert(&secret)
+		err = GetDbConn(c).Insert(secret)
 		if err != nil {
 			return err
 		}
