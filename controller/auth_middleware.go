@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 
 	"github.com/apex/log"
 	"github.com/gofiber/fiber/v2"
@@ -15,15 +16,15 @@ func requiresAuth(requiredRoles models.ApiKeyRole) fiber.Handler {
 		logger := GetLogger(c)
 
 		// Check auth header
-		authorizationHeader := []byte(c.Get("Authorization"))
-		key, salt, err := auth.Authenticate(authorizationHeader)
+		authorizationHeader := c.Get("Authorization")
+		key, salt, err := auth.Authenticate([]byte(authorizationHeader))
 		if err != nil {
-			return c.Status(401).SendString(err.Error())
+			return ErrorRes(c, 401, err)
 		}
 
 		// Check required roles matches
 		if !key.Roles.ContainsSome(requiredRoles) {
-			return c.Status(401).SendString("you do not have the permissions to access this route")
+			return ErrorRes(c, 401, errors.New("you do not have the permissions to access this route"))
 		}
 
 		*logger = *logger.WithFields(log.Fields{

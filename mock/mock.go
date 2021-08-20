@@ -1,37 +1,49 @@
 package mock
 
 import (
+	"github.com/script-development/RT-CV/db/dbInterfaces"
 	"github.com/script-development/RT-CV/db/testingdb"
 	"github.com/script-development/RT-CV/models"
+)
+
+var (
+	Key1 = &models.ApiKey{
+		M:       dbInterfaces.NewM(),
+		Enabled: true,
+		Domains: []string{"werk.nl"},
+		Key:     "abc",
+		Roles:   models.ApiKeyRoleAll,
+	}
+	Key2 = &models.ApiKey{
+		M:       dbInterfaces.NewM(),
+		Enabled: true,
+		Domains: []string{"werk.nl"},
+		Key:     "abc",
+		Roles:   models.ApiKeyRoleScraper,
+	}
+	Key3 = &models.ApiKey{
+		M:       dbInterfaces.NewM(),
+		Enabled: true,
+		Domains: []string{"werk.nl"},
+		Key:     "def",
+		Roles:   models.ApiKeyRoleInformationObtainer,
+	}
 )
 
 func NewMockDB() *testingdb.TestConnection {
 	db := testingdb.NewDB()
 
 	// Insert api keys
-	apiKeys := []*models.ApiKey{
-		{
-			Enabled: true,
-			Domains: []string{"werk.nl"},
-			Key:     "abc",
-			Roles:   models.ApiKeyRoleScraper,
-		},
-		{
-			Enabled: true,
-			Domains: []string{"werk.nl"},
-			Key:     "def",
-			Roles:   models.ApiKeyRoleInformationObtainer,
-		},
-	}
 	db.UnsafeInsert(
-		apiKeys[0],
-		apiKeys[1],
+		Key1,
+		Key2,
+		Key3,
 	)
 
 	// Insert secrets
 	db.UnsafeInsert(
-		models.UnsafeMustCreateSecret(apiKeys[0].ID, "foo", "very-secret-key", []byte(`{"foo": 1}`)),
-		models.UnsafeMustCreateSecret(apiKeys[1].ID, "bar", "very-secret-key", []byte(`{"bar": 2}`)),
+		models.UnsafeMustCreateSecret(Key1.ID, "foo", "very-secret-key", []byte(`{"foo": 1}`)),
+		models.UnsafeMustCreateSecret(Key2.ID, "bar", "very-secret-key", []byte(`{"bar": 2}`)),
 	)
 
 	// Insert profiles

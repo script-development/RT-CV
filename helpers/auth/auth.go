@@ -50,7 +50,7 @@ func New(keys []models.ApiKey, baseSeed []byte) *Auth {
 	return &res
 }
 
-var errorInvalidKey = errors.New("invalid key")
+var ErrorInvalidKey = errors.New("invalid key")
 
 func (a *Auth) GetBaseSeed() []byte {
 	return a.baseSeed
@@ -76,7 +76,7 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.ApiKey, sa
 
 	parts := bytes.Split(auth, []byte(":"))
 	if len(parts) != 4 {
-		return nil, salt, errorInvalidKey
+		return nil, salt, ErrorInvalidKey
 	}
 
 	isSha512 := bytes.Equal(parts[0], []byte("sha512"))
@@ -106,10 +106,11 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.ApiKey, sa
 
 	knownKey, ok := a.keys[siteId]
 	if !ok {
-		return nil, salt, errorInvalidKey
+		return nil, salt, ErrorInvalidKey
 	}
 	keyAndSalt := append(knownKey.keyBytes, salt...)
 
+	// FIXME: The sha512 code is almost equal to that of sha256
 	if isSha512 {
 		for idx, entry := range knownKey.sha512 {
 			if !bytes.Equal(entry.salt, salt) {
@@ -118,7 +119,7 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.ApiKey, sa
 
 			// Key + salt combo earlier created lets check if the credentials match
 			if !bytes.Equal(entry.value, key) {
-				return nil, salt, errorInvalidKey
+				return nil, salt, ErrorInvalidKey
 			}
 
 			hash := sha512.Sum512(append(append(entry.value, knownKey.keyBytes...), entry.salt...))
@@ -133,7 +134,7 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.ApiKey, sa
 		hash = sha512.Sum512(append(hash[:], keyAndSalt...))
 
 		if !bytes.Equal(hash[:], key) {
-			return nil, salt, errorInvalidKey
+			return nil, salt, ErrorInvalidKey
 		}
 
 		// Pre calculate next hash in the chain
@@ -151,7 +152,7 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.ApiKey, sa
 
 			// Key + salt combo earlier created lets check if the credentials match
 			if !bytes.Equal(entry.value, key) {
-				return nil, salt, errorInvalidKey
+				return nil, salt, ErrorInvalidKey
 			}
 
 			hash := sha256.Sum256(append(entry.value, keyAndSalt...))
@@ -166,7 +167,7 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.ApiKey, sa
 		hash = sha256.Sum256(append(hash[:], keyAndSalt...))
 
 		if !bytes.Equal(hash[:], key) {
-			return nil, salt, errorInvalidKey
+			return nil, salt, ErrorInvalidKey
 		}
 
 		// Pre calculate next hash in the chain

@@ -32,10 +32,15 @@ func GetApiKeys(conn dbInterfaces.Connection) ([]ApiKey, error) {
 type ApiKeyRole uint64
 
 const (
-	ApiKeyRoleScraper             = 1 << iota // 1
-	ApiKeyRoleInformationObtainer             // 2
-	ApiKeyRoleController                      // 4
-	ApiKeyRoleAdmin                           // 8
+	ApiKeyRoleScraper             ApiKeyRole = 1 << iota // 1
+	ApiKeyRoleInformationObtainer                        // 2
+	ApiKeyRoleController                                 // 4
+	ApiKeyRoleAdmin                                      // 8
+)
+
+var (
+	// ApiKeyRoleAll contains all of the above roles and thus can access everything
+	ApiKeyRoleAll = ApiKeyRoleScraper | ApiKeyRoleInformationObtainer | ApiKeyRoleController | ApiKeyRoleAdmin
 )
 
 type ApiRole struct {

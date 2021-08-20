@@ -33,7 +33,9 @@ func main() {
 
 	// Create a new fiber instance (http server)
 	// do not use fiber Prefork!, this app is not written to support it
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		ErrorHandler: controller.FiberErrorHandler,
+	})
 
 	// Setup the app routes
 	controller.Routes(app, dbConn, serverSeed)

@@ -7,13 +7,15 @@ import (
 
 func controllerRoutes(base fiber.Router) {
 	control := base.Group(`/control`, requiresAuth(models.ApiKeyRoleAdmin|models.ApiKeyRoleController))
-	control.Get("/reloadProfiles", func(c *fiber.Ctx) error {
-		newProfiles, err := models.GetProfiles(GetDbConn(c))
-		if err != nil {
-			return err
-		}
-		*GetProfiles(c) = newProfiles
+	control.Get("/reloadProfiles", routeControlReloadProfiles)
+}
 
-		return c.SendString("OK")
-	})
+func routeControlReloadProfiles(c *fiber.Ctx) error {
+	newProfiles, err := models.GetProfiles(GetDbConn(c))
+	if err != nil {
+		return err
+	}
+	*GetProfiles(c) = newProfiles
+
+	return c.JSON(map[string]string{"status": "ok"})
 }

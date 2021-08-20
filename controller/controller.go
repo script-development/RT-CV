@@ -48,3 +48,13 @@ func GetLogger(c *fiber.Ctx) *log.Entry {
 func GetDbConn(c *fiber.Ctx) dbInterfaces.Connection {
 	return GetCtxValue(c, dbConnCtxKey).(dbInterfaces.Connection)
 }
+
+func FiberErrorHandler(c *fiber.Ctx, err error) error {
+	return ErrorRes(c, 500, err)
+}
+
+func ErrorRes(c *fiber.Ctx, status int, err error) error {
+	return c.Status(status).JSON(map[string]string{
+		"error": err.Error(),
+	})
+}
