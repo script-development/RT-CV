@@ -72,6 +72,7 @@ return "Authorization: Basic " + base64(`sha512:${apiKeyID}:${salt}:${key}`);
 
 ```js
 seed = fetchJson("/v1/auth/salt").seed;
+salt = random(32)
 key = sha512(apiKey + salt);
 key = sha512(key + apiKey + salt);
 return "Authorization: Basic " + base64(`sha512:${apiKeyID}:${salt}:${key}`);

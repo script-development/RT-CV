@@ -15,7 +15,7 @@ import (
 // TODO we should avoid string maps as they are slow
 type Auth struct {
 	keys     map[string]key
-	baseseed []byte
+	baseSeed []byte
 }
 
 type key struct {
@@ -33,7 +33,7 @@ type rollingHash struct {
 func New(keys []models.ApiKey, baseSeed []byte) *Auth {
 	res := Auth{
 		keys:     map[string]key{},
-		baseseed: baseSeed,
+		baseSeed: baseSeed,
 	}
 	for _, dbKey := range keys {
 		if !dbKey.Enabled {
@@ -53,7 +53,7 @@ func New(keys []models.ApiKey, baseSeed []byte) *Auth {
 var errorInvalidKey = errors.New("invalid key")
 
 func (a *Auth) GetBaseSeed() []byte {
-	return a.baseseed
+	return a.baseSeed
 }
 
 func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.ApiKey, salt []byte, err error) {
@@ -115,6 +115,8 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.ApiKey, sa
 			if !bytes.Equal(entry.salt, salt) {
 				continue
 			}
+
+			// Key + salt combo earlier created lets check if the credentials match
 			if !bytes.Equal(entry.value, key) {
 				return nil, salt, errorInvalidKey
 			}
@@ -126,7 +128,8 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.ApiKey, sa
 			return &knownKey.apiKey, salt, nil
 		}
 
-		hash := sha512.Sum512(keyAndSalt)
+		// Create a new key + salt combo
+		hash := sha512.Sum512(append(a.baseSeed, keyAndSalt...))
 		hash = sha512.Sum512(append(hash[:], keyAndSalt...))
 
 		if !bytes.Equal(hash[:], key) {
@@ -145,6 +148,8 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.ApiKey, sa
 			if !bytes.Equal(entry.salt, salt) {
 				continue
 			}
+
+			// Key + salt combo earlier created lets check if the credentials match
 			if !bytes.Equal(entry.value, key) {
 				return nil, salt, errorInvalidKey
 			}
@@ -156,7 +161,8 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.ApiKey, sa
 			return &knownKey.apiKey, salt, nil
 		}
 
-		hash := sha256.Sum256(keyAndSalt)
+		// Create a new key + salt combo
+		hash := sha256.Sum256(append(a.baseSeed, keyAndSalt...))
 		hash = sha256.Sum256(append(hash[:], keyAndSalt...))
 
 		if !bytes.Equal(hash[:], key) {

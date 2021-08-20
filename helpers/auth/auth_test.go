@@ -27,14 +27,15 @@ func newAccessorHelper(keyId primitive.ObjectID, key, salt string) *accessor {
 	saltBytes := []byte(salt)
 	keyandSaltBytes := append(keyBytes, saltBytes...)
 
-	h := sha512.Sum512(keyandSaltBytes)
+	seed := []byte("unsafe-testing-seed")
+	h := sha512.Sum512(append(seed, keyandSaltBytes...))
 	return &accessor{
 		rollingKey:      h[:],
 		keyBytes:        keyBytes,
 		saltBytes:       saltBytes,
 		keyAndSaltBytes: keyandSaltBytes,
 		keyId:           keyId.Hex(),
-		baseSeed:        []byte("unsafe-testing-seed"),
+		baseSeed:        seed,
 	}
 }
 
