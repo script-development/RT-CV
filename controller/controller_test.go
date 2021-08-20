@@ -58,7 +58,7 @@ func TestCannotAccessCriticalRoutesWithoutCredentials(t *testing.T) {
 
 	db := mock.NewMockDB()
 	app := fiber.New()
-	Routes(app, db)
+	Routes(app, db, []byte("static-server-seed"))
 
 	for _, s := range scenarios {
 		s := s

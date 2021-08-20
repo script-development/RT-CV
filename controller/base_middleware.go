@@ -11,7 +11,7 @@ import (
 )
 
 // InsertData adds the profiles to every route
-func InsertData(dbConn dbInterfaces.Connection) fiber.Handler {
+func InsertData(dbConn dbInterfaces.Connection, serverSeed []byte) fiber.Handler {
 	profiles, err := models.GetProfiles(dbConn)
 	if err != nil {
 		log.Fatal(err.Error())
@@ -22,7 +22,7 @@ func InsertData(dbConn dbInterfaces.Connection) fiber.Handler {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	ctx = context.WithValue(ctx, authCtxKey, auth.New(keys))
+	ctx = context.WithValue(ctx, authCtxKey, auth.New(keys, serverSeed))
 
 	ctx = context.WithValue(ctx, dbConnCtxKey, dbConn)
 

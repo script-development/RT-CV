@@ -19,6 +19,7 @@ type accessor struct {
 	saltBytes       []byte
 	keyAndSaltBytes []byte // = keyBytes + saltBytes
 	keyId           string
+	baseSeed        []byte
 }
 
 func newAccessorHelper(keyId primitive.ObjectID, key, salt string) *accessor {
@@ -33,6 +34,7 @@ func newAccessorHelper(keyId primitive.ObjectID, key, salt string) *accessor {
 		saltBytes:       saltBytes,
 		keyAndSaltBytes: keyandSaltBytes,
 		keyId:           keyId.Hex(),
+		baseSeed:        []byte("unsafe-testing-seed"),
 	}
 }
 
@@ -76,7 +78,7 @@ func TestAuthenticate(t *testing.T) {
 			Key:     "ghi",
 			Roles:   models.ApiKeyRoleController,
 		},
-	})
+	}, []byte("unsafe-testing-seed"))
 
 	// No key provided
 	_, _, err := auth.Authenticate([]byte{})

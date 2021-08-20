@@ -8,8 +8,8 @@ import (
 	"github.com/script-development/RT-CV/models"
 )
 
-func Routes(app *fiber.App, dbConn dbInterfaces.Connection) {
-	v1 := app.Group(`/v1`, InsertData(dbConn))
+func Routes(app *fiber.App, dbConn dbInterfaces.Connection, serverSeed []byte) {
+	v1 := app.Group(`/v1`, InsertData(dbConn, serverSeed))
 
 	authRoutes(v1)
 	scraperRoutes(v1)

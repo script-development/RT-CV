@@ -13,7 +13,10 @@ import (
 )
 
 // TODO we should avoid string maps as they are slow
-type Auth map[string]key
+type Auth struct {
+	keys     map[string]key
+	baseseed []byte
+}
 
 type key struct {
 	keyBytes []byte
@@ -27,14 +30,17 @@ type rollingHash struct {
 	value []byte
 }
 
-func New(keys []models.ApiKey) *Auth {
-	res := Auth{}
+func New(keys []models.ApiKey, baseSeed []byte) *Auth {
+	res := Auth{
+		keys:     map[string]key{},
+		baseseed: baseSeed,
+	}
 	for _, dbKey := range keys {
 		if !dbKey.Enabled {
 			continue
 		}
 
-		res[dbKey.ID.Hex()] = key{
+		res.keys[dbKey.ID.Hex()] = key{
 			apiKey:   dbKey,
 			keyBytes: []byte(dbKey.Key),
 			sha512:   []rollingHash{},
@@ -45,6 +51,10 @@ func New(keys []models.ApiKey) *Auth {
 }
 
 var errorInvalidKey = errors.New("invalid key")
+
+func (a *Auth) GetBaseSeed() []byte {
+	return a.baseseed
+}
 
 func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.ApiKey, salt []byte, err error) {
 	authorizationHeaderLen := len(authorizationHeader)
@@ -94,7 +104,7 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.ApiKey, sa
 	}
 	key = key[:n]
 
-	knownKey, ok := (*a)[siteId]
+	knownKey, ok := a.keys[siteId]
 	if !ok {
 		return nil, salt, errorInvalidKey
 	}
@@ -162,6 +172,6 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.ApiKey, sa
 		})
 	}
 
-	(*a)[siteId] = knownKey
+	a.keys[siteId] = knownKey
 	return &knownKey.apiKey, salt, nil
 }
