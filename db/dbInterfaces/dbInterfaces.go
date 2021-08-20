@@ -5,10 +5,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type FakeConn struct {
-	Defer Connection
-}
-
 // Connection is a abstract interface for a database connection
 // There are 2 main implementations of this:
 // - MongoConnection (For the MongoDB driver)
