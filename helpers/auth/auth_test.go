@@ -40,7 +40,7 @@ func newAccessorHelper(keyId primitive.ObjectID, key, salt string) *accessor {
 }
 
 func (a *accessor) key() []byte {
-	newRollingKey := sha512.Sum512(append(append(a.rollingKey, a.keyBytes...), a.saltBytes...))
+	newRollingKey := sha512.Sum512(append(a.rollingKey, a.keyAndSaltBytes...))
 	a.rollingKey = newRollingKey[:]
 
 	src := bytes.Join([][]byte{
