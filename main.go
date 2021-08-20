@@ -5,7 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
 	"github.com/script-development/RT-CV/controller"
-	"github.com/script-development/RT-CV/db"
+	"github.com/script-development/RT-CV/db/mongo"
 	"github.com/script-development/RT-CV/models"
 )
 
@@ -17,7 +17,7 @@ func main() {
 	}
 
 	// Connect to the database using the env variables
-	dbConn := db.ConnectToDB()
+	dbConn := mongo.ConnectToDB()
 	dbConn.RegisterEntries(
 		&models.ApiKey{},
 		&models.Profile{},

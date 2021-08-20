@@ -44,11 +44,11 @@ func (c *TestConnection) Find(base dbInterfaces.Entry, results interface{}, filt
 	}
 
 	resultsSliceContentType := resultRefl.Type().Elem()
-	placePtr := resultsSliceContentType.Kind() == reflect.Ptr
+	resultIsSliceOfPtrs := resultsSliceContentType.Kind() == reflect.Ptr
 
 	for _, item := range c.getCollectionFromEntry(base).data {
 		itemRefl := reflect.ValueOf(item)
-		if placePtr {
+		if resultIsSliceOfPtrs {
 			resultRefl = reflect.Append(resultRefl, itemRefl)
 		} else {
 			resultRefl = reflect.Append(resultRefl, itemRefl.Elem())
