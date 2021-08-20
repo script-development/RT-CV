@@ -8,12 +8,32 @@ import (
 	"github.com/script-development/RT-CV/models"
 )
 
-func Routes(app *fiber.App, dbConn dbInterfaces.Connection, serverSeed []byte) {
-	v1 := app.Group(`/v1`, InsertData(dbConn, serverSeed))
+func Group(c fiber.Router, prefix string, group func(fiber.Router), handlers ...func(*fiber.Ctx) error) {
+	group(c.Group(prefix, handlers...))
+}
 
-	authRoutes(v1)
-	scraperRoutes(v1)
-	controllerRoutes(v1)
+func Routes(app *fiber.App, dbConn dbInterfaces.Connection, serverSeed []byte) {
+	Group(app, `/v1`, func(c fiber.Router) {
+		Group(c, `/auth`, func(c fiber.Router) {
+			c.Get(`/seed`, routeAuthSeed)
+		})
+
+		Group(c, `/scraper`, func(c fiber.Router) {
+			c.Post(`/scanCV`, routeScraperScanCV)
+			Group(c, `/secret/:key`, func(c fiber.Router) {
+				c.Delete(``, routeScraperDeleteSecret)
+				Group(c, `/:secretKey`, func(c fiber.Router) {
+					c.Post(``, routeScraperCreateSecret)
+					c.Put(``, routeScraperUpdateSecret)
+					c.Get(``, routeScraperGetSecret)
+				}, validSecretKey())
+			}, validKey())
+		}, requiresAuth(models.ApiKeyRoleScraper))
+
+		Group(c, `/control`, func(c fiber.Router) {
+			c.Get(`/reloadProfiles`, routeControlReloadProfiles)
+		}, requiresAuth(models.ApiKeyRoleAdmin|models.ApiKeyRoleController))
+	}, InsertData(dbConn, serverSeed))
 }
 
 type profilesCtx uint8

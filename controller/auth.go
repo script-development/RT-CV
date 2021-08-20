@@ -4,11 +4,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func authRoutes(base fiber.Router) {
-	auth := base.Group(`/auth`)
-	auth.Get(`/seed`, routeAuthSeed)
-}
-
 func routeAuthSeed(c *fiber.Ctx) error {
 	return c.JSON(map[string]string{
 		"seed": string(GetAuth(c).GetBaseSeed()),
