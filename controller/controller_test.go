@@ -69,7 +69,7 @@ type TestReqOpts struct {
 func (r *testingRouter) MakeRequest(t *testing.T, method Method, route string, opts TestReqOpts) *http.Response {
 	req, err := http.NewRequest(
 		Get.String(),
-		"/v1/control/reloadProfiles",
+		route,
 		nil,
 	)
 	NoError(t, err)
