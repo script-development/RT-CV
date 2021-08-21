@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/script-development/RT-CV/controller/ctx"
 	"github.com/script-development/RT-CV/helpers/match"
 	"github.com/script-development/RT-CV/models"
 )
@@ -15,7 +16,7 @@ func routeScraperScanCV(c *fiber.Ctx) error {
 		return err
 	}
 
-	profiles := GetProfiles(c)
+	profiles := ctx.GetProfiles(c)
 	matchedProfiles := match.Match("werk.nl", *profiles, body) // TODO remove this hardcoded value
 	if len(matchedProfiles) > 0 {
 		for _, profile := range matchedProfiles {

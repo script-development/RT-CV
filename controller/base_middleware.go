@@ -5,6 +5,7 @@ import (
 
 	"github.com/apex/log"
 	"github.com/gofiber/fiber/v2"
+	"github.com/script-development/RT-CV/controller/ctx"
 	"github.com/script-development/RT-CV/db/dbInterfaces"
 	"github.com/script-development/RT-CV/helpers/auth"
 	"github.com/script-development/RT-CV/models"
@@ -16,15 +17,15 @@ func InsertData(dbConn dbInterfaces.Connection, serverSeed []byte) fiber.Handler
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	ctx := context.WithValue(context.Background(), profilesCtxKey, &profiles)
+	context := ctx.SetProfiles(context.Background(), &profiles)
 
 	keys, err := models.GetApiKeys(dbConn)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	ctx = context.WithValue(ctx, authCtxKey, auth.New(keys, serverSeed))
 
-	ctx = context.WithValue(ctx, dbConnCtxKey, dbConn)
+	context = ctx.SetAuth(context, auth.New(keys, serverSeed))
+	context = ctx.SetDbConn(context, dbConn)
 
 	// Pre define loggerEntity so we only take once memory
 	loggerEntity := log.Entry{
@@ -37,7 +38,9 @@ func InsertData(dbConn dbInterfaces.Connection, serverSeed []byte) fiber.Handler
 			Logger: loggerEntity.Logger,
 		}
 
-		c.SetUserContext(context.WithValue(ctx, loggerCtxKey, &loggerEntity))
+		c.SetUserContext(
+			ctx.SetLogger(context, &loggerEntity),
+		)
 		return c.Next()
 	}
 }

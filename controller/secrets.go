@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/script-development/RT-CV/controller/ctx"
 	"github.com/script-development/RT-CV/models"
 )
 
@@ -28,7 +29,7 @@ func validSecretKeyMiddleware() fiber.Handler {
 }
 
 func routeCreateSecret(c *fiber.Ctx) error {
-	apiKey := GetKey(c)
+	apiKey := ctx.GetKey(c)
 	keyParam, secretKeyParam := c.Params("key"), c.Params("secretKey")
 	body := c.Body()
 	if len(body) == 0 {
@@ -40,7 +41,7 @@ func routeCreateSecret(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = GetDbConn(c).Insert(secret)
+	err = ctx.GetDbConn(c).Insert(secret)
 	if err != nil {
 		return err
 	}
@@ -54,14 +55,14 @@ func routeCreateSecret(c *fiber.Ctx) error {
 }
 
 func routeUpdateSecret(c *fiber.Ctx) error {
-	apiKey := GetKey(c)
+	apiKey := ctx.GetKey(c)
 	keyParam, secretKeyParam := c.Params("key"), c.Params("secretKey")
 	body := c.Body()
 	if len(body) == 0 {
 		return errors.New("body cannot be empty")
 	}
 
-	secret, err := models.GetSecretByKey(GetDbConn(c), apiKey.ID, keyParam)
+	secret, err := models.GetSecretByKey(ctx.GetDbConn(c), apiKey.ID, keyParam)
 	if err != nil {
 		return err
 	}
@@ -83,7 +84,7 @@ func routeUpdateSecret(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = GetDbConn(c).UpdateByID(secret)
+	err = ctx.GetDbConn(c).UpdateByID(secret)
 	if err != nil {
 		return err
 	}
@@ -92,10 +93,10 @@ func routeUpdateSecret(c *fiber.Ctx) error {
 }
 
 func routeGetSecret(c *fiber.Ctx) error {
-	apiKey := GetKey(c)
+	apiKey := ctx.GetKey(c)
 	keyParam, secretKeyParam := c.Params("key"), c.Params("secretKey")
 
-	secret, err := models.GetSecretByKey(GetDbConn(c), apiKey.ID, keyParam)
+	secret, err := models.GetSecretByKey(ctx.GetDbConn(c), apiKey.ID, keyParam)
 	if err != nil {
 		return err
 	}
@@ -109,10 +110,10 @@ func routeGetSecret(c *fiber.Ctx) error {
 }
 
 func routeDeleteSecret(c *fiber.Ctx) error {
-	apiKey := GetKey(c)
+	apiKey := ctx.GetKey(c)
 	keyParam := c.Params("key")
 
-	err := models.DeleteSecretByKey(GetDbConn(c), apiKey.ID, keyParam)
+	err := models.DeleteSecretByKey(ctx.GetDbConn(c), apiKey.ID, keyParam)
 	if err != nil {
 		return err
 	}

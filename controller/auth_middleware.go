@@ -1,19 +1,19 @@
 package controller
 
 import (
-	"context"
 	"errors"
 
 	"github.com/apex/log"
 	"github.com/gofiber/fiber/v2"
+	"github.com/script-development/RT-CV/controller/ctx"
 	"github.com/script-development/RT-CV/models"
 )
 
 func requiresAuth(requiredRoles models.ApiKeyRole) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		// Get values from context
-		auth := GetAuth(c)
-		logger := GetLogger(c)
+		auth := ctx.GetAuth(c)
+		logger := ctx.GetLogger(c)
 
 		// Check auth header
 		authorizationHeader := c.Get("Authorization")
@@ -34,11 +34,7 @@ func requiresAuth(requiredRoles models.ApiKeyRole) fiber.Handler {
 		})
 
 		c.SetUserContext(
-			context.WithValue(
-				c.UserContext(),
-				keyCtxKey,
-				key,
-			),
+			ctx.SetKey(c.UserContext(), key),
 		)
 
 		return c.Next()
