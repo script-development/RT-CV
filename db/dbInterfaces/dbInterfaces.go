@@ -63,6 +63,6 @@ func (m *M) SetID(id primitive.ObjectID) {
 }
 
 // DefaultFindFilters implements Entry
-func (m *M) DefaultFindFilters() bson.M {
+func (*M) DefaultFindFilters() bson.M {
 	return nil
 }

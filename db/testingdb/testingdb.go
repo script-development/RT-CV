@@ -26,7 +26,7 @@ type Collection struct {
 }
 
 // RegisterEntries implements dbInterfaces.Connection
-func (c *TestConnection) RegisterEntries(entries ...dbInterfaces.Entry) {
+func (*TestConnection) RegisterEntries(...dbInterfaces.Entry) {
 	// We don't need to implement this function
 }
 

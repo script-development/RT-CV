@@ -134,12 +134,14 @@ func (cv *CV) GetHTML(profile Profile, matchText string) (*bytes.Buffer, error) 
 	}
 
 	input := struct {
-		Profile      Profile
-		ProfileIDHex string // The normal `Profile.ID.String()`` is more of a debug value than a real id value so we add the hex to this field
-		Cv           *CV
-		MatchText    string
-		LogoURL      string
-		Domains      string
+		Profile   Profile
+		Cv        *CV
+		MatchText string
+		LogoURL   string
+		Domains   string
+
+		// The normal `Profile.ID.String()`` is more of a debug value than a real id value so we add the hex to this field
+		ProfileIDHex string
 	}{
 		Profile:      profile,
 		ProfileIDHex: profile.ID.Hex(),

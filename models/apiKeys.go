@@ -15,12 +15,12 @@ type APIKey struct {
 }
 
 // CollectionName returns the collection name of the ApiKey
-func (k *APIKey) CollectionName() string {
+func (*APIKey) CollectionName() string {
 	return "apiKeys"
 }
 
 // DefaultFindFilters sets the default filters for the db connection find
-func (k *APIKey) DefaultFindFilters() bson.M {
+func (*APIKey) DefaultFindFilters() bson.M {
 	return bson.M{
 		"enabled": true,
 	}

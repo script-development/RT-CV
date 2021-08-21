@@ -11,7 +11,8 @@ import (
 
 // FindOne finds one document in the collection of placeInto
 // The result can be filtered using filters
-// The filters should work equal to MongoDB filters (https://docs.mongodb.com/manual/tutorial/query-documents/) tough they might miss features
+// The filters should work equal to MongoDB filters (https://docs.mongodb.com/manual/tutorial/query-documents/)
+// tough this might miss features compared to mongoDB's filters
 func (c *TestConnection) FindOne(placeInto dbInterfaces.Entry, filters bson.M) error {
 	itemsFilter := newFilter(placeInto.DefaultFindFilters(), filters)
 
@@ -34,7 +35,8 @@ func (c *TestConnection) FindOne(placeInto dbInterfaces.Entry, filters bson.M) e
 
 // Find finds documents in the collection of the base
 // The results can be filtered using filters
-// The filters should work equal to MongoDB filters (https://docs.mongodb.com/manual/tutorial/query-documents/) tough they might miss features
+// The filters should work equal to MongoDB filters (https://docs.mongodb.com/manual/tutorial/query-documents/)
+// tough this might miss features compared to mongoDB's filters
 func (c *TestConnection) Find(base dbInterfaces.Entry, results interface{}, filters bson.M) error {
 	itemsFilter := newFilter(base.DefaultFindFilters(), filters)
 

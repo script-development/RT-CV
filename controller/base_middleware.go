@@ -17,15 +17,15 @@ func InsertData(dbConn dbInterfaces.Connection, serverSeed []byte) fiber.Handler
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	context := ctx.SetProfiles(context.Background(), &profiles)
+	requestContext := ctx.SetProfiles(context.Background(), &profiles)
 
 	keys, err := models.GetAPIKeys(dbConn)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	context = ctx.SetAuth(context, auth.New(keys, serverSeed))
-	context = ctx.SetDbConn(context, dbConn)
+	requestContext = ctx.SetAuth(requestContext, auth.New(keys, serverSeed))
+	requestContext = ctx.SetDbConn(requestContext, dbConn)
 
 	// Pre define loggerEntity so we only take once memory
 	loggerEntity := log.Entry{
@@ -39,7 +39,7 @@ func InsertData(dbConn dbInterfaces.Connection, serverSeed []byte) fiber.Handler
 		}
 
 		c.SetUserContext(
-			ctx.SetLogger(context, &loggerEntity),
+			ctx.SetLogger(requestContext, &loggerEntity),
 		)
 		return c.Next()
 	}

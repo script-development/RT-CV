@@ -112,11 +112,11 @@ func mapStruct(entry reflect.Type) map[string]structField {
 	for i := 0; i < entry.NumField(); i++ {
 		field := entry.Field(i)
 
-		bson := field.Tag.Get("bson")
-		if bson == "" {
-			bson = field.Tag.Get("json")
+		bsonTag := field.Tag.Get("bson")
+		if bsonTag == "" {
+			bsonTag = field.Tag.Get("json")
 		}
-		values := strings.Split(bson, ",")
+		values := strings.Split(bsonTag, ",")
 		dbName := values[0]
 		if dbName == "" {
 			dbName = convertGoToDbName(field.Name)

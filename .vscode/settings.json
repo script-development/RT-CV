@@ -1,3 +1,6 @@
 {
-    "go.lintTool": "revive"
+    "go.lintTool": "revive",
+    "go.lintFlags": [
+        "-config=${workspaceFolder}/revive.toml"
+    ]
 }

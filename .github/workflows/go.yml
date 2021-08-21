@@ -30,7 +30,10 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Lint code
+      # https://github.com/marketplace/actions/revive-action
       uses: docker://morphy/revive-action:v2
+      with:
+        config: revive.toml
 
   test:
     runs-on: ubuntu-latest

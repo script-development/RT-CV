@@ -1,0 +1,32 @@
+ignoreGeneratedHeader = false
+severity = "warning"
+confidence = 0.8
+errorCode = 0
+warningCode = 0
+enableAllRules = true
+
+[rule.add-constant]
+  Disabled = true
+[rule.file-header]
+  Disabled = true
+[rule.max-public-structs]
+  Disabled = true
+[rule.function-length]
+  Disabled = true
+[rule.deep-exit]
+  Disabled = true
+[rule.cyclomatic]
+  Disabled = true
+[rule.cognitive-complexity]
+  Disabled = true
+[rule.flag-parameter]
+  Disabled = true
+
+[rule.line-length-limit]
+  arguments = [140]
+[rule.unhandled-error]
+    arguments = ["fmt.Printf", "fmt.Println"]
+[rule.argument-limit]
+  arguments = [6]
+[rule.function-result-limit]
+  arguments = [3]

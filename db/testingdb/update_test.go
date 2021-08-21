@@ -18,7 +18,8 @@ func TestUpdate(t *testing.T) {
 	documentsCount := testDB.Count(mockData)
 	Equal(t, 1, documentsCount)
 
-	// Create a new mockuser so we don't update the value behind the pointer what might cause a fake positive when checking the updated data in the database
+	// Create a new mockuser so we don't update the value behind the pointer
+	// what might cause a fake positive when checking the updated data in the database
 	newMockData := NewMockuser()
 	realname := "John Doe"
 	newMockData.Realname = &realname
