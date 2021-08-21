@@ -44,4 +44,4 @@ func main() {
 	log.Fatal(app.Listen(":3000").Error())
 }
 
-type A struct{}
+type AB struct{}
