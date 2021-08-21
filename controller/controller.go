@@ -1,9 +1,12 @@
 package controller
 
 import (
+	"errors"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/script-development/RT-CV/db/dbInterfaces"
 	"github.com/script-development/RT-CV/models"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // Group is a wrapper around fiber.Router.Group to change it into a callback function with the group
@@ -37,6 +40,9 @@ func Routes(app *fiber.App, dbConn dbInterfaces.Connection, serverSeed []byte) {
 }
 
 func FiberErrorHandler(c *fiber.Ctx, err error) error {
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return ErrorRes(c, 404, errors.New("item not found"))
+	}
 	return ErrorRes(c, 500, err)
 }
 

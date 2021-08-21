@@ -117,5 +117,5 @@ func routeDeleteSecret(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	return c.JSON("ok")
+	return c.JSON(map[string]string{"status": "ok"})
 }

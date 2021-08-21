@@ -29,4 +29,32 @@ func TestSecretRoutes(t *testing.T) {
 	body, err = ioutil.ReadAll(res.Body)
 	NoError(t, err)
 	Equal(t, contents, string(body))
+
+	// Update the secret
+	contents = `{"key":"other value"}`
+	res = app.MakeRequest(t, Put, route, TestReqOpts{
+		Body: []byte(contents),
+	})
+	body, err = ioutil.ReadAll(res.Body)
+	NoError(t, err)
+	Equal(t, contents, string(body))
+
+	// Check if we do a get request we recive the updated value
+	res = app.MakeRequest(t, Get, route, TestReqOpts{})
+	body, err = ioutil.ReadAll(res.Body)
+	NoError(t, err)
+	Equal(t, contents, string(body))
+
+	// Can delete value
+	deleteRoute := fmt.Sprintf("/v1/scraper/secret/%v", valueKey)
+	res = app.MakeRequest(t, Delete, deleteRoute, TestReqOpts{})
+	body, err = ioutil.ReadAll(res.Body)
+	NoError(t, err)
+	Equal(t, `{"status":"ok"}`, string(body))
+
+	// Check if the value is for real deleted
+	res = app.MakeRequest(t, Get, route, TestReqOpts{})
+	body, err = ioutil.ReadAll(res.Body)
+	NoError(t, err)
+	Equal(t, `{"error":"item not found"}`, string(body))
 }
