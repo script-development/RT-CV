@@ -43,3 +43,5 @@ func main() {
 	// Start the webserver
 	log.Fatal(app.Listen(":3000").Error())
 }
+
+type A struct{}
