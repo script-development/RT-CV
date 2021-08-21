@@ -19,7 +19,7 @@ func InsertData(dbConn dbInterfaces.Connection, serverSeed []byte) fiber.Handler
 	}
 	context := ctx.SetProfiles(context.Background(), &profiles)
 
-	keys, err := models.GetApiKeys(dbConn)
+	keys, err := models.GetAPIKeys(dbConn)
 	if err != nil {
 		log.Fatal(err.Error())
 	}

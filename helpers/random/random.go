@@ -13,6 +13,7 @@ const (
 
 var allChars = lowerChars + upperChars + numberChars
 
+// Seed the random number generator with a "good" random value
 func Seed() {
 	dst := make([]byte, 8)
 	readBytes, err := cryptoRand.Read(dst)
@@ -36,6 +37,7 @@ func Seed() {
 	rand.Seed(seed)
 }
 
+// StringBytes returns a random set of string bytes
 func StringBytes(length int) []byte {
 	b := make([]byte, length)
 	for i := range b {

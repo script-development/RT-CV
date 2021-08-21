@@ -16,27 +16,27 @@ func TestAuthenticate(t *testing.T) {
 
 	authSeed := []byte("unsafe-testing-seed")
 
-	auth := New([]models.ApiKey{
+	auth := New([]models.APIKey{
 		{
 			M:       dbInterfaces.M{ID: key1ID},
 			Enabled: true,
 			Domains: []string{"a", "b"},
 			Key:     "abc",
-			Roles:   models.ApiKeyRoleScraper,
+			Roles:   models.APIKeyRoleScraper,
 		},
 		{
 			M:       dbInterfaces.M{ID: key2ID},
 			Enabled: true,
 			Domains: []string{"c", "d"},
 			Key:     "def",
-			Roles:   models.ApiKeyRoleInformationObtainer,
+			Roles:   models.APIKeyRoleInformationObtainer,
 		},
 		{
 			M:       dbInterfaces.M{ID: key3ID},
 			Enabled: true,
 			Domains: []string{"e", "f"},
 			Key:     "ghi",
-			Roles:   models.ApiKeyRoleController,
+			Roles:   models.APIKeyRoleController,
 		},
 	}, authSeed)
 

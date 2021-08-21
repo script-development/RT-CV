@@ -7,29 +7,33 @@ import (
 )
 
 var (
-	Key1 = &models.ApiKey{
+	// Key1 is a mock api key
+	Key1 = &models.APIKey{
 		M:       dbInterfaces.NewM(),
 		Enabled: true,
 		Domains: []string{"werk.nl"},
 		Key:     "abc",
-		Roles:   models.ApiKeyRoleAll,
+		Roles:   models.APIKeyRoleAll,
 	}
-	Key2 = &models.ApiKey{
+	// Key2 is a mock api key
+	Key2 = &models.APIKey{
 		M:       dbInterfaces.NewM(),
 		Enabled: true,
 		Domains: []string{"werk.nl"},
 		Key:     "abc",
-		Roles:   models.ApiKeyRoleScraper,
+		Roles:   models.APIKeyRoleScraper,
 	}
-	Key3 = &models.ApiKey{
+	// Key3 is a mock api key
+	Key3 = &models.APIKey{
 		M:       dbInterfaces.NewM(),
 		Enabled: true,
 		Domains: []string{"werk.nl"},
 		Key:     "def",
-		Roles:   models.ApiKeyRoleInformationObtainer,
+		Roles:   models.APIKeyRoleInformationObtainer,
 	}
 )
 
+// NewMockDB returns an in memory temp testing database with mock data
 func NewMockDB() *testingdb.TestConnection {
 	db := testingdb.NewDB()
 
@@ -75,7 +79,7 @@ func NewMockDB() *testingdb.TestConnection {
 			Emails: []models.Email{{
 				Email: "abc@example.com",
 			}},
-			Zipcodes: []models.Zipcode{{
+			Zipcodes: []models.DutchZipcode{{
 				From: 2000,
 				To:   8000,
 			}},

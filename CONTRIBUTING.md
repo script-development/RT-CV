@@ -1,5 +1,13 @@
 # Contributing to RT-CV
 
+## Requirements
+
+If you are using VSCode you might need to install the linter used in this project:
+
+```
+go install github.com/mgechev/revive@latest
+```
+
 ## Code guidelines
 
 - Try to code as if you leave tomorrow and some else picks up the code

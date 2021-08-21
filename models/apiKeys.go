@@ -5,72 +5,88 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-type ApiKey struct {
+// APIKey contains a registered API key
+type APIKey struct {
 	dbInterfaces.M `bson:"inline"`
 	Enabled        bool
 	Domains        []string
 	Key            string
-	Roles          ApiKeyRole
+	Roles          APIKeyRole
 }
 
-func (a *ApiKey) CollectionName() string {
+// CollectionName returns the collection name of the ApiKey
+func (k *APIKey) CollectionName() string {
 	return "apiKeys"
 }
 
-func (m *ApiKey) DefaultFindFilters() bson.M {
+// DefaultFindFilters sets the default filters for the db connection find
+func (k *APIKey) DefaultFindFilters() bson.M {
 	return bson.M{
 		"enabled": true,
 	}
 }
 
-func GetApiKeys(conn dbInterfaces.Connection) ([]ApiKey, error) {
-	keys := []ApiKey{}
-	err := conn.Find(&ApiKey{}, &keys, nil)
+// GetAPIKeys returns all the keys registered in the database
+func GetAPIKeys(conn dbInterfaces.Connection) ([]APIKey, error) {
+	keys := []APIKey{}
+	err := conn.Find(&APIKey{}, &keys, nil)
 	return keys, err
 }
 
-type ApiKeyRole uint64
+// APIKeyRole is a role
+type APIKeyRole uint64
 
 const (
-	ApiKeyRoleScraper             ApiKeyRole = 1 << iota // 1
-	ApiKeyRoleInformationObtainer                        // 2
-	ApiKeyRoleController                                 // 4
-	ApiKeyRoleAdmin                                      // 8
+	// APIKeyRoleScraper can access the scraper routes
+	APIKeyRoleScraper APIKeyRole = 1 << iota // 1
+
+	// APIKeyRoleInformationObtainer can obtain information the server has
+	APIKeyRoleInformationObtainer // 2
+
+	// APIKeyRoleController can control server settings
+	APIKeyRoleController // 4
+
+	// APIKeyRoleAdmin can do administrative tasks
+	APIKeyRoleAdmin // 8
 )
 
 var (
-	// ApiKeyRoleAll contains all of the above roles and thus can access everything
-	ApiKeyRoleAll = ApiKeyRoleScraper | ApiKeyRoleInformationObtainer | ApiKeyRoleController | ApiKeyRoleAdmin
+	// APIKeyRoleAll contains all of the above roles and thus can access everything
+	APIKeyRoleAll = APIKeyRoleScraper | APIKeyRoleInformationObtainer | APIKeyRoleController | APIKeyRoleAdmin
 )
 
-type ApiRole struct {
-	Role        ApiKeyRole `json:"role"`
+// APIRole contains information about a APIKeyRole
+type APIRole struct {
+	Role        APIKeyRole `json:"role"`
 	Description string     `json:"description"`
 }
 
-var ApiRoles = []ApiRole{
+// APIRoles contains all api roles with a description
+var APIRoles = []APIRole{
 	{
-		ApiKeyRoleScraper,
+		APIKeyRoleScraper,
 		"Can insert scraped data",
 	},
 	{
-		ApiKeyRoleInformationObtainer,
+		APIKeyRoleInformationObtainer,
 		"Can obtain scraped information",
 	},
 	{
-		ApiKeyRoleController,
+		APIKeyRoleController,
 		"Can obtain scraped information",
 	},
 	{
-		ApiKeyRoleAdmin,
+		APIKeyRoleAdmin,
 		"Admin (Currently unused)",
 	},
 }
 
-func (a ApiKeyRole) ContainsAll(other ApiKeyRole) bool {
+// ContainsAll check if a contains all of other
+func (a APIKeyRole) ContainsAll(other APIKeyRole) bool {
 	return a&other == other
 }
 
-func (a ApiKeyRole) ContainsSome(other ApiKeyRole) bool {
+// ContainsSome check if a contains some of other
+func (a APIKeyRole) ContainsSome(other APIKeyRole) bool {
 	return a&other > 0
 }

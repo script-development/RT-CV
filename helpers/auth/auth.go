@@ -12,7 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// TODO we should avoid string maps as they are slow
+// Auth can be used to check authentication headers
 type Auth struct {
 	keys     map[string]key
 	baseSeed []byte
@@ -20,7 +20,7 @@ type Auth struct {
 
 type key struct {
 	keyBytes []byte
-	apiKey   models.ApiKey
+	apiKey   models.APIKey
 	sha512   []rollingHash
 	sha256   []rollingHash
 }
@@ -30,7 +30,8 @@ type rollingHash struct {
 	value []byte
 }
 
-func New(keys []models.ApiKey, baseSeed []byte) *Auth {
+// New returns a new Auth instance that can be used to check auth tokens
+func New(keys []models.APIKey, baseSeed []byte) *Auth {
 	res := Auth{
 		keys:     map[string]key{},
 		baseSeed: baseSeed,
@@ -50,13 +51,16 @@ func New(keys []models.ApiKey, baseSeed []byte) *Auth {
 	return &res
 }
 
-var ErrorInvalidKey = errors.New("invalid key")
+// ErrorInvalidKey is a returned when a key is invalid
+var ErrorInvalidKey = errors.New("invalid authentication key")
 
+// GetBaseSeed returns the server base seed
 func (a *Auth) GetBaseSeed() []byte {
 	return a.baseSeed
 }
 
-func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.ApiKey, salt []byte, err error) {
+// Authenticate check is a authorizationHeader is correct
+func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.APIKey, salt []byte, err error) {
 	authorizationHeaderLen := len(authorizationHeader)
 	if authorizationHeaderLen < 7 {
 		if authorizationHeaderLen == 0 {
@@ -84,8 +88,8 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.ApiKey, sa
 		return nil, salt, errors.New("only sha512 and sha256 are supported")
 	}
 
-	siteId := string(parts[1])
-	if !primitive.IsValidObjectID(siteId) {
+	siteID := string(parts[1])
+	if !primitive.IsValidObjectID(siteID) {
 		return nil, salt, errors.New("invalid site ID")
 	}
 
@@ -104,7 +108,7 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.ApiKey, sa
 	}
 	key = key[:n]
 
-	knownKey, ok := a.keys[siteId]
+	knownKey, ok := a.keys[siteID]
 	if !ok {
 		return nil, salt, ErrorInvalidKey
 	}
@@ -179,6 +183,6 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.ApiKey, sa
 		})
 	}
 
-	a.keys[siteId] = knownKey
+	a.keys[siteID] = knownKey
 	return &knownKey.apiKey, salt, nil
 }

@@ -27,7 +27,7 @@ func MergeFilters(filtersList ...bson.M) bson.M {
 	return res
 }
 
-// Ctx
+// Ctx is a warpper around context.Background()
 func Ctx() context.Context {
 	return context.Background()
 }

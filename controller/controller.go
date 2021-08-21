@@ -15,6 +15,7 @@ func Group(c fiber.Router, prefix string, group func(fiber.Router), handlers ...
 	group(c.Group(prefix, handlers...))
 }
 
+// Routes defines the routes used
 func Routes(app *fiber.App, dbConn dbInterfaces.Connection, serverSeed []byte) {
 	Group(app, `/v1`, func(c fiber.Router) {
 		Group(c, `/auth`, func(c fiber.Router) {
@@ -31,14 +32,16 @@ func Routes(app *fiber.App, dbConn dbInterfaces.Connection, serverSeed []byte) {
 					c.Get(``, routeGetSecret)
 				}, validSecretKeyMiddleware())
 			}, validKeyMiddleware())
-		}, requiresAuth(models.ApiKeyRoleScraper))
+		}, requiresAuth(models.APIKeyRoleScraper))
 
 		Group(c, `/control`, func(c fiber.Router) {
 			c.Get(`/reloadProfiles`, routeControlReloadProfiles)
-		}, requiresAuth(models.ApiKeyRoleAdmin|models.ApiKeyRoleController))
+		}, requiresAuth(models.APIKeyRoleAdmin|models.APIKeyRoleController))
 	}, InsertData(dbConn, serverSeed))
 }
 
+// FiberErrorHandler handles errors in fiber
+// In our case that means we change the errors from text to json
 func FiberErrorHandler(c *fiber.Ctx, err error) error {
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		return ErrorRes(c, 404, errors.New("item not found"))
@@ -46,6 +49,7 @@ func FiberErrorHandler(c *fiber.Ctx, err error) error {
 	return ErrorRes(c, 500, err)
 }
 
+// ErrorRes returns the error response
 func ErrorRes(c *fiber.Ctx, status int, err error) error {
 	return c.Status(status).JSON(map[string]string{
 		"error": err.Error(),

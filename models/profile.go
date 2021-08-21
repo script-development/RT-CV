@@ -5,6 +5,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+// Profile contains all the information about a search profile
 type Profile struct {
 	dbInterfaces.M        `bson:"inline"`
 	Name                  string
@@ -24,29 +25,34 @@ type Profile struct {
 	DriversLicenses       []DriversLicense
 	Educations            []DBEducation
 	Emails                []Email
-	Zipcodes              []Zipcode
+	Zipcodes              []DutchZipcode
 }
 
+// CollectionName returns the collection name of the Profile
 func (*Profile) CollectionName() string {
 	return "profiles"
 }
+
+// DefaultFindFilters returns the default filters for the Find function
 func (*Profile) DefaultFindFilters() bson.M {
 	return bson.M{
 		"active": true,
 	}
 }
 
+// GetProfiles returns all profiles from the database
 func GetProfiles(conn dbInterfaces.Connection) ([]Profile, error) {
 	profiles := []Profile{}
 	err := conn.Find(&Profile{}, &profiles, nil)
 	return profiles, err
 }
 
+// Profession contains information about a proffession
 type Profession struct {
-	Name           string
-	HeadFunctionID int
+	Name string
 
 	// TODO find out what this is about?
+	// HeadFunctionID int
 	// SubsectorLevel1ID int
 	// SubsectorLevel2ID int
 	// SubsectorLevel3ID int
@@ -55,16 +61,19 @@ type Profession struct {
 	// SubsectorLevel6ID int
 }
 
+// DriversLicense contains the drivers license name
 type DriversLicense struct {
 	Name string
 }
 
+// DBEducation contains education name
 type DBEducation struct {
 	Name string
 	// HeadEducationID int
 	// SubsectorID     int
 }
 
+// Email only contains an email address
 type Email struct {
 	Email string
 }
@@ -75,7 +84,8 @@ type Email struct {
 // 	Name      string
 // }
 
-type Zipcode struct {
+// DutchZipcode is dutch zipcode range limited to the number
+type DutchZipcode struct {
 	From uint16
 	To   uint16
 }

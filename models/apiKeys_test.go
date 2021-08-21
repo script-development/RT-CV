@@ -9,50 +9,50 @@ import (
 func TestApiKeyRole(t *testing.T) {
 	seneraios := []struct {
 		name              string
-		userRole          ApiKeyRole
-		contains          ApiKeyRole
+		userRole          APIKeyRole
+		contains          APIKeyRole
 		expectedMatchAll  bool
 		expectedMatchSome bool
 	}{
 		{
 			"no roles should not match anything",
-			ApiKeyRole(0),
-			ApiKeyRoleAdmin,
+			APIKeyRole(0),
+			APIKeyRoleAdmin,
 			false,
 			false,
 		},
 		{
 			"single role should match equal single role",
-			ApiKeyRoleController,
-			ApiKeyRoleController,
+			APIKeyRoleController,
+			APIKeyRoleController,
 			true,
 			true,
 		},
 		{
 			"multiple roles should match other matching role",
-			ApiKeyRoleScraper | ApiKeyRoleInformationObtainer,
-			ApiKeyRoleInformationObtainer,
+			APIKeyRoleScraper | APIKeyRoleInformationObtainer,
+			APIKeyRoleInformationObtainer,
 			true,
 			true,
 		},
 		{
 			"single role mismatch",
-			ApiKeyRoleScraper,
-			ApiKeyRoleInformationObtainer,
+			APIKeyRoleScraper,
+			APIKeyRoleInformationObtainer,
 			false,
 			false,
 		},
 		{
 			"multiple roles mismatch",
-			ApiKeyRoleScraper | ApiKeyRoleInformationObtainer,
-			ApiKeyRoleController | ApiKeyRoleAdmin,
+			APIKeyRoleScraper | APIKeyRoleInformationObtainer,
+			APIKeyRoleController | APIKeyRoleAdmin,
 			false,
 			false,
 		},
 		{
 			"multiple roles contain one match",
-			ApiKeyRoleScraper | ApiKeyRoleInformationObtainer,
-			ApiKeyRoleInformationObtainer | ApiKeyRoleAdmin,
+			APIKeyRoleScraper | APIKeyRoleInformationObtainer,
+			APIKeyRoleInformationObtainer | APIKeyRoleAdmin,
 			false,
 			true,
 		},

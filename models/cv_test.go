@@ -12,7 +12,7 @@ import (
 func TestGetHtml(t *testing.T) {
 	matchTest := "this is a test text that should re-appear in the response html"
 
-	cv := Cv{
+	cv := CV{
 		Title:           "Pilot with experience in farming simulator 2020",
 		ReferenceNumber: "4455-PIETER",
 
@@ -41,7 +41,7 @@ func TestGetHtml(t *testing.T) {
 		Domains: []string{"test.com"},
 	}
 
-	htmlBuff, err := cv.GetHtml(profile, matchTest)
+	htmlBuff, err := cv.GetHTML(profile, matchTest)
 	if err != nil {
 		NoError(t, err)
 		return

@@ -10,7 +10,7 @@ import (
 )
 
 func routeScraperScanCV(c *fiber.Ctx) error {
-	body := models.Cv{}
+	body := models.CV{}
 	err := c.BodyParser(&body)
 	if err != nil {
 		return err

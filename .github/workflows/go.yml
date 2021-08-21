@@ -9,6 +9,9 @@ on:
 jobs:
 
   build:
+    strategy:
+      matrix:
+        go: [1.15, 1.17]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -16,10 +19,28 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.16
+        go-version: ${{ matrix.go }}
 
     - name: Build
       run: go build -v ./...
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Lint code
+      uses: docker://morphy/revive-action:v2
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.17
 
     - name: Test
       run: go test -v ./...

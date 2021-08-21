@@ -12,7 +12,7 @@ import (
 
 // Match tries to match a profile to a CV
 // FIXME: There are a lot of performance optimizations that could be done here
-func Match(domain string, profiles []models.Profile, cv models.Cv) []models.Profile {
+func Match(domain string, profiles []models.Profile, cv models.CV) []models.Profile {
 	res := []models.Profile{}
 
 	normalizeString := func(in string) string {

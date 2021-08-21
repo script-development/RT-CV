@@ -9,12 +9,15 @@ import (
 	"io"
 )
 
+// NormalizeKey returns a fixed length key of 32 bytes
 func NormalizeKey(key []byte) []byte {
 	// Sum256 returns a bytes array of exactly 32 bytes, the length we also need for AES-256
 	hashedKey := sha256.Sum256(key)
 	return hashedKey[:]
 }
 
+// Encrypt encrypts data using AES-256 with the key provided
+// Key must at least 16 chars
 func Encrypt(data, key []byte) ([]byte, error) {
 	if len(key) < 16 {
 		return nil, errors.New("an encryption keys needs to be at least 16 chars")
@@ -47,6 +50,7 @@ func Encrypt(data, key []byte) ([]byte, error) {
 	return append(nonce, encryptedValue...), nil
 }
 
+// Decrypt decrypts an encrypted value when the key is equal to the key used in the Encrypt method
 func Decrypt(ciphertext, key []byte) ([]byte, error) {
 	if len(key) < 16 {
 		return nil, errors.New("an decryption keys needs to be at least 16 chars")

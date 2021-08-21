@@ -15,11 +15,12 @@ type TestAccessor struct {
 	keyBytes        []byte
 	saltBytes       []byte
 	keyAndSaltBytes []byte // = keyBytes + saltBytes
-	keyId           string
+	keyID           string
 	authSeed        []byte
 }
 
-func NewAccessorHelper(keyId primitive.ObjectID, key, salt string, authSeed []byte) *TestAccessor {
+// NewAccessorHelper creates a TestAccessor that can be used to generate auth headers
+func NewAccessorHelper(keyID primitive.ObjectID, key, salt string, authSeed []byte) *TestAccessor {
 	keyBytes := []byte(key)
 	saltBytes := []byte(salt)
 	keyandSaltBytes := append(keyBytes, saltBytes...)
@@ -30,17 +31,18 @@ func NewAccessorHelper(keyId primitive.ObjectID, key, salt string, authSeed []by
 		keyBytes:        keyBytes,
 		saltBytes:       saltBytes,
 		keyAndSaltBytes: keyandSaltBytes,
-		keyId:           keyId.Hex(),
+		keyID:           keyID.Hex(),
 		authSeed:        authSeed,
 	}
 }
 
+// Key generates a new key
 func (a *TestAccessor) Key() []byte {
 	newRollingKey := sha512.Sum512(append(a.rollingKey, a.keyAndSaltBytes...))
 	a.rollingKey = newRollingKey[:]
 
 	src := bytes.Join([][]byte{
-		[]byte("sha512:" + a.keyId),
+		[]byte("sha512:" + a.keyID),
 		a.saltBytes,
 		[]byte(hex.EncodeToString(a.rollingKey)),
 	}, []byte(":"))

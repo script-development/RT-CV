@@ -26,7 +26,7 @@ func main() {
 	// Connect to the database using the env variables
 	dbConn := mongo.ConnectToDB()
 	dbConn.RegisterEntries(
-		&models.ApiKey{},
+		&models.APIKey{},
 		&models.Profile{},
 		&models.Secret{},
 	)

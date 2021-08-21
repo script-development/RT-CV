@@ -9,7 +9,7 @@ import (
 	"github.com/script-development/RT-CV/models"
 )
 
-func requiresAuth(requiredRoles models.ApiKeyRole) fiber.Handler {
+func requiresAuth(requiredRoles models.APIKeyRole) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		// Get values from context
 		auth := ctx.GetAuth(c)

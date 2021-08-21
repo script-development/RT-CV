@@ -45,6 +45,7 @@ type M struct {
 	ID primitive.ObjectID `bson:"_id"`
 }
 
+// NewM returns a new instance of M
 func NewM() M {
 	return M{
 		ID: primitive.NewObjectID(),

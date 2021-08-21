@@ -6,24 +6,28 @@ import (
 	"github.com/script-development/RT-CV/db/dbInterfaces"
 )
 
+// TestConnection is the struct that implements dbInterfaces.Connection
+type TestConnection struct {
+	m           sync.Mutex
+	collections map[string]Collection
+}
+
+// NewDB returns a testing database connection that is compatible with dbInterfaces.Connection
 func NewDB() *TestConnection {
 	return &TestConnection{
 		collections: map[string]Collection{},
 	}
 }
 
-type TestConnection struct {
-	m           sync.Mutex
-	collections map[string]Collection
-}
-
+// Collection contains all the data for a collection
 type Collection struct {
 	name string
 	data []dbInterfaces.Entry
 }
 
+// RegisterEntries implements dbInterfaces.Connection
 func (c *TestConnection) RegisterEntries(entries ...dbInterfaces.Entry) {
-	// This function doesn't have to be implemented
+	// We don't need to implement this function
 }
 
 func (c *TestConnection) getCollectionFromEntry(e dbInterfaces.Entry) Collection {

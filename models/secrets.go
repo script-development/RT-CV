@@ -11,6 +11,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+// Secret contains a secret value that can be stored in the database by a api user
+// The secret value is encrypted with a key that is not stored on our side and is controlled by the api user
 type Secret struct {
 	dbInterfaces.M `bson:"inline"`
 	KeyID          primitive.ObjectID `bson:"keyId"`
@@ -18,13 +20,12 @@ type Secret struct {
 	Value          string
 }
 
+// CollectionName returns the collection name of a secret
 func (*Secret) CollectionName() string {
 	return "secrets"
 }
-func (*Secret) DefaultFindFilters() bson.M {
-	return bson.M{}
-}
 
+// CreateSecret creates a secret
 func CreateSecret(keyID primitive.ObjectID, key string, encryptionKey string, value []byte) (*Secret, error) {
 	data, err := crypto.Encrypt(value, []byte(encryptionKey))
 	if err != nil {
@@ -50,6 +51,7 @@ func UnsafeMustCreateSecret(keyID primitive.ObjectID, key string, encryptionKey 
 	return s
 }
 
+// Decrypt decrypts the value of a secret
 func (secret Secret) Decrypt(key string) (json.RawMessage, error) {
 	bytes, err := base64.RawStdEncoding.DecodeString(secret.Value)
 	if err != nil {
@@ -58,6 +60,7 @@ func (secret Secret) Decrypt(key string) (json.RawMessage, error) {
 	return crypto.Decrypt(bytes, []byte(key))
 }
 
+// GetSecretByKey gets a secret
 func GetSecretByKey(conn dbInterfaces.Connection, keyID primitive.ObjectID, key string) (*Secret, error) {
 	secret := &Secret{}
 	err := conn.FindOne(secret, bson.M{"key": key, "keyId": keyID})
@@ -67,6 +70,7 @@ func GetSecretByKey(conn dbInterfaces.Connection, keyID primitive.ObjectID, key 
 	return secret, nil
 }
 
+// DeleteSecretByKey delete a secret
 func DeleteSecretByKey(conn dbInterfaces.Connection, keyID primitive.ObjectID, key string) error {
 	secret, err := GetSecretByKey(conn, keyID, key)
 	if err != nil {
