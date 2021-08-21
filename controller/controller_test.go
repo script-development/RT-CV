@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"bytes"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"testing"
@@ -64,13 +66,19 @@ func newTestingRouter() *testingRouter {
 
 type TestReqOpts struct {
 	NoAuth bool
+	Body   []byte
 }
 
 func (r *testingRouter) MakeRequest(t *testing.T, method Method, route string, opts TestReqOpts) *http.Response {
+	var body io.Reader
+	if opts.Body != nil {
+		body = bytes.NewReader(opts.Body)
+	}
+
 	req, err := http.NewRequest(
-		Get.String(),
+		method.String(),
 		route,
-		nil,
+		body,
 	)
 	NoError(t, err)
 

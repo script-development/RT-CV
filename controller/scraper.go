@@ -1,123 +1,12 @@
 package controller
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/script-development/RT-CV/helpers/match"
 	"github.com/script-development/RT-CV/models"
 )
-
-func validKey() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		if len(c.Params("key")) == 0 {
-			return errors.New("key param cannot be empty")
-		}
-		return c.Next()
-	}
-}
-
-func validSecretKey() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		if len(c.Params("secretKey")) < 16 {
-			return errors.New("secretKey param must have a minimal length of 16 chars")
-		}
-		return c.Next()
-	}
-}
-
-func routeScraperCreateSecret(c *fiber.Ctx) error {
-	apiKey := GetKey(c)
-	keyParam, secretKeyParam := c.Params("key"), c.Params("secretKey")
-	body := c.Body()
-	if len(body) == 0 {
-		return errors.New("body cannot be empty")
-	}
-
-	secret, err := models.CreateSecret(apiKey.ID, keyParam, secretKeyParam, body)
-	if err != nil {
-		return err
-	}
-
-	err = GetDbConn(c).Insert(secret)
-	if err != nil {
-		return err
-	}
-
-	secretValue, err := secret.Decrypt(secretKeyParam)
-	if err != nil {
-		return err
-	}
-
-	return c.JSON(secretValue)
-}
-
-func routeScraperUpdateSecret(c *fiber.Ctx) error {
-	apiKey := GetKey(c)
-	keyParam, secretKeyParam := c.Params("key"), c.Params("secretKey")
-	body := c.Body()
-	if len(body) == 0 {
-		return errors.New("body cannot be empty")
-	}
-
-	secret, err := models.GetSecretByKey(GetDbConn(c), apiKey.ID, keyParam)
-	if err != nil {
-		return err
-	}
-	// check if the key provided is equal to the previous key
-	_, err = secret.Decrypt(secretKeyParam)
-	if err != nil {
-		return err
-	}
-
-	newSecret, err := models.CreateSecret(apiKey.ID, keyParam, secretKeyParam, body)
-	if err != nil {
-		return err
-	}
-	secret.Value = newSecret.Value
-
-	// check if decryption still works
-	secretValue, err := secret.Decrypt(secretKeyParam)
-	if err != nil {
-		return err
-	}
-
-	err = GetDbConn(c).UpdateByID(secret)
-	if err != nil {
-		return err
-	}
-
-	return c.JSON(secretValue)
-}
-
-func routeScraperGetSecret(c *fiber.Ctx) error {
-	apiKey := GetKey(c)
-	keyParam, secretKeyParam := c.Params("key"), c.Params("secretKey")
-
-	secret, err := models.GetSecretByKey(GetDbConn(c), apiKey.ID, keyParam)
-	if err != nil {
-		return err
-	}
-
-	value, err := secret.Decrypt(secretKeyParam)
-	if err != nil {
-		return err
-	}
-
-	return c.JSON(value)
-}
-
-func routeScraperDeleteSecret(c *fiber.Ctx) error {
-	apiKey := GetKey(c)
-	keyParam := c.Params("key")
-
-	err := models.DeleteSecretByKey(GetDbConn(c), apiKey.ID, keyParam)
-	if err != nil {
-		return err
-	}
-	return c.JSON("ok")
-}
 
 func routeScraperScanCV(c *fiber.Ctx) error {
 	body := models.Cv{}

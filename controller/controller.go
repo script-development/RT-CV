@@ -21,13 +21,13 @@ func Routes(app *fiber.App, dbConn dbInterfaces.Connection, serverSeed []byte) {
 		Group(c, `/scraper`, func(c fiber.Router) {
 			c.Post(`/scanCV`, routeScraperScanCV)
 			Group(c, `/secret/:key`, func(c fiber.Router) {
-				c.Delete(``, routeScraperDeleteSecret)
+				c.Delete(``, routeDeleteSecret)
 				Group(c, `/:secretKey`, func(c fiber.Router) {
-					c.Post(``, routeScraperCreateSecret)
-					c.Put(``, routeScraperUpdateSecret)
-					c.Get(``, routeScraperGetSecret)
-				}, validSecretKey())
-			}, validKey())
+					c.Post(``, routeCreateSecret)
+					c.Put(``, routeUpdateSecret)
+					c.Get(``, routeGetSecret)
+				}, validSecretKeyMiddleware())
+			}, validKeyMiddleware())
 		}, requiresAuth(models.ApiKeyRoleScraper))
 
 		Group(c, `/control`, func(c fiber.Router) {
