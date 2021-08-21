@@ -39,26 +39,26 @@ func GetAuth(c *fiber.Ctx) *auth.Auth {
 	return getCtxValue(c, authCtxKey).(*auth.Auth)
 }
 func SetAuth(ctx context.Context, value *auth.Auth) context.Context {
-	return context.WithValue(ctx, profilesCtxKey, value)
+	return context.WithValue(ctx, authCtxKey, value)
 }
 
 func GetKey(c *fiber.Ctx) *models.ApiKey {
 	return getCtxValue(c, keyCtxKey).(*models.ApiKey)
 }
 func SetKey(ctx context.Context, value *models.ApiKey) context.Context {
-	return context.WithValue(ctx, profilesCtxKey, value)
+	return context.WithValue(ctx, keyCtxKey, value)
 }
 
 func GetLogger(c *fiber.Ctx) *log.Entry {
 	return getCtxValue(c, loggerCtxKey).(*log.Entry)
 }
 func SetLogger(ctx context.Context, value *log.Entry) context.Context {
-	return context.WithValue(ctx, profilesCtxKey, value)
+	return context.WithValue(ctx, loggerCtxKey, value)
 }
 
 func GetDbConn(c *fiber.Ctx) dbInterfaces.Connection {
 	return getCtxValue(c, dbConnCtxKey).(dbInterfaces.Connection)
 }
 func SetDbConn(ctx context.Context, value dbInterfaces.Connection) context.Context {
-	return context.WithValue(ctx, profilesCtxKey, value)
+	return context.WithValue(ctx, dbConnCtxKey, value)
 }

@@ -16,6 +16,13 @@ func NormalizeKey(key []byte) []byte {
 }
 
 func Encrypt(data, key []byte) ([]byte, error) {
+	if len(key) < 16 {
+		return nil, errors.New("an encryption keys needs to be at least 16 chars")
+	}
+	if data == nil {
+		return nil, errors.New("data to encrypt should not be nil")
+	}
+
 	c, err := aes.NewCipher(NormalizeKey(key))
 	if err != nil {
 		return nil, err
@@ -27,14 +34,24 @@ func Encrypt(data, key []byte) ([]byte, error) {
 	}
 
 	nonce := make([]byte, gcm.NonceSize())
-	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+	_, err = io.ReadFull(rand.Reader, nonce)
+	if err != nil {
 		return nil, err
 	}
 
-	return gcm.Seal(nonce, nonce, data, nil), nil
+	encryptedValue, err := gcm.Seal(data[:0], nonce, data, nil), nil
+	if err != nil {
+		return nil, err
+	}
+
+	return append(nonce, encryptedValue...), nil
 }
 
 func Decrypt(ciphertext, key []byte) ([]byte, error) {
+	if len(key) < 16 {
+		return nil, errors.New("an decryption keys needs to be at least 16 chars")
+	}
+
 	c, err := aes.NewCipher(NormalizeKey(key))
 	if err != nil {
 		return nil, err

@@ -9,6 +9,7 @@ import (
 	"github.com/script-development/RT-CV/db/dbHelpers"
 	"github.com/script-development/RT-CV/db/dbInterfaces"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type filter struct {
@@ -42,37 +43,52 @@ func (f *filter) matches(e dbInterfaces.Entry) bool {
 
 		field, fieldFound := eFieldsMap[key]
 		if !fieldFound {
-			continue
+			return false
 		}
 		goField := eRefl.FieldByName(field.GoFieldName)
+
+		if goField.Kind() == reflect.Ptr {
+			if goField.IsNil() {
+				return false
+			}
+			goField = goField.Elem()
+		}
 
 		switch typedValue := value.(type) {
 		case string:
 			if goField.Kind() != reflect.String {
-				continue
+				return false
 			}
 			if goField.String() != typedValue {
-				continue
+				return false
 			}
 		case bool:
 			if goField.Kind() != reflect.Bool {
-				continue
+				return false
 			}
 			if goField.Bool() != typedValue {
-				continue
+				return false
 			}
 		case int:
 			switch goField.Kind() {
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 				if goField.Int() != int64(typedValue) {
-					continue
+					return false
 				}
 			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 				if int64(goField.Uint()) != int64(typedValue) {
-					continue
+					return false
 				}
 			default:
-				continue
+				return false
+			}
+		case primitive.ObjectID:
+			goFieldValue, ok := goField.Interface().(primitive.ObjectID)
+			if !ok {
+				return false
+			}
+			if goFieldValue != typedValue {
+				return false
 			}
 		default:
 			panic(fmt.Sprintf("Unimplemented value filter type: %T, key: %v, value: %#v", value, key, value))

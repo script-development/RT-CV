@@ -6,6 +6,7 @@ import (
 
 	"github.com/script-development/RT-CV/db/dbInterfaces"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func (c *TestConnection) FindOne(placeInto dbInterfaces.Entry, filters bson.M) error {
@@ -25,7 +26,7 @@ func (c *TestConnection) FindOne(placeInto dbInterfaces.Entry, filters bson.M) e
 		return nil
 	}
 
-	return errors.New("no document found")
+	return mongo.ErrNoDocuments
 }
 
 func (c *TestConnection) Find(base dbInterfaces.Entry, results interface{}, filters bson.M) error {

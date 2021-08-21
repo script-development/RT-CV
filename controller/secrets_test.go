@@ -25,9 +25,7 @@ func TestSecretRoutes(t *testing.T) {
 	Equal(t, contents, string(body))
 
 	// Get key works
-	res = app.MakeRequest(t, Get, route, TestReqOpts{
-		Body: []byte(contents),
-	})
+	res = app.MakeRequest(t, Get, route, TestReqOpts{})
 	body, err = ioutil.ReadAll(res.Body)
 	NoError(t, err)
 	Equal(t, contents, string(body))
