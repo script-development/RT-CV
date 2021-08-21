@@ -36,7 +36,7 @@ vim .env
 go run .
 ```
 
-Before you start fiddling around with the code make sure to read [DEV.md](/DEV.md)
+Before you start fiddling around with the code make sure to read [CONTRIBUTING.md](/CONTRIBUTING.md)
 
 ## Auth
 
