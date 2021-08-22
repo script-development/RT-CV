@@ -13,8 +13,8 @@ This is an api for CV scrapers to upload found CVs to where this tries to match 
 **What this isn't:**
 
 - A CV scraper for x website (that's up to you)
-- A gui where you can search for CVs (this is only an API)
-- A CV database (it might cache some cv information but **CVs are never written to disk**)
+- A gui where you can search for CVs (this is only an API nor a database)
+- A CV database (it might cache some cv information but **CVs are never written to disk by this program**)
 
 **Goals:**
 
@@ -42,13 +42,15 @@ Before you start fiddling around with the code make sure to read [CONTRIBUTING.m
 
 How to generate a token:
 
+_The functions below don't exsist they explain the kind of function that should be called_
 _sha256 can also be used, use use replace sha512 with sha256 everywhere below_
 
 #### On app init
 
 ```js
-{apiKey, apiKeyID} = getApiKey(); // User defined
-seed = fetchJson("/v1/auth/salt").seed;
+apiKey = getApiKey();
+apiKeyID = getApiKeyID();
+seed = fetchJson("/v1/auth/seed").seed;
 salt = random(32)
 key = sha512(seed + apiKey + salt);
 ```
