@@ -42,8 +42,11 @@ Before you start fiddling around with the code make sure to read [CONTRIBUTING.m
 
 How to generate a token:
 
-_The functions below don't exsist they explain the kind of function that should be called_
-_sha256 can also be used, use use replace sha512 with sha256 everywhere below_
+Notes:
+
+- The functions below don't exsist they explain the kind of function that should be called
+- sha256 can also be used, use use replace sha512 with sha256 everywhere below
+- the `sha512` function should return the bytes and not hex value, the bytes are then used in the next hash not the hex value
 
 #### On app init
 
@@ -51,7 +54,7 @@ _sha256 can also be used, use use replace sha512 with sha256 everywhere below_
 apiKey = getApiKey();
 apiKeyID = getApiKeyID();
 seed = fetchJson("/api/v1/auth/seed").seed;
-salt = random(32)
+salt = random(32);
 key = sha512(seed + apiKey + salt);
 ```
 
@@ -59,7 +62,9 @@ key = sha512(seed + apiKey + salt);
 
 ```js
 key = sha512(key + apiKey + salt);
-return "Authorization: Basic " + base64(`sha512:${apiKeyID}:${salt}:${key}`);
+return (
+  "Authorization: Basic " + base64(`sha512:${apiKeyID}:${salt}:${key.hex()}`)
+);
 ```
 
 #### If auth fails while having a theoretically valid key
@@ -67,7 +72,9 @@ return "Authorization: Basic " + base64(`sha512:${apiKeyID}:${salt}:${key}`);
 1: just retry it (the server might be offline or whatever)
 
 ```js
-return "Authorization: Basic " + base64(`sha512:${apiKeyID}:${salt}:${key}`);
+return (
+  "Authorization: Basic " + base64(`sha512:${apiKeyID}:${salt}:${key.hex()}`)
+);
 ```
 
 2: Get a new salt and start over (basically going back to "on init")
