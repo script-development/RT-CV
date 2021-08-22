@@ -2,7 +2,6 @@ package controller
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/script-development/RT-CV/models"
@@ -62,7 +61,6 @@ func TestProfileRoutes(t *testing.T) {
 	body, err := json.Marshal(profileToInsert)
 	NoError(t, err)
 	_, res = app.MakeRequest(Post, `/api/v1/control/profiles`, TestReqOpts{Body: body})
-	fmt.Println(string(res))
 	resProfile := &models.Profile{}
 	err = json.Unmarshal(res, resProfile)
 	NoError(t, err)
