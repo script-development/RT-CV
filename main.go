@@ -55,5 +55,5 @@ func main() {
 	controller.Routes(app, dbConn, serverSeed)
 
 	// Start the webserver
-	log.Fatal(app.Listen(":3000").Error())
+	log.Fatal(app.Listen(":4000").Error())
 }
