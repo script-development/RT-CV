@@ -7,25 +7,29 @@ import (
 
 // Profile contains all the information about a search profile
 type Profile struct {
-	db.M                  `bson:"inline"`
-	Name                  string
-	YearsSinceWork        *int
-	Active                bool
-	MustExpProfession     bool
-	MustDesiredProfession bool
-	MustEducation         bool
-	MustEducationFinished bool
-	MustDriversLicense    bool
-	Domains               []string
-	ListProfile           bool // TODO find out what this is
-	YearsSinceEducation   int
+	db.M        `bson:"inline"`
+	Name        string   `json:"name"`
+	Active      bool     `json:"active"`
+	Domains     []string `json:"domains"`
+	ListProfile bool     `json:"-" bson:"-"` // TODO find out what this is
 
-	DesiredProfessions    []ProfileProfession
+	MustDesiredProfession bool                `json:"mustDesiredProfession"`
+	DesiredProfessions    []ProfileProfession `json:"desiredProfessions"`
+
+	YearsSinceWork        *int `json:"yearsSinceWork"`
+	MustExpProfession     bool `json:"mustExpProfession"`
 	ProfessionExperienced []ProfileProfession
-	DriversLicenses       []ProfileDriversLicense
-	Educations            []ProfileEducation
-	Emails                []ProfileEmail
-	Zipcodes              []ProfileDutchZipcode
+
+	MustDriversLicense bool `json:"mustDriversLicense"`
+	DriversLicenses    []ProfileDriversLicense
+
+	MustEducationFinished bool               `json:"mustEducationFinished"`
+	MustEducation         bool               `json:"mustEducation"`
+	YearsSinceEducation   int                `json:"yearsSinceEducation"`
+	Educations            []ProfileEducation `json:"educations"`
+
+	Emails   []ProfileEmail        `json:"emails"`
+	Zipcodes []ProfileDutchZipcode `json:"zipCodes"`
 }
 
 // CollectionName returns the collection name of the Profile
@@ -49,7 +53,7 @@ func GetProfiles(conn db.Connection) ([]Profile, error) {
 
 // ProfileProfession contains information about a proffession
 type ProfileProfession struct {
-	Name string
+	Name string `json:"name"`
 
 	// TODO find out what this is about?
 	// HeadFunctionID int
@@ -63,19 +67,19 @@ type ProfileProfession struct {
 
 // ProfileDriversLicense contains the drivers license name
 type ProfileDriversLicense struct {
-	Name string
+	Name string `json:"name"`
 }
 
 // ProfileEducation contains information about an education
 type ProfileEducation struct {
-	Name string
+	Name string `json:"name"`
 	// HeadEducationID int
 	// SubsectorID     int
 }
 
 // ProfileEmail only contains an email address
 type ProfileEmail struct {
-	Email string
+	Email string `json:"email"`
 }
 
 // type ProfileProfession struct {
@@ -86,6 +90,6 @@ type ProfileEmail struct {
 
 // ProfileDutchZipcode is dutch zipcode range limited to the number
 type ProfileDutchZipcode struct {
-	From uint16
-	To   uint16
+	From uint16 `json:"from"`
+	To   uint16 `json:"to"`
 }

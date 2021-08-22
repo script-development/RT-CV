@@ -8,10 +8,9 @@ import (
 )
 
 func TestRouteAuthSeed(t *testing.T) {
-	app := newTestingRouter()
+	app := newTestingRouter(t)
 
 	_, body := app.MakeRequest(
-		t,
 		Get,
 		"/v1/auth/seed",
 		TestReqOpts{

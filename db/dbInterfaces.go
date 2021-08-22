@@ -42,7 +42,7 @@ type Entry interface {
 // - SetID
 // - DefaultFindFilters
 type M struct {
-	ID primitive.ObjectID `bson:"_id"`
+	ID primitive.ObjectID `bson:"_id" json:"id"`
 }
 
 // NewM returns a new instance of M

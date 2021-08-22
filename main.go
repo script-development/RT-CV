@@ -40,6 +40,13 @@ func main() {
 	// Setup the app routes
 	controller.Routes(app, dbConn, serverSeed)
 
+	appStack := app.Stack()
+	routes := 0
+	for _, list := range appStack {
+		routes += len(list)
+	}
+	log.Infof("%d routes configured", routes)
+
 	// Start the webserver
 	log.Fatal(app.Listen(":3000").Error())
 }

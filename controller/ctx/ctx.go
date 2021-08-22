@@ -11,6 +11,7 @@ import (
 )
 
 type profilesCtx uint8
+type profileCtx uint8
 type authCtx uint8
 type keyCtx uint8
 type loggerCtx uint8
@@ -18,6 +19,7 @@ type dbConnCtx uint8
 
 const (
 	profilesCtxKey = profilesCtx(0)
+	profileCtxKey  = profileCtx(0)
 	authCtxKey     = authCtx(0)
 	keyCtxKey      = keyCtx(0)
 	loggerCtxKey   = loggerCtx(0)
@@ -36,6 +38,16 @@ func GetProfiles(c *fiber.Ctx) *[]models.Profile {
 // SetProfiles sets the search profiles
 func SetProfiles(ctx context.Context, value *[]models.Profile) context.Context {
 	return context.WithValue(ctx, profilesCtxKey, value)
+}
+
+// GetProfile returns a single profile
+func GetProfile(c *fiber.Ctx) *models.Profile {
+	return getCtxValue(c, profileCtxKey).(*models.Profile)
+}
+
+// SetProfile sets a single search profile
+func SetProfile(ctx context.Context, value *models.Profile) context.Context {
+	return context.WithValue(ctx, profileCtxKey, value)
 }
 
 // GetAuth returns the auth key used to make the request

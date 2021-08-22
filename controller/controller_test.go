@@ -45,12 +45,13 @@ func (m Method) String() string {
 var testingServerSeed = []byte("static-server-seed")
 
 type testingRouter struct {
+	t        *testing.T
 	fiber    *fiber.App
 	db       *testingdb.TestConnection
 	accessor *auth.TestAccessor
 }
 
-func newTestingRouter() *testingRouter {
+func newTestingRouter(t *testing.T) *testingRouter {
 	db := mock.NewMockDB()
 	app := fiber.New(fiber.Config{
 		ErrorHandler: FiberErrorHandler,
@@ -58,6 +59,7 @@ func newTestingRouter() *testingRouter {
 
 	Routes(app, db, testingServerSeed)
 	return &testingRouter{
+		t:        t,
 		fiber:    app,
 		db:       db,
 		accessor: auth.NewAccessorHelper(mock.Key1.ID, "abc", string(random.StringBytes(32)), testingServerSeed),
@@ -69,7 +71,7 @@ type TestReqOpts struct {
 	Body   []byte
 }
 
-func (r *testingRouter) MakeRequest(t *testing.T, method Method, route string, opts TestReqOpts) (res *http.Response, resBody []byte) {
+func (r *testingRouter) MakeRequest(method Method, route string, opts TestReqOpts) (res *http.Response, resBody []byte) {
 	var body io.Reader
 	if opts.Body != nil {
 		body = bytes.NewReader(opts.Body)
@@ -80,17 +82,20 @@ func (r *testingRouter) MakeRequest(t *testing.T, method Method, route string, o
 		route,
 		body,
 	)
-	NoError(t, err)
+	NoError(r.t, err)
 
+	if opts.Body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
 	if !opts.NoAuth {
-		req.Header.Add("Authorization", string(r.accessor.Key()))
+		req.Header.Set("Authorization", string(r.accessor.Key()))
 	}
 
 	res, err = r.fiber.Test(req, -1)
-	NoError(t, err)
+	NoError(r.t, err)
 
 	resBody, err = ioutil.ReadAll(res.Body)
-	NoError(t, err)
+	NoError(r.t, err)
 
 	return res, resBody
 }
@@ -113,13 +118,13 @@ func TestCannotAccessCriticalRoutesWithoutCredentials(t *testing.T) {
 		},
 	}
 
-	app := newTestingRouter()
+	app := newTestingRouter(t)
 
 	for _, route := range routes {
 		route := route
 
 		t.Run(route.name, func(t *testing.T) {
-			res, body := app.MakeRequest(t, route.method, route.route, TestReqOpts{
+			res, body := app.MakeRequest(route.method, route.route, TestReqOpts{
 				NoAuth: true,
 			})
 

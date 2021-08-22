@@ -38,7 +38,15 @@ func Routes(app *fiber.App, dbConn db.Connection, serverSeed []byte) {
 		}, requiresAuth(models.APIKeyRoleScraper))
 
 		Group(c, `/control`, func(c fiber.Router) {
-			c.Get(`/reloadProfiles`, routeControlReloadProfiles)
+			Group(c, `/profiles`, func(c fiber.Router) {
+				c.Post(``, routeCreateProfile)
+				c.Get(``, routeAllProfiles)
+				Group(c, `/:profile`, func(c fiber.Router) {
+					c.Get(``, routeGetProfile)
+					// c.Put(``, routeModifyProfile) // TODO
+					c.Delete(``, routeDeleteProfile)
+				}, middlewareBindProfile())
+			})
 		}, requiresAuth(models.APIKeyRoleAdmin|models.APIKeyRoleController))
 	}, InsertData(dbConn, serverSeed))
 }
