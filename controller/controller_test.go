@@ -109,12 +109,12 @@ func TestCannotAccessCriticalRoutesWithoutCredentials(t *testing.T) {
 		{
 			"scraper",
 			Post,
-			"/v1/scraper/scanCV",
+			"/api/v1/scraper/scanCV",
 		},
 		{
 			"control",
 			Get,
-			"/v1/control/reloadProfiles",
+			"/api/v1/control/reloadProfiles",
 		},
 	}
 

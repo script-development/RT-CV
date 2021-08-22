@@ -20,7 +20,7 @@ func Group(c fiber.Router, prefix string, group func(fiber.Router), handlers ...
 
 // Routes defines the routes used
 func Routes(app *fiber.App, dbConn db.Connection, serverSeed []byte) {
-	Group(app, `/v1`, func(c fiber.Router) {
+	Group(app, `/api/v1`, func(c fiber.Router) {
 		Group(c, `/auth`, func(c fiber.Router) {
 			c.Get(`/seed`, routeAuthSeed)
 		})

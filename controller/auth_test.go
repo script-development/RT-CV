@@ -12,7 +12,7 @@ func TestRouteAuthSeed(t *testing.T) {
 
 	_, body := app.MakeRequest(
 		Get,
-		"/v1/auth/seed",
+		"/api/v1/auth/seed",
 		TestReqOpts{
 			// This route should work without auth
 			NoAuth: true,

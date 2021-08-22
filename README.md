@@ -50,7 +50,7 @@ _sha256 can also be used, use use replace sha512 with sha256 everywhere below_
 ```js
 apiKey = getApiKey();
 apiKeyID = getApiKeyID();
-seed = fetchJson("/v1/auth/seed").seed;
+seed = fetchJson("/api/v1/auth/seed").seed;
 salt = random(32)
 key = sha512(seed + apiKey + salt);
 ```
@@ -73,7 +73,7 @@ return "Authorization: Basic " + base64(`sha512:${apiKeyID}:${salt}:${key}`);
 2: Get a new salt and start over (basically going back to "on init")
 
 ```js
-seed = fetchJson("/v1/auth/salt").seed;
+seed = fetchJson("/api/v1/auth/seed").seed;
 salt = random(32);
 key = sha512(apiKey + salt);
 key = sha512(key + apiKey + salt);
