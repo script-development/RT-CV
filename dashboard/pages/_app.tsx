@@ -3,6 +3,7 @@ import Head from 'next/head'
 import CssBaseline from '@material-ui/core/CssBaseline'
 import { createTheme, ThemeProvider } from '@material-ui/core/styles'
 import { red } from '@material-ui/core/colors'
+import { useEffect } from 'react'
 
 const theme = createTheme({
   palette: {

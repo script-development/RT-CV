@@ -1,30 +1,62 @@
 import Button from '@material-ui/core/Button'
+import LinearProgress from '@material-ui/core/LinearProgress'
 import TextField from '@material-ui/core/TextField'
 import Head from 'next/head'
 import React, { useState } from 'react'
-import { login } from '../src/auth'
+import { fetcher } from '../src/auth'
 
 export default function Home() {
-	const [apiToken, setApiToken] = useState('')
+	const [apiKey, setApiKey] = useState('')
+	const [apiKeyId, setApiKeyId] = useState('')
+	const [loading, setLoading] = useState(false)
+	const [error, setError] = useState('')
 
 	const submit = (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault()
-		login(apiToken)
+		try {
+			e.preventDefault()
+			setLoading(true)
+			fetcher.login(apiKey, apiKeyId)
+		} catch (e) {
+			setError(e.message)
+		} finally {
+			setLoading(false)
+		}
 	}
 
 	return (
 		<div className="container">
 			<Head>
-				<title>Home</title>
+				<title>RT-CV Login</title>
 				<link rel="icon" href="/favicon.ico" />
 			</Head>
 
-			<h1>Login</h1>
+			<h1>RT-CV Login</h1>
 			<form noValidate onSubmit={submit} >
-				<TextField fullWidth id="token" label="API Token" variant="filled" onChange={e => setApiToken(e.target.value)} />
+				<p>Insert a api key with the <b>Information Obtainer</b> and <b>Controller</b> role</p>
+				<TextField
+					fullWidth
+					id="key"
+					label="API Key"
+					variant="filled"
+					onChange={e => setApiKey(e.target.value)}
+					disabled={loading}
+				/>
+				<TextField
+					fullWidth
+					id="id"
+					label="API Key ID"
+					variant="filled"
+					onChange={e => setApiKeyId(e.target.value)}
+					disabled={loading}
+				/>
 				<div className="actions">
-					<Button color="secondary" type="submit">Login</Button>
+					<Button
+						color="secondary"
+						type="submit"
+						disabled={loading}
+					>Login</Button>
 				</div>
+				<LinearProgress hidden={!loading} />
 			</form>
 			<style jsx>{`
 				.container {
@@ -43,6 +75,9 @@ export default function Home() {
 				}
 				.actions {
 					padding-top: 10px;
+				}
+				form p {
+					margin-bottom: 6px;
 				}
 			`}</style>
 		</div>
