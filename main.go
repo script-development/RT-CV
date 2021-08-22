@@ -1,12 +1,16 @@
 package main
 
 import (
+	"os"
+
 	"github.com/apex/log"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
 	"github.com/script-development/RT-CV/controller"
+	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/db/mongo"
 	"github.com/script-development/RT-CV/helpers/random"
+	"github.com/script-development/RT-CV/mock"
 	"github.com/script-development/RT-CV/models"
 )
 
@@ -23,8 +27,14 @@ func main() {
 		log.Fatalf("Error loading .env file: %s", err.Error())
 	}
 
-	// Connect to the database using the env variables
-	dbConn := mongo.ConnectToDB()
+	var dbConn db.Connection
+	useTestingDB := os.Getenv("USE_TESTING_DB")
+	if useTestingDB == "true" || useTestingDB == "TRUE" {
+		dbConn = mock.NewMockDB()
+	} else {
+		dbConn = mongo.ConnectToDB()
+	}
+
 	dbConn.RegisterEntries(
 		&models.APIKey{},
 		&models.Profile{},
@@ -39,13 +49,6 @@ func main() {
 
 	// Setup the app routes
 	controller.Routes(app, dbConn, serverSeed)
-
-	appStack := app.Stack()
-	routes := 0
-	for _, list := range appStack {
-		routes += len(list)
-	}
-	log.Infof("%d routes configured", routes)
 
 	// Start the webserver
 	log.Fatal(app.Listen(":3000").Error())
