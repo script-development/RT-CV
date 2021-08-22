@@ -64,22 +64,22 @@ func NewMockDB() *testingdb.TestConnection {
 			Domains:               []string{"werk.nl"},
 			ListProfile:           true,
 			YearsSinceEducation:   1,
-			DesiredProfessions: []models.Profession{{
+			DesiredProfessions: []models.ProfileProfession{{
 				Name: "Rapper",
 			}},
-			ProfessionExperienced: []models.Profession{{
+			ProfessionExperienced: []models.ProfileProfession{{
 				Name: "Dancer",
 			}},
-			DriversLicenses: []models.DriversLicense{{
+			DriversLicenses: []models.ProfileDriversLicense{{
 				Name: "A",
 			}},
-			Educations: []models.DBEducation{{
+			Educations: []models.ProfileEducation{{
 				Name: "Default",
 			}},
-			Emails: []models.Email{{
+			Emails: []models.ProfileEmail{{
 				Email: "abc@example.com",
 			}},
-			Zipcodes: []models.DutchZipcode{{
+			Zipcodes: []models.ProfileDutchZipcode{{
 				From: 2000,
 				To:   8000,
 			}},

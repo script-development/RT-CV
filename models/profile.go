@@ -20,12 +20,12 @@ type Profile struct {
 	ListProfile           bool // TODO find out what this is
 	YearsSinceEducation   int
 
-	DesiredProfessions    []Profession
-	ProfessionExperienced []Profession
-	DriversLicenses       []DriversLicense
-	Educations            []DBEducation
-	Emails                []Email
-	Zipcodes              []DutchZipcode
+	DesiredProfessions    []ProfileProfession
+	ProfessionExperienced []ProfileProfession
+	DriversLicenses       []ProfileDriversLicense
+	Educations            []ProfileEducation
+	Emails                []ProfileEmail
+	Zipcodes              []ProfileDutchZipcode
 }
 
 // CollectionName returns the collection name of the Profile
@@ -47,8 +47,8 @@ func GetProfiles(conn db.Connection) ([]Profile, error) {
 	return profiles, err
 }
 
-// Profession contains information about a proffession
-type Profession struct {
+// ProfileProfession contains information about a proffession
+type ProfileProfession struct {
 	Name string
 
 	// TODO find out what this is about?
@@ -61,20 +61,20 @@ type Profession struct {
 	// SubsectorLevel6ID int
 }
 
-// DriversLicense contains the drivers license name
-type DriversLicense struct {
+// ProfileDriversLicense contains the drivers license name
+type ProfileDriversLicense struct {
 	Name string
 }
 
-// DBEducation contains education name
-type DBEducation struct {
+// ProfileEducation contains information about an education
+type ProfileEducation struct {
 	Name string
 	// HeadEducationID int
 	// SubsectorID     int
 }
 
-// Email only contains an email address
-type Email struct {
+// ProfileEmail only contains an email address
+type ProfileEmail struct {
 	Email string
 }
 
@@ -84,8 +84,8 @@ type Email struct {
 // 	Name      string
 // }
 
-// DutchZipcode is dutch zipcode range limited to the number
-type DutchZipcode struct {
+// ProfileDutchZipcode is dutch zipcode range limited to the number
+type ProfileDutchZipcode struct {
 	From uint16
 	To   uint16
 }
