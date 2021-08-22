@@ -45,3 +45,8 @@ func StringBytes(length int) []byte {
 	}
 	return b
 }
+
+// GenerateKey generates a good random key
+func GenerateKey() []byte {
+	return StringBytes(32)
+}

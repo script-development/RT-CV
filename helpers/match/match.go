@@ -1,7 +1,6 @@
 package match
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -52,7 +51,6 @@ func Match(domain string, profiles []models.Profile, cv models.CV) []models.Prof
 
 				t, err := time.Parse(time.RFC3339, cvEducation.EndDate)
 				if err != nil {
-					fmt.Println(err)
 					continue
 				}
 

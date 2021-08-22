@@ -41,6 +41,8 @@ func main() {
 		&models.Secret{},
 	)
 
+	models.CheckNeedToCreateSystemKeys(dbConn)
+
 	// Create a new fiber instance (http server)
 	// do not use fiber Prefork!, this app is not written to support it
 	app := fiber.New(fiber.Config{

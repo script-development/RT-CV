@@ -8,6 +8,10 @@ import (
 
 // MergeFilters merges a list of filters into a single filter
 func MergeFilters(filtersList ...bson.M) bson.M {
+	if len(filtersList) == 0 {
+		return bson.M{}
+	}
+
 	res := filtersList[0]
 
 	for _, filters := range filtersList[1:] {

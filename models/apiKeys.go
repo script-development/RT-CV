@@ -3,7 +3,9 @@ package models
 import (
 	"encoding/json"
 
+	"github.com/apex/log"
 	"github.com/script-development/RT-CV/db"
+	"github.com/script-development/RT-CV/helpers/random"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -14,6 +16,10 @@ type APIKey struct {
 	Domains []string   `json:"domains"`
 	Key     string     `json:"key"`
 	Roles   APIKeyRole `json:"roles"`
+
+	// System indicates if this is a key required by the system
+	// These are keys whereof at least one needs to exists otherwise RT-CV would not work
+	System bool `json:"system"`
 }
 
 // CollectionName returns the collection name of the ApiKey
@@ -113,4 +119,35 @@ func (a APIKeyRole) ContainsAll(other APIKeyRole) bool {
 // ContainsSome check if a contains some of other
 func (a APIKeyRole) ContainsSome(other APIKeyRole) bool {
 	return a&other > 0
+}
+
+// CheckNeedToCreateSystemKeys checks weather the required system keys are available and if not creates them
+func CheckNeedToCreateSystemKeys(conn db.Connection) {
+	systemUserRole := APIKeyRoleInformationObtainer | APIKeyRoleController
+
+	keys := []APIKey{}
+	err := conn.Find(&APIKey{}, &keys, bson.M{"system": true, "roles": systemUserRole})
+	if err != nil {
+		log.WithError(err).Fatalf("unable to fetch api keys")
+	}
+
+	if len(keys) != 0 {
+		log.Infof("One system key exists with id %s and role %d", keys[0].ID.Hex(), systemUserRole)
+		return
+	}
+
+	log.Info("System key does not yet exists, creating one..")
+	key := &APIKey{
+		M:       db.NewM(),
+		Enabled: true,
+		Domains: []string{"*"},
+		Key:     string(random.GenerateKey()),
+		Roles:   systemUserRole,
+		System:  true,
+	}
+	err = conn.Insert(key)
+	if err != nil {
+		log.WithError(err).Fatalf("Unable to insert system api keys")
+	}
+	log.WithField("key", key.Key).WithField("id", key.ID.Hex()).Info("Created system key")
 }

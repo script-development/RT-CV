@@ -3,7 +3,6 @@ package mongo
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"time"
 
@@ -19,7 +18,7 @@ import (
 
 // ConnectToDB connects to a mongodb database based on a shell variable ($MONGODB_URI)
 func ConnectToDB() db.Connection {
-	fmt.Println("Connecting to database...")
+	log.Info("Connecting to database...")
 	client, err := mongo.NewClient(options.Client().ApplyURI(os.Getenv("MONGODB_URI")))
 	if err != nil {
 		log.Fatal(err.Error())
@@ -40,7 +39,7 @@ func ConnectToDB() db.Connection {
 	}
 
 	mongoConnection := client.Database(os.Getenv("MONGODB_DATABASE"))
-	fmt.Println("Connected to database")
+	log.Info("Connected to database")
 	var conn db.Connection = &Connection{
 		db: mongoConnection,
 	}
@@ -116,7 +115,7 @@ func (c *Connection) collection(entry db.Entry) *mongo.Collection {
 
 // RegisterEntries creates a collection for every entry
 func (c *Connection) RegisterEntries(entries ...db.Entry) {
-	fmt.Println("Checking if all db collections exist")
+	log.Info("Checking if all db collections exist")
 
 	names, err := c.db.ListCollectionNames(dbHelpers.Ctx(), bson.D{})
 	if err != nil {
@@ -130,10 +129,10 @@ func (c *Connection) RegisterEntries(entries ...db.Entry) {
 		collectionName := entry.CollectionName()
 
 		if !namesMap[collectionName] {
-			fmt.Println("Creating collection", collectionName)
+			log.Infof("Creating collection %s", collectionName)
 			c.db.CreateCollection(dbHelpers.Ctx(), collectionName)
 		}
 	}
 
-	fmt.Println("Database collection check succeeded")
+	log.Info("Database collection check succeeded")
 }
