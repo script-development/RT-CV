@@ -6,7 +6,7 @@ import (
 )
 
 func routeAuthSeed(c *fiber.Ctx) error {
-	return c.JSON(map[string]string{
+	return c.JSON(IMap{
 		"seed": string(ctx.GetAuth(c).GetBaseSeed()),
 	})
 }

@@ -1,11 +1,11 @@
 package testingdb
 
 import (
-	"github.com/script-development/RT-CV/db/dbInterfaces"
+	"github.com/script-development/RT-CV/db"
 )
 
 // DeleteByID deletes a document by it's ID
-func (c *TestConnection) DeleteByID(e dbInterfaces.Entry) error {
+func (c *TestConnection) DeleteByID(e db.Entry) error {
 	c.m.Lock()
 	defer c.m.Unlock()
 

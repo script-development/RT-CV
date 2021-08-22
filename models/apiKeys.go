@@ -1,17 +1,17 @@
 package models
 
 import (
-	"github.com/script-development/RT-CV/db/dbInterfaces"
+	"github.com/script-development/RT-CV/db"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 // APIKey contains a registered API key
 type APIKey struct {
-	dbInterfaces.M `bson:"inline"`
-	Enabled        bool
-	Domains        []string
-	Key            string
-	Roles          APIKeyRole
+	db.M    `bson:"inline"`
+	Enabled bool
+	Domains []string
+	Key     string
+	Roles   APIKeyRole
 }
 
 // CollectionName returns the collection name of the ApiKey
@@ -27,7 +27,7 @@ func (*APIKey) DefaultFindFilters() bson.M {
 }
 
 // GetAPIKeys returns all the keys registered in the database
-func GetAPIKeys(conn dbInterfaces.Connection) ([]APIKey, error) {
+func GetAPIKeys(conn db.Connection) ([]APIKey, error) {
 	keys := []APIKey{}
 	err := conn.Find(&APIKey{}, &keys, nil)
 	return keys, err

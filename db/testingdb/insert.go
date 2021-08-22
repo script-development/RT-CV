@@ -1,13 +1,13 @@
 package testingdb
 
 import (
-	"github.com/script-development/RT-CV/db/dbInterfaces"
+	"github.com/script-development/RT-CV/db"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // Insert inserts an item into the database
-// Implements dbInterfaces.Connection
-func (c *TestConnection) Insert(data dbInterfaces.Entry) error {
+// Implements db.Connection
+func (c *TestConnection) Insert(data db.Entry) error {
 	c.m.Lock()
 	defer c.m.Unlock()
 	return c.UnsafeInsert(data)
@@ -17,7 +17,7 @@ func (c *TestConnection) Insert(data dbInterfaces.Entry) error {
 // !!Be aware!!:
 // - Not thread safe
 // - Assumes the all entries are of same type / collection
-func (c *TestConnection) UnsafeInsert(entries ...dbInterfaces.Entry) error {
+func (c *TestConnection) UnsafeInsert(entries ...db.Entry) error {
 	if len(entries) == 0 {
 		return nil
 	}

@@ -1,4 +1,4 @@
-package dbInterfaces
+package db
 
 import (
 	"go.mongodb.org/mongo-driver/bson"

@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/apex/log"
+	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/db/dbHelpers"
-	"github.com/script-development/RT-CV/db/dbInterfaces"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -18,7 +18,7 @@ import (
 )
 
 // ConnectToDB connects to a mongodb database based on a shell variable ($MONGODB_URI)
-func ConnectToDB() dbInterfaces.Connection {
+func ConnectToDB() db.Connection {
 	fmt.Println("Connecting to database...")
 	client, err := mongo.NewClient(options.Client().ApplyURI(os.Getenv("MONGODB_URI")))
 	if err != nil {
@@ -39,10 +39,10 @@ func ConnectToDB() dbInterfaces.Connection {
 		log.Fatal(err.Error())
 	}
 
-	db := client.Database(os.Getenv("MONGODB_DATABASE"))
+	mongoConnection := client.Database(os.Getenv("MONGODB_DATABASE"))
 	fmt.Println("Connected to database")
-	var conn dbInterfaces.Connection = &Connection{
-		db: db,
+	var conn db.Connection = &Connection{
+		db: mongoConnection,
 	}
 	return conn
 }
@@ -53,7 +53,7 @@ type Connection struct {
 }
 
 // FindOne finds a single entry based on the filter
-func (c *Connection) FindOne(e dbInterfaces.Entry, filter bson.M) error {
+func (c *Connection) FindOne(e db.Entry, filter bson.M) error {
 	res := c.collection(e).FindOne(dbHelpers.Ctx(), dbHelpers.MergeFilters(e.DefaultFindFilters(), filter))
 	err := res.Err()
 	if err != nil {
@@ -64,7 +64,7 @@ func (c *Connection) FindOne(e dbInterfaces.Entry, filter bson.M) error {
 }
 
 // Find finds entries based on the filter
-func (c *Connection) Find(e dbInterfaces.Entry, results interface{}, filter bson.M) error {
+func (c *Connection) Find(e db.Entry, results interface{}, filter bson.M) error {
 	cur, err := c.collection(e).Find(dbHelpers.Ctx(), dbHelpers.MergeFilters(e.DefaultFindFilters(), filter))
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func (c *Connection) Find(e dbInterfaces.Entry, results interface{}, filter bson
 }
 
 // Insert inserts an entry into the database
-func (c *Connection) Insert(e dbInterfaces.Entry) error {
+func (c *Connection) Insert(e db.Entry) error {
 	if e.GetID().IsZero() {
 		e.SetID(primitive.NewObjectID())
 	}
@@ -89,7 +89,7 @@ func (c *Connection) Insert(e dbInterfaces.Entry) error {
 }
 
 // UpdateByID updates an entry by its id
-func (c *Connection) UpdateByID(e dbInterfaces.Entry) error {
+func (c *Connection) UpdateByID(e db.Entry) error {
 	id := e.GetID()
 	if id.IsZero() {
 		return errors.New("cannot update item without id")
@@ -100,7 +100,7 @@ func (c *Connection) UpdateByID(e dbInterfaces.Entry) error {
 }
 
 // DeleteByID deletes an entry by its id
-func (c *Connection) DeleteByID(e dbInterfaces.Entry) error {
+func (c *Connection) DeleteByID(e db.Entry) error {
 	id := e.GetID()
 	if id.IsZero() {
 		return errors.New("cannot update item without id")
@@ -110,12 +110,12 @@ func (c *Connection) DeleteByID(e dbInterfaces.Entry) error {
 	return err
 }
 
-func (c *Connection) collection(entry dbInterfaces.Entry) *mongo.Collection {
+func (c *Connection) collection(entry db.Entry) *mongo.Collection {
 	return c.db.Collection(entry.CollectionName())
 }
 
 // RegisterEntries creates a collection for every entry
-func (c *Connection) RegisterEntries(entries ...dbInterfaces.Entry) {
+func (c *Connection) RegisterEntries(entries ...db.Entry) {
 	fmt.Println("Checking if all db collections exist")
 
 	names, err := c.db.ListCollectionNames(dbHelpers.Ctx(), bson.D{})

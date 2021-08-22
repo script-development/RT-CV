@@ -4,7 +4,7 @@ import (
 	"errors"
 	"reflect"
 
-	"github.com/script-development/RT-CV/db/dbInterfaces"
+	"github.com/script-development/RT-CV/db"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -13,7 +13,7 @@ import (
 // The result can be filtered using filters
 // The filters should work equal to MongoDB filters (https://docs.mongodb.com/manual/tutorial/query-documents/)
 // tough this might miss features compared to mongoDB's filters
-func (c *TestConnection) FindOne(placeInto dbInterfaces.Entry, filters bson.M) error {
+func (c *TestConnection) FindOne(placeInto db.Entry, filters bson.M) error {
 	itemsFilter := newFilter(placeInto.DefaultFindFilters(), filters)
 
 	c.m.Lock()
@@ -37,7 +37,7 @@ func (c *TestConnection) FindOne(placeInto dbInterfaces.Entry, filters bson.M) e
 // The results can be filtered using filters
 // The filters should work equal to MongoDB filters (https://docs.mongodb.com/manual/tutorial/query-documents/)
 // tough this might miss features compared to mongoDB's filters
-func (c *TestConnection) Find(base dbInterfaces.Entry, results interface{}, filters bson.M) error {
+func (c *TestConnection) Find(base db.Entry, results interface{}, filters bson.M) error {
 	itemsFilter := newFilter(base.DefaultFindFilters(), filters)
 
 	c.m.Lock()

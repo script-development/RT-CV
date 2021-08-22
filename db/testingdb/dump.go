@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/script-development/RT-CV/db/dbInterfaces"
+	"github.com/script-development/RT-CV/db"
 )
 
 // Dump prints the full database contents in the console
@@ -12,7 +12,7 @@ import (
 //
 // shouldPanic controls if the output is only printed or also should panic
 func (c *TestConnection) Dump(shouldPanic bool) {
-	data := map[string][]dbInterfaces.Entry{}
+	data := map[string][]db.Entry{}
 	for _, collection := range c.collections {
 		data[collection.name] = collection.data
 	}
@@ -34,7 +34,7 @@ func (c *TestConnection) Dump(shouldPanic bool) {
 // This can be used in tests to dump the contents of the database might something fail or to debug
 //
 // shouldPanic controls if the output is only printed or also should panic
-func (c *TestConnection) DumpCollection(entry dbInterfaces.Entry, shouldPanic bool) {
+func (c *TestConnection) DumpCollection(entry db.Entry, shouldPanic bool) {
 	collection := c.getCollectionFromEntry(entry)
 
 	jsonBytes, err := json.MarshalIndent(collection.data, "", "    ")

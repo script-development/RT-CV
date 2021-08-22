@@ -69,7 +69,7 @@ type TestReqOpts struct {
 	Body   []byte
 }
 
-func (r *testingRouter) MakeRequest(t *testing.T, method Method, route string, opts TestReqOpts) *http.Response {
+func (r *testingRouter) MakeRequest(t *testing.T, method Method, route string, opts TestReqOpts) (res *http.Response, resBody []byte) {
 	var body io.Reader
 	if opts.Body != nil {
 		body = bytes.NewReader(opts.Body)
@@ -86,10 +86,13 @@ func (r *testingRouter) MakeRequest(t *testing.T, method Method, route string, o
 		req.Header.Add("Authorization", string(r.accessor.Key()))
 	}
 
-	res, err := r.fiber.Test(req, -1)
+	res, err = r.fiber.Test(req, -1)
 	NoError(t, err)
 
-	return res
+	resBody, err = ioutil.ReadAll(res.Body)
+	NoError(t, err)
+
+	return res, resBody
 }
 
 func TestCannotAccessCriticalRoutesWithoutCredentials(t *testing.T) {
@@ -116,15 +119,12 @@ func TestCannotAccessCriticalRoutesWithoutCredentials(t *testing.T) {
 		route := route
 
 		t.Run(route.name, func(t *testing.T) {
-			res := app.MakeRequest(t, route.method, route.route, TestReqOpts{
+			res, body := app.MakeRequest(t, route.method, route.route, TestReqOpts{
 				NoAuth: true,
 			})
 
 			// 401 = Unauthorized
 			Equal(t, 401, res.StatusCode)
-
-			body, err := ioutil.ReadAll(res.Body)
-			NoError(t, err)
 			Equal(t, `{"error":"missing authorization header of type Basic"}`, string(body))
 		})
 	}

@@ -1,7 +1,7 @@
 package mock
 
 import (
-	"github.com/script-development/RT-CV/db/dbInterfaces"
+	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/db/testingdb"
 	"github.com/script-development/RT-CV/models"
 )
@@ -9,7 +9,7 @@ import (
 var (
 	// Key1 is a mock api key
 	Key1 = &models.APIKey{
-		M:       dbInterfaces.NewM(),
+		M:       db.NewM(),
 		Enabled: true,
 		Domains: []string{"werk.nl"},
 		Key:     "abc",
@@ -17,7 +17,7 @@ var (
 	}
 	// Key2 is a mock api key
 	Key2 = &models.APIKey{
-		M:       dbInterfaces.NewM(),
+		M:       db.NewM(),
 		Enabled: true,
 		Domains: []string{"werk.nl"},
 		Key:     "abc",
@@ -25,7 +25,7 @@ var (
 	}
 	// Key3 is a mock api key
 	Key3 = &models.APIKey{
-		M:       dbInterfaces.NewM(),
+		M:       db.NewM(),
 		Enabled: true,
 		Domains: []string{"werk.nl"},
 		Key:     "def",
@@ -35,23 +35,23 @@ var (
 
 // NewMockDB returns an in memory temp testing database with mock data
 func NewMockDB() *testingdb.TestConnection {
-	db := testingdb.NewDB()
+	conn := testingdb.NewDB()
 
 	// Insert api keys
-	db.UnsafeInsert(
+	conn.UnsafeInsert(
 		Key1,
 		Key2,
 		Key3,
 	)
 
 	// Insert secrets
-	db.UnsafeInsert(
+	conn.UnsafeInsert(
 		models.UnsafeMustCreateSecret(Key1.ID, "foo", "very-secret-key-of-more-than-16-chars", []byte(`{"foo": 1}`)),
 		models.UnsafeMustCreateSecret(Key2.ID, "bar", "very-secret-key-of-more-than-16-chars", []byte(`{"bar": 2}`)),
 	)
 
 	// Insert profiles
-	db.UnsafeInsert(
+	conn.UnsafeInsert(
 		&models.Profile{
 			Name:                  "Mock profile 1",
 			YearsSinceWork:        nil,
@@ -105,5 +105,5 @@ func NewMockDB() *testingdb.TestConnection {
 		},
 	)
 
-	return db
+	return conn
 }

@@ -4,10 +4,13 @@ import (
 	"errors"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/script-development/RT-CV/db/dbInterfaces"
+	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/models"
 	"go.mongodb.org/mongo-driver/mongo"
 )
+
+// IMap is a wrapper around map[string]interface{} that's faster to use
+type IMap map[string]interface{}
 
 // Group is a wrapper around fiber.Router.Group to change it into a callback function with the group
 // This makes it easier to understand the routes structure
@@ -16,7 +19,7 @@ func Group(c fiber.Router, prefix string, group func(fiber.Router), handlers ...
 }
 
 // Routes defines the routes used
-func Routes(app *fiber.App, dbConn dbInterfaces.Connection, serverSeed []byte) {
+func Routes(app *fiber.App, dbConn db.Connection, serverSeed []byte) {
 	Group(app, `/v1`, func(c fiber.Router) {
 		Group(c, `/auth`, func(c fiber.Router) {
 			c.Get(`/seed`, routeAuthSeed)
@@ -51,7 +54,7 @@ func FiberErrorHandler(c *fiber.Ctx, err error) error {
 
 // ErrorRes returns the error response
 func ErrorRes(c *fiber.Ctx, status int, err error) error {
-	return c.Status(status).JSON(map[string]string{
+	return c.Status(status).JSON(IMap{
 		"error": err.Error(),
 	})
 }

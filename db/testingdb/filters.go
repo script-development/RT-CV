@@ -6,8 +6,8 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/db/dbHelpers"
-	"github.com/script-development/RT-CV/db/dbInterfaces"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -28,7 +28,7 @@ func newFilter(filters ...bson.M) *filter {
 	return res
 }
 
-func (f *filter) matches(e dbInterfaces.Entry) bool {
+func (f *filter) matches(e db.Entry) bool {
 	if f.empty {
 		return true
 	}

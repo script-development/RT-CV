@@ -13,5 +13,5 @@ func routeControlReloadProfiles(c *fiber.Ctx) error {
 	}
 	*ctx.GetProfiles(c) = newProfiles
 
-	return c.JSON(map[string]string{"status": "ok"})
+	return c.JSON(IMap{"status": "ok"})
 }

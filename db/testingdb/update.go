@@ -1,11 +1,9 @@
 package testingdb
 
-import (
-	"github.com/script-development/RT-CV/db/dbInterfaces"
-)
+import "github.com/script-development/RT-CV/db"
 
 // UpdateByID updates a document in the database by its ID
-func (c *TestConnection) UpdateByID(updateData dbInterfaces.Entry) error {
+func (c *TestConnection) UpdateByID(updateData db.Entry) error {
 	c.m.Lock()
 	defer c.m.Unlock()
 

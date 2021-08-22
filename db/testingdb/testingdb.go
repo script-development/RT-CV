@@ -3,16 +3,16 @@ package testingdb
 import (
 	"sync"
 
-	"github.com/script-development/RT-CV/db/dbInterfaces"
+	"github.com/script-development/RT-CV/db"
 )
 
-// TestConnection is the struct that implements dbInterfaces.Connection
+// TestConnection is the struct that implements db.Connection
 type TestConnection struct {
 	m           sync.Mutex
 	collections map[string]Collection
 }
 
-// NewDB returns a testing database connection that is compatible with dbInterfaces.Connection
+// NewDB returns a testing database connection that is compatible with db.Connection
 func NewDB() *TestConnection {
 	return &TestConnection{
 		collections: map[string]Collection{},
@@ -22,15 +22,15 @@ func NewDB() *TestConnection {
 // Collection contains all the data for a collection
 type Collection struct {
 	name string
-	data []dbInterfaces.Entry
+	data []db.Entry
 }
 
-// RegisterEntries implements dbInterfaces.Connection
-func (*TestConnection) RegisterEntries(...dbInterfaces.Entry) {
+// RegisterEntries implements db.Connection
+func (*TestConnection) RegisterEntries(...db.Entry) {
 	// We don't need to implement this function
 }
 
-func (c *TestConnection) getCollectionFromEntry(e dbInterfaces.Entry) Collection {
+func (c *TestConnection) getCollectionFromEntry(e db.Entry) Collection {
 	collectionName := e.CollectionName()
 	v, ok := c.collections[collectionName]
 	if ok {
@@ -39,7 +39,7 @@ func (c *TestConnection) getCollectionFromEntry(e dbInterfaces.Entry) Collection
 
 	return Collection{
 		name: collectionName,
-		data: []dbInterfaces.Entry{},
+		data: []db.Entry{},
 	}
 }
 

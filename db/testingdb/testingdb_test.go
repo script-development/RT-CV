@@ -3,14 +3,14 @@ package testingdb
 import (
 	"testing"
 
-	"github.com/script-development/RT-CV/db/dbInterfaces"
+	"github.com/script-development/RT-CV/db"
 	. "github.com/stretchr/testify/assert"
 )
 
 type MockUser struct {
-	dbInterfaces.M `bson:",inline"`
-	Realname       *string `bson:"real_name,omitempty"`
-	Username       string
+	db.M     `bson:",inline"`
+	Realname *string `bson:"real_name,omitempty"`
+	Username string
 }
 
 func (*MockUser) CollectionName() string {
@@ -19,14 +19,14 @@ func (*MockUser) CollectionName() string {
 
 func NewMockuser() *MockUser {
 	return &MockUser{
-		M:        dbInterfaces.NewM(),
+		M:        db.NewM(),
 		Realname: nil,
 		Username: "Piet",
 	}
 }
 
 type MockPost struct {
-	dbInterfaces.M
+	db.M
 	Title   string
 	Content string
 }

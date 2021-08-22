@@ -5,7 +5,7 @@ import (
 
 	"github.com/apex/log"
 	"github.com/gofiber/fiber/v2"
-	"github.com/script-development/RT-CV/db/dbInterfaces"
+	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/auth"
 	"github.com/script-development/RT-CV/models"
 )
@@ -70,11 +70,11 @@ func SetLogger(ctx context.Context, value *log.Entry) context.Context {
 }
 
 // GetDbConn returns the database connection
-func GetDbConn(c *fiber.Ctx) dbInterfaces.Connection {
-	return getCtxValue(c, dbConnCtxKey).(dbInterfaces.Connection)
+func GetDbConn(c *fiber.Ctx) db.Connection {
+	return getCtxValue(c, dbConnCtxKey).(db.Connection)
 }
 
 // SetDbConn sets the database connection
-func SetDbConn(ctx context.Context, value dbInterfaces.Connection) context.Context {
+func SetDbConn(ctx context.Context, value db.Connection) context.Context {
 	return context.WithValue(ctx, dbConnCtxKey, value)
 }
