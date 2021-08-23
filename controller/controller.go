@@ -48,7 +48,11 @@ func Routes(app *fiber.App, dbConn db.Connection, serverSeed []byte) {
 					c.Delete(``, routeDeleteProfile)
 				}, middlewareBindProfile())
 			})
-		}, requiresAuth(models.APIKeyRoleAdmin|models.APIKeyRoleController))
+		}, requiresAuth(models.APIKeyRoleController))
+
+		Group(c, `/keys`, func(c fiber.Router) {
+			c.Get(``, routeGetKeys)
+		}, requiresAuth(models.APIKeyRoleInformationObtainer|models.APIKeyRoleController))
 	}, InsertData(dbConn, serverSeed))
 }
 
