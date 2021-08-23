@@ -2,14 +2,16 @@ import Button from '@material-ui/core/Button'
 import LinearProgress from '@material-ui/core/LinearProgress'
 import TextField from '@material-ui/core/TextField'
 import Head from 'next/head'
-import React, { useState } from 'react'
+import { useRouter } from 'next/router'
+import React, { useEffect, useState } from 'react'
 import { fetcher } from '../src/auth'
 
 export default function Home() {
-	const [apiKey, setApiKey] = useState('')
 	const [apiKeyId, setApiKeyId] = useState('')
+	const [apiKey, setApiKey] = useState('')
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState('')
+	const router = useRouter()
 
 	const submit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
@@ -17,12 +19,18 @@ export default function Home() {
 			setLoading(true)
 			setError('')
 			await fetcher.login(apiKey, apiKeyId)
+			router.push('/')
 		} catch (e) {
 			setError(e?.message || e)
 		} finally {
 			setLoading(false)
 		}
 	}
+
+	useEffect(() => {
+		setApiKeyId(fetcher.getApiKeyId)
+		setApiKey(fetcher.getApiKey)
+	}, [])
 
 	return (
 		<div className="container">
@@ -35,6 +43,7 @@ export default function Home() {
 			<form noValidate onSubmit={submit} >
 				<p>Insert a api key with the <b>Information Obtainer</b> and <b>Controller</b> role</p>
 				<TextField
+					value={apiKeyId}
 					fullWidth
 					id="id"
 					label="API Key ID"
@@ -45,6 +54,7 @@ export default function Home() {
 				/>
 				<div className="marginTop" >
 					<TextField
+						value={apiKey}
 						fullWidth
 						id="key"
 						label="API Key"

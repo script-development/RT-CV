@@ -23,7 +23,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter()
 
   useEffect(() => {
-    if (!fetcher.tryRestoreCredentials() && router.route != '/login') {
+    if ((!fetcher.getApiKey || !fetcher.getApiKeyId) && router.route != '/login') {
       router.push('/login')
     }
   }, [])
@@ -33,6 +33,7 @@ function MyApp({ Component, pageProps }: AppProps) {
       <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
       <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
       <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width" />
+      <link rel="icon" href="/favicon.ico" />
     </Head>
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -42,6 +43,9 @@ function MyApp({ Component, pageProps }: AppProps) {
       * {
         padding: 0;
         margin: 0;
+      }
+      body {
+        font-size: 17px;
       }
       h1 {
         margin-bottom: 10px;
