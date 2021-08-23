@@ -11,13 +11,14 @@ export default function Home() {
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState('')
 
-	const submit = (e: React.FormEvent<HTMLFormElement>) => {
+	const submit = async (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault()
 		try {
-			e.preventDefault()
 			setLoading(true)
-			fetcher.login(apiKey, apiKeyId)
+			setError('')
+			await fetcher.login(apiKey, apiKeyId)
 		} catch (e) {
-			setError(e.message)
+			setError(e?.message || e)
 		} finally {
 			setLoading(false)
 		}
@@ -35,20 +36,25 @@ export default function Home() {
 				<p>Insert a api key with the <b>Information Obtainer</b> and <b>Controller</b> role</p>
 				<TextField
 					fullWidth
-					id="key"
-					label="API Key"
-					variant="filled"
-					onChange={e => setApiKey(e.target.value)}
-					disabled={loading}
-				/>
-				<TextField
-					fullWidth
 					id="id"
 					label="API Key ID"
 					variant="filled"
 					onChange={e => setApiKeyId(e.target.value)}
 					disabled={loading}
+					error={!!error}
 				/>
+				<div className="marginTop" >
+					<TextField
+						fullWidth
+						id="key"
+						label="API Key"
+						variant="filled"
+						onChange={e => setApiKey(e.target.value)}
+						disabled={loading}
+						error={!!error}
+						helperText={error}
+					/>
+				</div>
 				<div className="actions">
 					<Button
 						color="secondary"
@@ -78,6 +84,9 @@ export default function Home() {
 				}
 				form p {
 					margin-bottom: 6px;
+				}
+				.marginTop {
+					margin-top: 20px;
 				}
 			`}</style>
 		</div>

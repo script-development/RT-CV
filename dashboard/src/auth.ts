@@ -9,72 +9,120 @@ function randomString(length: number): string {
 };
 
 class AuthenticatedFetcher {
-    apiKey?: string;
-    apiKeyId?: string;
-    salt?: string;
+    private apiKey?: string;
+    private apiKeyId?: string;
+    private salt?: string;
 
-    serverSeed?: string;
+    private serverSeed?: string;
 
-    rollingKey?: Uint8Array;
+    private rollingKey = new Uint8Array;
 
     async login(key: string, keyId: string) {
+        if (key == '')
+            throw 'api key not set'
+        if (keyId == '')
+            throw 'api key id not set'
+
         this.apiKey = key
         this.apiKeyId = keyId
         this.salt = randomString(32)
+        await this.fetch('/api/v1/auth/keyinfo')
+        this.storeCredentials()
     }
 
-    get urlPrefix(): string {
-        return location.port == '3000'
-            ? `https://${location.hostname}:4000`
-            : ''
+    // Returns true if the apiKey and apiKeyId is set
+    tryRestoreCredentials(): boolean {
+        this.apiKey = localStorage.getItem('rtcv_api_key') || undefined
+        this.apiKeyId = localStorage.getItem('rtcv_api_key_id') || undefined
+        this.salt = localStorage.getItem('rtcv_salt') || undefined
+        this.serverSeed = localStorage.getItem('rtcv_server_seed') || undefined
+        const rollingKeyHex = localStorage.getItem('rtcv_rolling_key') || ''
+        if (rollingKeyHex != '')
+            this.rollingKey = new Uint8Array(Buffer.from(rollingKeyHex, 'hex'))
+
+        return !!(this.apiKey && this.apiKeyId)
     }
 
-    get apiKeyAndSalt(): string {
+    private storeCredentials() {
+        localStorage.setItem('rtcv_api_key', this.apiKey || '')
+        localStorage.setItem('rtcv_api_key_id', this.apiKeyId || '')
+        localStorage.setItem('rtcv_salt', this.salt || '')
+        localStorage.setItem('rtcv_server_seed', this.serverSeed || '')
+        localStorage.setItem('rtcv_rolling_key', this.rollingKeyHex)
+    }
+
+    private get rollingKeyHex(): string {
+        return (this.rollingKey.length == 0)
+            ? ''
+            : Buffer.from(this.rollingKey).toString('hex')
+    }
+
+    private get apiKeyAndSalt(): string {
         return (this.apiKey || '') + (this.salt || '');
     }
 
     async fetch(path: string) {
-        const authHeader = await this.authorizationHeader()
-
-        const r = await fetch(this.urlPrefix + (path[0] != '/' ? '/' : '') + path, {
+        let authHeader = await this.authorizationHeader()
+        const url = (path[0] != '/' ? '/' : '') + path
+        const args = {
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": authHeader,
             },
-        })
+        }
+
+        let r = await fetch(url, args)
+        if (r.status == 401) {
+            // Firstly lets just re-try it
+            r = await fetch(url, args)
+            if (r.status == 401) {
+                await this.refreshSeedAndRollingKey()
+                authHeader = await this.authorizationHeader()
+
+                r = await fetch(url, args)
+                if (r.status == 401) {
+                    const resData = await r.json()
+                    throw resData.error
+                }
+            }
+        }
         return await r.json()
     }
 
-    async fetchServerSeed() {
-        const r = await fetch(this.urlPrefix + '/api/v1/auth/seed')
+    private async fetchServerSeed(): Promise<string> {
+        const r = await fetch('/api/v1/auth/seed')
         const seedRes = await r.json()
-        this.serverSeed = seedRes.seed
+        return seedRes.seed
+    }
+
+    private async newRollingKey(): Promise<Uint8Array> {
+        return new Uint8Array(
+            await crypto.subtle.digest(
+                'SHA-512',
+                new TextEncoder().encode((this.serverSeed || '') + this.apiKeyAndSalt),
+            ),
+        )
+    }
+
+    private async refreshSeedAndRollingKey() {
+        this.serverSeed = await this.fetchServerSeed()
+        this.rollingKey = await this.newRollingKey()
     }
 
     private async authorizationHeader(): Promise<string> {
-        if (!this.serverSeed)
-            // Get the server seed as we don't have it yet
-            await this.fetchServerSeed()
-
-        if (!this.rollingKey)
-            // Gen a new rolling key
-            this.rollingKey = new Uint8Array(
-                await crypto.subtle.digest(
-                    'SHA-512',
-                    new TextEncoder().encode((this.serverSeed || '') + this.apiKeyAndSalt),
-                ),
-            )
+        if (!this.serverSeed || this.rollingKey.length == 0)
+            await this.refreshSeedAndRollingKey()
 
         const genNextKeyAppendValue = new TextEncoder().encode(this.apiKeyAndSalt)
         const inputForNextRollingKey = new Uint8Array(this.rollingKey.length + genNextKeyAppendValue.length)
         inputForNextRollingKey.set(this.rollingKey)
         inputForNextRollingKey.set(genNextKeyAppendValue, this.rollingKey.length)
 
-        const nextRollingKey = await crypto.subtle.digest( 'SHA-512', inputForNextRollingKey)
+        const nextRollingKey = await crypto.subtle.digest('SHA-512', inputForNextRollingKey)
         this.rollingKey = new Uint8Array(nextRollingKey)
 
-
-        const basicKeyValue = Buffer.from(`sha512:${this.apiKeyId}:${this.salt}:${Buffer.from(this.rollingKey).toString('hex')}`, 'base64').toString()
+        // FIXME btoa is deprecated for some reason
+        const basicKeyValue = btoa(`sha512:${this.apiKeyId}:${this.salt}:${this.rollingKeyHex}`)
         return "Basic " + basicKeyValue;
     }
 }

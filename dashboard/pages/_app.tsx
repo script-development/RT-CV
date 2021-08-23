@@ -4,6 +4,8 @@ import CssBaseline from '@material-ui/core/CssBaseline'
 import { createTheme, ThemeProvider } from '@material-ui/core/styles'
 import { red } from '@material-ui/core/colors'
 import { useEffect } from 'react'
+import { fetcher } from '../src/auth'
+import { useRouter } from 'next/router'
 
 const theme = createTheme({
   palette: {
@@ -18,6 +20,14 @@ const theme = createTheme({
 });
 
 function MyApp({ Component, pageProps }: AppProps) {
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!fetcher.tryRestoreCredentials() && router.route != '/login') {
+      router.push('/login')
+    }
+  }, [])
+
   return (<>
     <Head>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
