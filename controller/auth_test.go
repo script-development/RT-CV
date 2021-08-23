@@ -1,7 +1,9 @@
 package controller
 
 import (
+	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	. "github.com/stretchr/testify/assert"
@@ -19,4 +21,22 @@ func TestRouteAuthSeed(t *testing.T) {
 		},
 	)
 	Equal(t, fmt.Sprintf(`{"seed":"%s"}`, string(testingServerSeed)), string(body))
+}
+
+func TestRouteGetKeyInfo(t *testing.T) {
+	app := newTestingRouter(t)
+
+	_, body := app.MakeRequest(
+		Get,
+		"/api/v1/auth/keyinfo",
+		TestReqOpts{},
+	)
+	bodyValues := map[string]interface{}{}
+	err := json.Unmarshal(body, &bodyValues)
+	NoError(t, err)
+
+	for key, value := range bodyValues {
+		fmt.Println(key, value)
+		NotEqual(t, strings.ToLower(key), "key", "the key should re-appear in the result data")
+	}
 }

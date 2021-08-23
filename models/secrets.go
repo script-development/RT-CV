@@ -38,7 +38,7 @@ func CreateSecret(keyID primitive.ObjectID, key string, encryptionKey string, va
 		M:     db.NewM(),
 		KeyID: keyID,
 		Key:   key,
-		Value: base64.RawStdEncoding.EncodeToString(data),
+		Value: base64.URLEncoding.EncodeToString(data),
 	}, nil
 }
 
@@ -53,7 +53,7 @@ func UnsafeMustCreateSecret(keyID primitive.ObjectID, key string, encryptionKey 
 
 // Decrypt decrypts the value of a secret
 func (secret Secret) Decrypt(key string) (json.RawMessage, error) {
-	bytes, err := base64.RawStdEncoding.DecodeString(secret.Value)
+	bytes, err := base64.URLEncoding.DecodeString(secret.Value)
 	if err != nil {
 		return nil, err
 	}

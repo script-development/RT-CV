@@ -47,5 +47,5 @@ func (a *TestAccessor) Key() []byte {
 		[]byte(hex.EncodeToString(a.rollingKey)),
 	}, []byte(":"))
 
-	return []byte("Basic " + base64.RawStdEncoding.EncodeToString(src))
+	return []byte("Basic " + base64.URLEncoding.EncodeToString(src))
 }

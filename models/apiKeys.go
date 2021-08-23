@@ -1,12 +1,11 @@
 package models
 
 import (
-	"encoding/json"
-
 	"github.com/apex/log"
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/random"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // APIKey contains a registered API key
@@ -31,6 +30,27 @@ func (*APIKey) CollectionName() string {
 func (*APIKey) DefaultFindFilters() bson.M {
 	return bson.M{
 		"enabled": true,
+	}
+}
+
+// APIKeyInfo contains information about an API key
+// This key can be send to someone safely without exposing the key
+// To generate this object use the (*APIKey).Info method
+type APIKeyInfo struct {
+	ID      primitive.ObjectID `json:"id"`
+	Domains []string           `json:"domains"`
+	Roles   []APIRole          `json:"roles"`
+	System  bool               `json:"system"`
+}
+
+// Info converts the APIKey into APIKeyInfo
+// This key can be send to someone safely without exposing the key
+func (a *APIKey) Info() APIKeyInfo {
+	return APIKeyInfo{
+		ID:      a.ID,
+		Domains: a.Domains,
+		Roles:   a.Roles.ConvertToAPIRoles(),
+		System:  a.System,
 	}
 }
 
@@ -95,8 +115,8 @@ type APIRole struct {
 	Description string     `json:"description"`
 }
 
-// MarshalJSON convers the unreadable role number into an array of APIRole
-func (a APIKeyRole) MarshalJSON() ([]byte, error) {
+// ConvertToAPIRoles convers the unreadable role number into an array of APIRole
+func (a APIKeyRole) ConvertToAPIRoles() []APIRole {
 	res := []APIRole{}
 	for _, role := range APIKeyRoleAllArray {
 		if a&role == role {
@@ -104,11 +124,7 @@ func (a APIKeyRole) MarshalJSON() ([]byte, error) {
 			res = append(res, APIRole{Role: role, Description: description})
 		}
 	}
-
-	if len(res) == 0 {
-		return []byte(`[]`), nil
-	}
-	return json.Marshal(res)
+	return res
 }
 
 // ContainsAll check if a contains all of other

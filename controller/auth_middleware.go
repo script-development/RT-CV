@@ -23,7 +23,7 @@ func requiresAuth(requiredRoles models.APIKeyRole) fiber.Handler {
 		}
 
 		// Check required roles matches
-		if !key.Roles.ContainsSome(requiredRoles) {
+		if requiredRoles != 0 && !key.Roles.ContainsSome(requiredRoles) {
 			return ErrorRes(c, 401, errors.New("you do not have the permissions to access this route"))
 		}
 

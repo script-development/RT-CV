@@ -10,3 +10,7 @@ func routeAuthSeed(c *fiber.Ctx) error {
 		"seed": string(ctx.GetAuth(c).GetBaseSeed()),
 	})
 }
+
+func routeGetKeyInfo(c *fiber.Ctx) error {
+	return c.JSON(ctx.GetKey(c).Info())
+}

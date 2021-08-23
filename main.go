@@ -5,6 +5,7 @@ import (
 
 	"github.com/apex/log"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/joho/godotenv"
 	"github.com/script-development/RT-CV/controller"
 	"github.com/script-development/RT-CV/db"
@@ -48,6 +49,7 @@ func main() {
 	app := fiber.New(fiber.Config{
 		ErrorHandler: controller.FiberErrorHandler,
 	})
+	app.Use(logger.New())
 
 	// Setup the app routes
 	controller.Routes(app, dbConn, serverSeed)

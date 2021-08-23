@@ -73,7 +73,7 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.APIKey, sa
 		return nil, salt, errors.New("authorization must be of type Basic")
 	}
 
-	auth, err := base64.RawStdEncoding.DecodeString(string(authorizationHeader[6:]))
+	auth, err := base64.URLEncoding.DecodeString(string(authorizationHeader[6:]))
 	if err != nil {
 		return nil, salt, err
 	}
@@ -90,7 +90,7 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.APIKey, sa
 
 	siteID := string(parts[1])
 	if !primitive.IsValidObjectID(siteID) {
-		return nil, salt, errors.New("invalid site ID")
+		return nil, salt, errors.New("invalid key ID")
 	}
 
 	salt = parts[2]
