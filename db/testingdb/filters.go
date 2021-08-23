@@ -45,49 +45,42 @@ func (f *filter) matches(e db.Entry) bool {
 		if !fieldFound {
 			return false
 		}
-		goField := eRefl.FieldByName(field.GoFieldName)
+		entryField := eRefl.FieldByName(field.GoFieldName)
 
-		if goField.Kind() == reflect.Ptr {
-			if goField.IsNil() {
+		if entryField.Kind() == reflect.Ptr {
+			if entryField.IsNil() {
 				return false
 			}
-			goField = goField.Elem()
+			entryField = entryField.Elem()
 		}
 
-		switch typedValue := value.(type) {
-		case string:
-			if goField.Kind() != reflect.String {
-				return false
-			}
-			if goField.String() != typedValue {
-				return false
-			}
-		case bool:
-			if goField.Kind() != reflect.Bool {
-				return false
-			}
-			if goField.Bool() != typedValue {
-				return false
-			}
-		case int:
-			switch goField.Kind() {
-			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-				if goField.Int() != int64(typedValue) {
-					return false
-				}
-			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-				if int64(goField.Uint()) != int64(typedValue) {
-					return false
-				}
-			default:
-				return false
-			}
-		case primitive.ObjectID:
-			goFieldValue, ok := goField.Interface().(primitive.ObjectID)
+		valueObjectID, ok := value.(primitive.ObjectID)
+		if ok {
+			goFieldValue, ok := entryField.Interface().(primitive.ObjectID)
 			if !ok {
 				return false
 			}
-			if goFieldValue != typedValue {
+			if goFieldValue != valueObjectID {
+				return false
+			}
+		}
+
+		reflectionValue := reflect.ValueOf(value)
+		switch reflectionValue.Kind() {
+		case reflect.String:
+			if entryField.Kind() != reflect.String || entryField.String() != reflectionValue.String() {
+				return false
+			}
+		case reflect.Bool:
+			if entryField.Kind() != reflect.Bool || entryField.Bool() != reflectionValue.Bool() {
+				return false
+			}
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			if !compareInt64ToReflect(reflectionValue.Int(), entryField) {
+				return false
+			}
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			if !compareUint64ToReflect(reflectionValue.Uint(), entryField) {
 				return false
 			}
 		default:
@@ -133,4 +126,35 @@ func mapStruct(entry reflect.Type) map[string]structField {
 func convertGoToDbName(fieldname string) string {
 	// No need to check if filename length is > 0 beaucase go field name always have a name
 	return string(unicode.ToLower(rune(fieldname[0]))) + fieldname[1:]
+}
+
+func compareInt64ToReflect(value int64, reflectionValue reflect.Value) bool {
+	switch reflectionValue.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return reflectionValue.Int() == value
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		reflectionIntValue := int64(reflectionValue.Uint())
+		if reflectionIntValue < 0 {
+			// The uint64 value of the reflect value was more than the highest int64 value and thus resetted itself and now it's below zero
+			return false
+		}
+		return reflectionIntValue == value
+	default:
+		return false
+	}
+}
+
+func compareUint64ToReflect(value uint64, reflectionValue reflect.Value) bool {
+	switch reflectionValue.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		intValue := reflectionValue.Int()
+		if intValue < 0 {
+			return false
+		}
+		return uint64(intValue) == value
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return reflectionValue.Uint() == value
+	default:
+		return false
+	}
 }
