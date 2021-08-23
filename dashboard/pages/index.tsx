@@ -1,4 +1,4 @@
-import { AccordionSummary, Accordion, AccordionDetails, Button, ButtonGroup, Divider, AccordionActions } from '@material-ui/core'
+import { AccordionSummary, Accordion, AccordionDetails, Button, ButtonGroup, Divider, AccordionActions, Dialog, DialogTitle, DialogContentText, DialogContent, TextField, DialogActions } from '@material-ui/core'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import Add from '@material-ui/icons/Add'
 import Delete from '@material-ui/icons/Delete'
@@ -7,21 +7,28 @@ import Head from 'next/head'
 import React, { useEffect, useState } from 'react'
 import { fetcher } from '../src/auth'
 import { ApiKey } from '../src/types'
+import { KeyModal, KeyModalKind } from '../components/keyModal'
 
 export default function Home() {
 	const [keys, setKeys] = useState(undefined as Array<ApiKey> | undefined)
+	const [keyModal, setKeyModal] = useState({ kind: KeyModalKind.Closed, key: undefined as (undefined | ApiKey) })
 
-	useEffect(() => {
-		fetcher.fetch('/api/v1/keys').then(v => {
-			setKeys(v)
-		})
-	}, [])
+	const fetchKeys = async () =>
+		setKeys(await fetcher.fetch(`/api/v1/keys`))
+
+	useEffect(() => { fetchKeys() }, [])
 
 	return (
 		<div>
 			<Head>
 				<title>RT-CV home</title>
 			</Head>
+
+			<KeyModal
+				kind={keyModal.kind}
+				apiKey={keyModal.key}
+				onClose={() => setKeyModal({ kind: KeyModalKind.Closed, key: undefined })}
+			/>
 
 			<main>
 				<h1>RT-CV</h1>
@@ -33,7 +40,9 @@ export default function Home() {
 						</div>
 						<div>
 							<ButtonGroup color="primary" variant="contained">
-								<Button><Add fontSize={'small'} /></Button>
+								<Button
+									onClick={() => setKeyModal({ kind: KeyModalKind.Create, key: undefined })}
+								><Add fontSize={'small'} /></Button>
 							</ButtonGroup>
 						</div>
 					</div>
@@ -61,8 +70,12 @@ export default function Home() {
 						</AccordionDetails>
 						<Divider />
 						<AccordionActions>
-							<Button><Delete fontSize="small" style={{ marginRight: 6 }} />Delete</Button>
-							<Button><Edit fontSize="small" style={{ marginRight: 6 }} />Edit</Button>
+							<Button
+								onClick={() => setKeyModal({ kind: KeyModalKind.Delete, key: key })}
+							><Delete fontSize="small" style={{ marginRight: 6 }} />Delete</Button>
+							<Button
+								onClick={() => setKeyModal({ kind: KeyModalKind.Edit, key: key })}
+							><Edit fontSize="small" style={{ marginRight: 6 }} />Edit</Button>
 						</AccordionActions>
 					</Accordion>)}
 				</div>
