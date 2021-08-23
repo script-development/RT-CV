@@ -54,6 +54,11 @@ func main() {
 	// Setup the app routes
 	controller.Routes(app, dbConn, serverSeed)
 
+	testingDieAfterInit := os.Getenv("TESTING_DIE_AFTER_INIT")
+	if testingDieAfterInit == "true" || testingDieAfterInit == "TRUE" {
+		return
+	}
+
 	// Start the webserver
 	log.Fatal(app.Listen(":4000").Error())
 }

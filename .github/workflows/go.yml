@@ -47,3 +47,9 @@ jobs:
 
     - name: Test
       run: go test -v ./...
+    
+    - name: Check if app startup works
+      env:
+        TESTING_DIE_AFTER_INIT: 'TRUE'
+        USE_TESTING_DB: 'TRUE'
+      run: go run . 
