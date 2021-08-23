@@ -54,6 +54,15 @@ func Routes(app *fiber.App, dbConn db.Connection, serverSeed []byte) {
 			c.Get(``, routeGetKeys)
 		}, requiresAuth(models.APIKeyRoleInformationObtainer|models.APIKeyRoleController))
 	}, InsertData(dbConn, serverSeed))
+
+	app.Static("", "./dashboard/out/index.html", fiber.Static{Compress: true})
+	app.Static("login", "./dashboard/out/login.html", fiber.Static{Compress: true})
+	app.Static("_next", "./dashboard/out/_next", fiber.Static{Compress: true})
+	app.Static("favicon.ico", "./dashboard/out/favicon.ico", fiber.Static{Compress: true})
+	app.Use(func(c *fiber.Ctx) error {
+		// 404 page
+		return c.Status(404).SendFile("./dashboard/out/404.html", true)
+	})
 }
 
 // FiberErrorHandler handles errors in fiber
