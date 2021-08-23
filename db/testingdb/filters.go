@@ -54,17 +54,6 @@ func (f *filter) matches(e db.Entry) bool {
 			entryField = entryField.Elem()
 		}
 
-		valueObjectID, ok := value.(primitive.ObjectID)
-		if ok {
-			goFieldValue, ok := entryField.Interface().(primitive.ObjectID)
-			if !ok {
-				return false
-			}
-			if goFieldValue != valueObjectID {
-				return false
-			}
-		}
-
 		reflectionValue := reflect.ValueOf(value)
 		switch reflectionValue.Kind() {
 		case reflect.String:
@@ -84,7 +73,18 @@ func (f *filter) matches(e db.Entry) bool {
 				return false
 			}
 		default:
-			panic(fmt.Sprintf("Unimplemented value filter type: %T, key: %v, value: %#v", value, key, value))
+			valueObjectID, ok := value.(primitive.ObjectID)
+			if ok {
+				goFieldValue, ok := entryField.Interface().(primitive.ObjectID)
+				if !ok {
+					return false
+				}
+				if goFieldValue != valueObjectID {
+					return false
+				}
+			} else {
+				panic(fmt.Sprintf("Unimplemented value filter type: %T, key: %v, value: %#v", value, key, value))
+			}
 		}
 	}
 
