@@ -23,9 +23,14 @@ func main() {
 	serverSeed := random.StringBytes(64)
 
 	// Loading the .env if available
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("Error loading .env file: %s", err.Error())
+	_, err := os.Stat(".env")
+	if err == nil {
+		err := godotenv.Load()
+		if err != nil {
+			log.Fatalf("Error loading .env file: %s", err.Error())
+		}
+	} else {
+		log.Warn("No .env file found")
 	}
 
 	var dbConn db.Connection
