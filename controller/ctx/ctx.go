@@ -73,13 +73,13 @@ func SetKey(ctx context.Context, value *models.APIKey) context.Context {
 	return context.WithValue(ctx, keyCtxKey, value)
 }
 
-// GetApiKeyFromParam returns the api key specified in the url
-func GetApiKeyFromParam(c *fiber.Ctx) *models.APIKey {
+// GetAPIKeyFromParam returns the api key specified in the url
+func GetAPIKeyFromParam(c *fiber.Ctx) *models.APIKey {
 	return getCtxValue(c, keyFromParamCtxKey).(*models.APIKey)
 }
 
-// SetApiKeyFromParam sets an api key based on the route
-func SetApiKeyFromParam(ctx context.Context, value *models.APIKey) context.Context {
+// SetAPIKeyFromParam sets an api key based on the route
+func SetAPIKeyFromParam(ctx context.Context, value *models.APIKey) context.Context {
 	return context.WithValue(ctx, keyFromParamCtxKey, value)
 }
 

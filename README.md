@@ -22,14 +22,23 @@ This is an api for CV scrapers to upload found CVs to where this tries to match 
 - GDPR compliant
 - Fast
 
+## Quickly start hacking:
+
+Only requires GoLang:
+_note that this uses an in memory database that is resets every time the app restarts_
+
+```bash
+USE_TESTING_DB=true go run .
+```
+
 ## Setup
 
 Requirements:
 
-- GoLang 1.15+
+- GoLang 1.14+
 - Mongodb _(mongodb compass is a great db viewer)_
 
-```sh
+```bash
 cp .env.example .env
 vim .env
 

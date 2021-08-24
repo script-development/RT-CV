@@ -78,7 +78,7 @@ func routeCreateKey(c *fiber.Ctx) error {
 }
 
 func routeDeleteKey(c *fiber.Ctx) error {
-	apiKey := ctx.GetApiKeyFromParam(c)
+	apiKey := ctx.GetAPIKeyFromParam(c)
 	if apiKey.System {
 		return errors.New("you are not allowed to remove system keys")
 	}
@@ -92,13 +92,13 @@ func routeDeleteKey(c *fiber.Ctx) error {
 }
 
 func routeGetKey(c *fiber.Ctx) error {
-	apiKey := ctx.GetApiKeyFromParam(c)
+	apiKey := ctx.GetAPIKeyFromParam(c)
 	return c.JSON(apiKey)
 }
 
 func routeUpdateKey(c *fiber.Ctx) error {
 	dbConn := ctx.GetDbConn(c)
-	apiKey := ctx.GetApiKeyFromParam(c)
+	apiKey := ctx.GetAPIKeyFromParam(c)
 	authenticator := ctx.GetAuth(c)
 	if apiKey.System {
 		return errors.New("you are not allowed to remove system keys")
@@ -169,7 +169,7 @@ func middlewareBindKey() fiber.Handler {
 		}
 
 		c.SetUserContext(
-			ctx.SetApiKeyFromParam(
+			ctx.SetAPIKeyFromParam(
 				c.UserContext(),
 				&apiKey,
 			),
