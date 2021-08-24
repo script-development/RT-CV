@@ -14,7 +14,7 @@ import (
 // Secret contains a secret value that can be stored in the database by a api user
 // The secret value is encrypted with a key that is not stored on our side and is controlled by the api user
 type Secret struct {
-	db.M  `bson:"inline"`
+	db.M  `bson:",inline"`
 	KeyID primitive.ObjectID `bson:"keyId"`
 	Key   string
 	Value string

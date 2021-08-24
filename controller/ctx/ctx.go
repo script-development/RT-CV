@@ -14,16 +14,18 @@ type profilesCtx uint8
 type profileCtx uint8
 type authCtx uint8
 type keyCtx uint8
+type keyFromParamCtx uint8
 type loggerCtx uint8
 type dbConnCtx uint8
 
 const (
-	profilesCtxKey = profilesCtx(0)
-	profileCtxKey  = profileCtx(0)
-	authCtxKey     = authCtx(0)
-	keyCtxKey      = keyCtx(0)
-	loggerCtxKey   = loggerCtx(0)
-	dbConnCtxKey   = dbConnCtx(0)
+	profilesCtxKey     = profilesCtx(0)
+	profileCtxKey      = profileCtx(0)
+	authCtxKey         = authCtx(0)
+	keyCtxKey          = keyCtx(0)
+	keyFromParamCtxKey = keyFromParamCtx(0)
+	loggerCtxKey       = loggerCtx(0)
+	dbConnCtxKey       = dbConnCtx(0)
 )
 
 func getCtxValue(c *fiber.Ctx, key interface{}) interface{} {
@@ -69,6 +71,16 @@ func GetKey(c *fiber.Ctx) *models.APIKey {
 // SetKey sets the api key used to make the request
 func SetKey(ctx context.Context, value *models.APIKey) context.Context {
 	return context.WithValue(ctx, keyCtxKey, value)
+}
+
+// GetApiKeyFromParam returns the api key specified in the url
+func GetApiKeyFromParam(c *fiber.Ctx) *models.APIKey {
+	return getCtxValue(c, keyFromParamCtxKey).(*models.APIKey)
+}
+
+// SetApiKeyFromParam sets an api key based on the route
+func SetApiKeyFromParam(ctx context.Context, value *models.APIKey) context.Context {
+	return context.WithValue(ctx, keyFromParamCtxKey, value)
 }
 
 // GetLogger returns the global logger

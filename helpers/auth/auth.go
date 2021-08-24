@@ -59,6 +59,37 @@ func (a *Auth) GetBaseSeed() []byte {
 	return a.baseSeed
 }
 
+// RefreshKey resets a key
+// This should be called if the updatedKey.key changed otherwise users can still send auth requests with the old key
+func (a *Auth) RefreshKey(updatedKey models.APIKey) {
+	id := updatedKey.ID.Hex()
+	if !updatedKey.Enabled {
+		delete(a.keys, id)
+		return
+	}
+
+	a.keys[id] = key{
+		apiKey:   updatedKey,
+		keyBytes: []byte(updatedKey.Key),
+		sha512:   []rollingHash{},
+		sha256:   []rollingHash{},
+	}
+}
+
+// AddKey Adds a key to the authenticator so it can be used to authenticate with
+func (a *Auth) AddKey(newKey models.APIKey) {
+	if !newKey.Enabled {
+		return
+	}
+
+	a.keys[newKey.ID.Hex()] = key{
+		apiKey:   newKey,
+		keyBytes: []byte(newKey.Key),
+		sha512:   []rollingHash{},
+		sha256:   []rollingHash{},
+	}
+}
+
 // Authenticate check is a authorizationHeader is correct
 func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.APIKey, salt []byte, err error) {
 	authorizationHeaderLen := len(authorizationHeader)

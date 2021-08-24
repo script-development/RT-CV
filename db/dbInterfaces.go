@@ -5,14 +5,20 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+// FindOptions are options for the find operator in Connection
+type FindOptions struct {
+	// NoDefaultFilters does not include the default filters for the entry provided
+	NoDefaultFilters bool
+}
+
 // Connection is a abstract interface for a database connection
 // There are 2 main implementations of this:
 // - MongoConnection (For the MongoDB driver)
 // - TestConnection (For a fake temp database)
 type Connection interface {
 	RegisterEntries(entries ...Entry)
-	FindOne(result Entry, filters bson.M) error
-	Find(entry Entry, results interface{}, filters bson.M) error
+	FindOne(result Entry, filters bson.M, opts ...FindOptions) error
+	Find(entry Entry, results interface{}, filters bson.M, opts ...FindOptions) error
 	Insert(data Entry) error
 	UpdateByID(data Entry) error
 	DeleteByID(data Entry) error

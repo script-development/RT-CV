@@ -7,7 +7,6 @@ import (
 	"unicode"
 
 	"github.com/script-development/RT-CV/db"
-	"github.com/script-development/RT-CV/db/dbHelpers"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -17,12 +16,15 @@ type filter struct {
 	empty   bool
 }
 
-func newFilter(filters ...bson.M) *filter {
+func newFilter(filters bson.M) *filter {
 	res := &filter{
-		filters: dbHelpers.MergeFilters(filters...),
+		filters: filters,
 	}
 	if len(res.filters) == 0 {
 		res.empty = true
+
+		// if filters is nil
+		res.filters = bson.M{}
 	}
 
 	return res
@@ -44,6 +46,11 @@ func (f *filter) matches(e db.Entry) bool {
 		field, fieldFound := eFieldsMap[key]
 		if !fieldFound {
 			return false
+		}
+
+		eReflPath := eRefl
+		for _, pathPart := range field.GoPathToField {
+			eReflPath = eReflPath.FieldByName(pathPart)
 		}
 		entryField := eRefl.FieldByName(field.GoFieldName)
 
@@ -92,6 +99,9 @@ func (f *filter) matches(e db.Entry) bool {
 }
 
 type structField struct {
+	// incase of a inline field we need to resolve the field within another struct
+	GoPathToField []string
+
 	GoFieldName string
 	DbFieldName string
 }
@@ -103,24 +113,48 @@ func mapStruct(entry reflect.Type) map[string]structField {
 
 	res := map[string]structField{}
 	for i := 0; i < entry.NumField(); i++ {
-		field := entry.Field(i)
-
-		bsonTag := field.Tag.Get("bson")
-		if bsonTag == "" {
-			bsonTag = field.Tag.Get("json")
-		}
-		values := strings.Split(bsonTag, ",")
-		dbName := values[0]
-		if dbName == "" {
-			dbName = convertGoToDbName(field.Name)
-		}
-
-		res[dbName] = structField{
-			GoFieldName: field.Name,
-			DbFieldName: dbName,
-		}
+		mapStructField(entry.Field(i), func(field structField) {
+			res[field.DbFieldName] = field
+		})
 	}
 	return res
+}
+
+func mapStructField(field reflect.StructField, add func(structField)) {
+	bsonTag := field.Tag.Get("bson")
+	if bsonTag == "" {
+		bsonTag = field.Tag.Get("json")
+	}
+
+	values := strings.Split(bsonTag, ",")
+	dbName := values[0]
+	if dbName == "" {
+		dbName = convertGoToDbName(field.Name)
+	}
+
+	isInlineField := false
+	if len(values) > 1 {
+		for _, entry := range values[1:] {
+			if entry == "inline" && field.Type.Kind() == reflect.Struct {
+				isInlineField = true
+			}
+		}
+	}
+
+	if isInlineField {
+		for i := 0; i < field.Type.NumField(); i++ {
+			mapStructField(field.Type.Field(i), func(toAdd structField) {
+				toAdd.GoPathToField = append(toAdd.GoPathToField, field.Name)
+				add(toAdd)
+			})
+		}
+	} else {
+		add(structField{
+			GoPathToField: []string{},
+			GoFieldName:   field.Name,
+			DbFieldName:   dbName,
+		})
+	}
 }
 
 func convertGoToDbName(fieldname string) string {

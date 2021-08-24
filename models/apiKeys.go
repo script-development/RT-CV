@@ -10,7 +10,7 @@ import (
 
 // APIKey contains a registered API key
 type APIKey struct {
-	db.M    `bson:"inline"`
+	db.M    `bson:",inline"`
 	Enabled bool       `json:"enabled"`
 	Domains []string   `json:"domains"`
 	Key     string     `json:"key"`
@@ -135,6 +135,12 @@ func (a APIKeyRole) ContainsAll(other APIKeyRole) bool {
 // ContainsSome check if a contains some of other
 func (a APIKeyRole) ContainsSome(other APIKeyRole) bool {
 	return a&other > 0
+}
+
+// Valid returns if the role is valid role
+// Empty roles are also invalid
+func (a APIKeyRole) Valid() bool {
+	return a > 0 && a <= APIKeyRoleAll
 }
 
 // CheckNeedToCreateSystemKeys checks weather the required system keys are available and if not creates them

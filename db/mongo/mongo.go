@@ -52,8 +52,18 @@ type Connection struct {
 }
 
 // FindOne finds a single entry based on the filter
-func (c *Connection) FindOne(e db.Entry, filter bson.M) error {
-	res := c.collection(e).FindOne(dbHelpers.Ctx(), dbHelpers.MergeFilters(e.DefaultFindFilters(), filter))
+func (c *Connection) FindOne(e db.Entry, filter bson.M, optionalOpts ...db.FindOptions) error {
+	opts := db.FindOptions{}
+	if len(optionalOpts) > 0 {
+		opts = optionalOpts[0]
+	}
+
+	queryFilters := filter
+	if !opts.NoDefaultFilters {
+		dbHelpers.MergeFilters(e.DefaultFindFilters(), filter)
+	}
+
+	res := c.collection(e).FindOne(dbHelpers.Ctx(), queryFilters)
 	err := res.Err()
 	if err != nil {
 		return err
@@ -63,8 +73,18 @@ func (c *Connection) FindOne(e db.Entry, filter bson.M) error {
 }
 
 // Find finds entries based on the filter
-func (c *Connection) Find(e db.Entry, results interface{}, filter bson.M) error {
-	cur, err := c.collection(e).Find(dbHelpers.Ctx(), dbHelpers.MergeFilters(e.DefaultFindFilters(), filter))
+func (c *Connection) Find(e db.Entry, results interface{}, filter bson.M, optionalOpts ...db.FindOptions) error {
+	opts := db.FindOptions{}
+	if len(optionalOpts) > 0 {
+		opts = optionalOpts[0]
+	}
+
+	queryFilters := filter
+	if !opts.NoDefaultFilters {
+		dbHelpers.MergeFilters(e.DefaultFindFilters(), filter)
+	}
+
+	cur, err := c.collection(e).Find(dbHelpers.Ctx(), queryFilters)
 	if err != nil {
 		return err
 	}

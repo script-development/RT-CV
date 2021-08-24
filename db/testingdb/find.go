@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	"github.com/script-development/RT-CV/db"
+	"github.com/script-development/RT-CV/db/dbHelpers"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -13,8 +14,17 @@ import (
 // The result can be filtered using filters
 // The filters should work equal to MongoDB filters (https://docs.mongodb.com/manual/tutorial/query-documents/)
 // tough this might miss features compared to mongoDB's filters
-func (c *TestConnection) FindOne(placeInto db.Entry, filters bson.M) error {
-	itemsFilter := newFilter(placeInto.DefaultFindFilters(), filters)
+func (c *TestConnection) FindOne(placeInto db.Entry, filters bson.M, optionalOpts ...db.FindOptions) error {
+	opts := db.FindOptions{}
+	if len(optionalOpts) > 0 {
+		opts = optionalOpts[0]
+	}
+
+	queryFilters := filters
+	if !opts.NoDefaultFilters {
+		dbHelpers.MergeFilters(placeInto.DefaultFindFilters(), filters)
+	}
+	itemsFilter := newFilter(queryFilters)
 
 	c.m.Lock()
 	defer c.m.Unlock()
@@ -37,8 +47,17 @@ func (c *TestConnection) FindOne(placeInto db.Entry, filters bson.M) error {
 // The results can be filtered using filters
 // The filters should work equal to MongoDB filters (https://docs.mongodb.com/manual/tutorial/query-documents/)
 // tough this might miss features compared to mongoDB's filters
-func (c *TestConnection) Find(base db.Entry, results interface{}, filters bson.M) error {
-	itemsFilter := newFilter(base.DefaultFindFilters(), filters)
+func (c *TestConnection) Find(base db.Entry, results interface{}, filters bson.M, optionalOpts ...db.FindOptions) error {
+	opts := db.FindOptions{}
+	if len(optionalOpts) > 0 {
+		opts = optionalOpts[0]
+	}
+
+	queryFilters := filters
+	if !opts.NoDefaultFilters {
+		dbHelpers.MergeFilters(base.DefaultFindFilters(), filters)
+	}
+	itemsFilter := newFilter(queryFilters)
 
 	c.m.Lock()
 	defer c.m.Unlock()

@@ -7,7 +7,7 @@ import (
 
 // Profile contains all the information about a search profile
 type Profile struct {
-	db.M        `bson:"inline"`
+	db.M        `bson:",inline"`
 	Name        string   `json:"name"`
 	Active      bool     `json:"active"`
 	Domains     []string `json:"domains"`
