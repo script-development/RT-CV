@@ -114,7 +114,7 @@ func (c *Connection) UpdateByID(e db.Entry) error {
 		return errors.New("cannot update item without id")
 	}
 
-	_, err := c.collection(e).UpdateOne(dbHelpers.Ctx(), bson.M{"_id": id}, e)
+	_, err := c.collection(e).ReplaceOne(dbHelpers.Ctx(), bson.M{"_id": id}, e)
 	return err
 }
 

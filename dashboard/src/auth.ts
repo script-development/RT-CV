@@ -51,16 +51,34 @@ class AuthenticatedFetcher {
         return this.apiKeyId
     }
 
-    async fetch(path: string) {
+    async post(path: string, data?: any) {
+        return await this.fetch(path, "POST", data)
+    }
+
+    async put(path: string, data?: any) {
+        return await this.fetch(path, "PUT", data)
+    }
+
+    async delete(path: string, data?: any) {
+        return await this.fetch(path, "DELETE", data)
+    }
+
+    async get(path: string) {
+        return await this.fetch(path)
+    }
+
+    async fetch(path: string, method: 'POST' | 'GET' | 'PUT' | 'DELETE' = 'GET', data?: any) {
         if (!this.triedToRestoreCredentials) this.tryRestoreCredentials();
 
         let authHeader = await this.authorizationHeader()
         const url = (path[0] != '/' ? '/' : '') + path
-        const args = (authHeader: string) => ({
+        const args = (authHeader: string): RequestInit => ({
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": authHeader,
             },
+            method: method,
+            body: data ? JSON.stringify(data) : undefined,
         })
 
         let r = await fetch(url, args(authHeader))
@@ -84,7 +102,12 @@ class AuthenticatedFetcher {
             }
         }
 
-        return await r.json()
+        const resJsonData = await r.json()
+
+        if (resJsonData.error)
+            throw resJsonData.error
+
+        return resJsonData
     }
 
     // Returns true if the apiKey and apiKeyId is set

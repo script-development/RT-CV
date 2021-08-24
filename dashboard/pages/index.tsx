@@ -1,4 +1,13 @@
-import { AccordionSummary, Accordion, AccordionDetails, Button, ButtonGroup, Divider, AccordionActions, Dialog, DialogTitle, DialogContentText, DialogContent, TextField, DialogActions, Tooltip } from '@material-ui/core'
+import {
+	AccordionSummary,
+	Accordion,
+	AccordionDetails,
+	Button,
+	ButtonGroup,
+	Divider,
+	AccordionActions,
+	Tooltip,
+} from '@material-ui/core'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import Add from '@material-ui/icons/Add'
 import Delete from '@material-ui/icons/Delete'
@@ -27,7 +36,10 @@ export default function Home() {
 			<KeyModal
 				kind={keyModal.kind}
 				apiKey={keyModal.key}
-				onClose={() => setKeyModal({ kind: KeyModalKind.Closed, key: undefined })}
+				onClose={() => {
+					setKeyModal({ kind: KeyModalKind.Closed, key: undefined })
+					fetchKeys()
+				}}
 			/>
 
 			<main>
@@ -40,54 +52,60 @@ export default function Home() {
 						</div>
 						<div>
 							<ButtonGroup color="primary" variant="contained">
-								<Button
-									onClick={() => setKeyModal({ kind: KeyModalKind.Create, key: undefined })}
-								><Add fontSize={'small'} /></Button>
+								<Tooltip title="Create Api key">
+									<Button
+										onClick={() => setKeyModal({ kind: KeyModalKind.Create, key: undefined })}
+									>
+										<Add fontSize={'small'} />
+									</Button>
+								</Tooltip>
 							</ButtonGroup>
 						</div>
 					</div>
-					{keys?.map(key => <Accordion key={key.id}>
-						<AccordionSummary expandIcon={<ExpandMoreIcon />}>
-							<div className="accordionSummary">
-								<h4>
-									{key.system ?
-										<Tooltip title="This is a internal key created by RT-CV">
+					{keys?.map(key =>
+						<Accordion key={key.id}>
+							<AccordionSummary expandIcon={<ExpandMoreIcon />}>
+								<div className="accordionSummary">
+									<h4>
+										{key.system ?
+											<Tooltip title="This is a internal key created by RT-CV">
+												<div
+													style={{ backgroundColor: '#EF6C00' }}
+													className="status"
+												>System</div>
+											</Tooltip>
+											: ''}
+										<Tooltip title={key.enabled ? 'Key can be used for authentication' : 'Key can\'t be used for authentication'}>
 											<div
-												style={{ backgroundColor: '#EF6C00' }}
+												style={{ backgroundColor: key.enabled ? '#00e676' : '#ff3d00' }}
 												className="status"
-											>System</div>
+											>{key.enabled ? 'Enabled' : 'Disabled'}</div>
 										</Tooltip>
-										: ''}
-									<Tooltip title={key.enabled ? 'Key can be used for authentication' : 'Key can\'t be used for authentication'}>
-										<div
-											style={{ backgroundColor: key.enabled ? '#00e676' : '#ff3d00' }}
-											className="status"
-										>{key.enabled ? 'Enabled' : 'Disabled'}</div>
-									</Tooltip>
-									{key.id}
-								</h4>
-								<p>{key.domains.join(', ')}</p>
-							</div>
-						</AccordionSummary>
-						<AccordionDetails>
-							<div>
-								<p>id: <b>{key.id}</b></p>
-								<p>key: <b>{key.key}</b></p>
-								<p>domains: <b>{key.domains.join(', ')}</b></p>
-								<p>enabled: <b>{key.enabled ? 'Enabled' : 'Disabled'}</b></p>
-								<p>roles: <b>{key.roles}</b></p>
-							</div>
-						</AccordionDetails>
-						<Divider />
-						<AccordionActions>
-							<Button
-								onClick={() => setKeyModal({ kind: KeyModalKind.Delete, key: key })}
-							><Delete fontSize="small" style={{ marginRight: 6 }} />Delete</Button>
-							<Button
-								onClick={() => setKeyModal({ kind: KeyModalKind.Edit, key: key })}
-							><Edit fontSize="small" style={{ marginRight: 6 }} />Edit</Button>
-						</AccordionActions>
-					</Accordion>)}
+										{key.id}
+									</h4>
+									<p>{key.domains.join(', ')}</p>
+								</div>
+							</AccordionSummary>
+							<AccordionDetails>
+								<div>
+									<p>id: <b>{key.id}</b></p>
+									<p>key: <b>{key.key}</b></p>
+									<p>domains: <b>{key.domains.join(', ')}</b></p>
+									<p>enabled: <b>{key.enabled ? 'Enabled' : 'Disabled'}</b></p>
+									<p>roles: <b>{key.roles}</b></p>
+								</div>
+							</AccordionDetails>
+							<Divider />
+							<AccordionActions>
+								<Button
+									onClick={() => setKeyModal({ kind: KeyModalKind.Delete, key: key })}
+								><Delete fontSize="small" style={{ marginRight: 6 }} />Delete</Button>
+								<Button
+									onClick={() => setKeyModal({ kind: KeyModalKind.Edit, key: key })}
+								><Edit fontSize="small" style={{ marginRight: 6 }} />Edit</Button>
+							</AccordionActions>
+						</Accordion>
+					)}
 				</div>
 			</main>
 
