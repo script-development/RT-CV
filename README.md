@@ -25,7 +25,7 @@ This is an api for CV scrapers to upload found CVs to where this tries to match 
 ## Quickly start hacking:
 
 Only requires GoLang:
-_note that this uses an in memory database that is resets every time the app restarts_
+_note that this uses an in memory database that resets every time the app restarts_
 
 ```bash
 USE_TESTING_DB=true go run .
