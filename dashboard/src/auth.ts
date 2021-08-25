@@ -66,56 +66,64 @@ class AuthenticatedFetcher {
     }
 
     async fetch(path: string, method: 'POST' | 'GET' | 'PUT' | 'DELETE' = 'GET', data?: any) {
-        await new Promise(res => {
-            if (this.awaitingFetches.length == 0)
-                res(undefined)
-            this.awaitingFetches.push(res)
-        })
+        try {
+            await new Promise(res => {
+                if (this.awaitingFetches.length == 0)
+                    res(undefined)
+                this.awaitingFetches.push(res)
+            })
 
-        if (!this.triedToRestoreCredentials) this.tryRestoreCredentials();
+            if (!this.triedToRestoreCredentials) this.tryRestoreCredentials();
 
-        let authHeader = await this.authorizationHeader()
-        const url = (path[0] != '/' ? '/' : '') + path
-        const args = (authHeader: string): RequestInit => ({
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": authHeader,
-            },
-            method: method,
-            body: data ? JSON.stringify(data) : undefined,
-        })
+            let authHeader = await this.authorizationHeader()
+            const url = (path[0] != '/' ? '/' : '') + path
+            const args = (authHeader: string): RequestInit => ({
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": authHeader,
+                },
+                method: method,
+                body: data ? JSON.stringify(data) : undefined,
+            })
 
-        let r = await fetch(url, args(authHeader))
-        if (r.status == 401) {
-            // Firstly lets just re-try it
-            r = await fetch(url, args(authHeader))
+            let r = await fetch(url, args(authHeader))
             if (r.status == 401) {
-                // Retrying did not work, lets refresh the seed and rolling key and try again
-                await this.refreshSeedAndRollingKey()
-                authHeader = await this.authorizationHeader()
-
+                // Firstly lets just re-try it
                 r = await fetch(url, args(authHeader))
                 if (r.status == 401) {
-                    const resData = await r.json()
-                    if (resData.error)
-                        // redirect to login screen as something with the credentials is going wrong
-                        location.pathname = '/login'
-                    throw resData.error
+                    // Retrying did not work, lets refresh the seed and rolling key and try again
+                    await this.refreshSeedAndRollingKey()
+                    authHeader = await this.authorizationHeader()
+
+                    r = await fetch(url, args(authHeader))
+                    if (r.status == 401) {
+                        const resData = await r.json()
+                        if (resData.error)
+                            // redirect to login screen as something with the credentials is going wrong
+                            location.pathname = '/login'
+                        throw resData.error
+                    }
+                    this.storeCredentials()
                 }
-                this.storeCredentials()
             }
+
+            const resJsonData = await r.json()
+
+            if (resJsonData.error)
+                throw resJsonData.error
+
+            this.awaitingFetches.shift()
+            if (this.awaitingFetches.length > 0)
+                this.awaitingFetches[0](undefined)
+
+            return resJsonData
+        } catch (e) {
+            this.awaitingFetches.shift()
+            if (this.awaitingFetches.length > 0)
+                this.awaitingFetches[0](undefined)
+
+            throw e
         }
-
-        const resJsonData = await r.json()
-
-        if (resJsonData.error)
-            throw resJsonData.error
-
-        this.awaitingFetches.shift()
-        if (this.awaitingFetches.length > 0)
-            this.awaitingFetches[0](undefined)
-
-        return resJsonData
     }
 
     // Returns true if the apiKey and apiKeyId is set
