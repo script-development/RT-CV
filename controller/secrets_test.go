@@ -15,7 +15,7 @@ func TestSecretRoutes(t *testing.T) {
 	encryptionKey := "very-secret-key-of-minimal-16-chars"
 
 	// Insert key works
-	route := fmt.Sprintf("/api/v1/secrets/%v/%v", valueKey, encryptionKey)
+	route := fmt.Sprintf("/api/v1/secrets/myKey/%v/%v", valueKey, encryptionKey)
 	_, body := app.MakeRequest(Post, route, TestReqOpts{
 		Body: []byte(contents),
 	})
@@ -37,7 +37,7 @@ func TestSecretRoutes(t *testing.T) {
 	Equal(t, contents, string(body))
 
 	// Can delete value
-	deleteRoute := fmt.Sprintf("/api/v1/secrets/%v", valueKey)
+	deleteRoute := fmt.Sprintf("/api/v1/secrets/myKey/%v", valueKey)
 	_, body = app.MakeRequest(Delete, deleteRoute, TestReqOpts{})
 	Equal(t, `{"status":"ok"}`, string(body))
 

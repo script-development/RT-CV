@@ -150,9 +150,25 @@ func routeUpdateKey(c *fiber.Ctx) error {
 	return c.JSON(apiKey)
 }
 
+// middlewareBindMyKey sets the APIKeyFromParam to the api key used to authenticate
+func middlewareBindMyKey() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		apiKey := ctx.GetKey(c)
+
+		c.SetUserContext(
+			ctx.SetAPIKeyFromParam(
+				c.UserContext(),
+				apiKey,
+			),
+		)
+
+		return c.Next()
+	}
+}
+
 func middlewareBindKey() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		keyParam := c.Params(`key`)
+		keyParam := c.Params(`keyID`)
 		keyID, err := primitive.ObjectIDFromHex(keyParam)
 		if err != nil {
 			return err

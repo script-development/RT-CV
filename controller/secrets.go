@@ -29,7 +29,7 @@ func validSecretKeyMiddleware() fiber.Handler {
 }
 
 func routeCreateSecret(c *fiber.Ctx) error {
-	apiKey := ctx.GetKey(c)
+	apiKey := ctx.GetAPIKeyFromParam(c)
 	keyParam, secretKeyParam := c.Params("key"), c.Params("secretKey")
 	body := c.Body()
 	if len(body) == 0 {
@@ -55,7 +55,7 @@ func routeCreateSecret(c *fiber.Ctx) error {
 }
 
 func routeUpdateSecret(c *fiber.Ctx) error {
-	apiKey := ctx.GetKey(c)
+	apiKey := ctx.GetAPIKeyFromParam(c)
 	keyParam, secretKeyParam := c.Params("key"), c.Params("secretKey")
 	body := c.Body()
 	if len(body) == 0 {
@@ -94,7 +94,7 @@ func routeUpdateSecret(c *fiber.Ctx) error {
 
 func routeGetSecret(c *fiber.Ctx) error {
 	dbConn := ctx.GetDbConn(c)
-	apiKey := ctx.GetKey(c)
+	apiKey := ctx.GetAPIKeyFromParam(c)
 	keyParam, secretKeyParam := c.Params("key"), c.Params("secretKey")
 
 	secret, err := models.GetSecretByKey(dbConn, apiKey.ID, keyParam)
@@ -112,7 +112,7 @@ func routeGetSecret(c *fiber.Ctx) error {
 
 func routeGetSecrets(c *fiber.Ctx) error {
 	dbConn := ctx.GetDbConn(c)
-	apiKey := ctx.GetKey(c)
+	apiKey := ctx.GetAPIKeyFromParam(c)
 
 	secrets, err := models.GetSecrets(dbConn, apiKey.ID)
 	if err != nil {
@@ -123,7 +123,7 @@ func routeGetSecrets(c *fiber.Ctx) error {
 }
 
 func routeDeleteSecret(c *fiber.Ctx) error {
-	apiKey := ctx.GetKey(c)
+	apiKey := ctx.GetAPIKeyFromParam(c)
 	keyParam := c.Params("key")
 
 	err := models.DeleteSecretByKey(ctx.GetDbConn(c), apiKey.ID, keyParam)
