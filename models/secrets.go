@@ -77,6 +77,13 @@ func GetSecrets(conn db.Connection, keyID primitive.ObjectID) ([]Secret, error) 
 	return secrets, err
 }
 
+// GetSecretsFromAllKeys gets all secrets
+func GetSecretsFromAllKeys(conn db.Connection) ([]Secret, error) {
+	secrets := []Secret{}
+	err := conn.Find(&Secret{}, &secrets, nil)
+	return secrets, err
+}
+
 // DeleteSecretByKey delete a secret
 func DeleteSecretByKey(conn db.Connection, keyID primitive.ObjectID, key string) error {
 	secret, err := GetSecretByKey(conn, keyID, key)

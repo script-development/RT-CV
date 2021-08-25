@@ -42,7 +42,10 @@ func Routes(app *fiber.App, dbConn db.Connection, serverSeed []byte) {
 			}, validKeyMiddleware())
 		}
 		Group(c, `/secrets/myKey`, secretsRoutes, requiresAuth(models.APIKeyRoleAll), middlewareBindMyKey())
-		Group(c, `/secrets/otherKey/:keyID`, secretsRoutes, requiresAuth(models.APIKeyRoleDashboard), middlewareBindKey())
+		Group(c, `/secrets/otherKey`, func(c fiber.Router) {
+			c.Get(``, routeGetAllSecretsFromAllKeys)
+			Group(c, `/:keyID`, secretsRoutes, middlewareBindKey())
+		}, requiresAuth(models.APIKeyRoleDashboard))
 
 		Group(c, `/control`, func(c fiber.Router) {
 			Group(c, `/profiles`, func(c fiber.Router) {

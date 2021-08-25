@@ -122,6 +122,17 @@ func routeGetSecrets(c *fiber.Ctx) error {
 	return c.JSON(secrets)
 }
 
+func routeGetAllSecretsFromAllKeys(c *fiber.Ctx) error {
+	dbConn := ctx.GetDbConn(c)
+
+	secrets, err := models.GetSecretsFromAllKeys(dbConn)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(secrets)
+}
+
 func routeDeleteSecret(c *fiber.Ctx) error {
 	apiKey := ctx.GetAPIKeyFromParam(c)
 	keyParam := c.Params("key")
