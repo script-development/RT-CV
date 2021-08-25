@@ -30,23 +30,19 @@ func Routes(app *fiber.App, dbConn db.Connection, serverSeed []byte) {
 			c.Post(`/scanCV`, routeScraperScanCV)
 		}, requiresAuth(models.APIKeyRoleScraper))
 
-		Group(c, `/secrets`, func(c fiber.Router) {
-			secretsRoutes := func(c fiber.Router) {
-				c.Get(``, routeGetSecrets)
-				Group(c, `/:key`, func(c fiber.Router) {
-					c.Delete(``, routeDeleteSecret)
-					Group(c, `/:secretKey`, func(c fiber.Router) {
-						c.Get(``, routeGetSecret)
-						c.Put(``, routeUpdateSecret)
-						c.Post(``, routeCreateSecret)
-					}, validSecretKeyMiddleware())
-				}, validKeyMiddleware())
-			}
-			Group(c, `/myKey`, secretsRoutes, middlewareBindMyKey())
-			Group(c, `/otherKey/:keyID`, secretsRoutes, middlewareBindKey())
-		}, requiresAuth(
-			models.APIKeyRoleScraper|models.APIKeyRoleInformationObtainer|models.APIKeyRoleController|models.APIKeyRoleDashboard,
-		))
+		secretsRoutes := func(c fiber.Router) {
+			c.Get(``, routeGetSecrets)
+			Group(c, `/:key`, func(c fiber.Router) {
+				c.Delete(``, routeDeleteSecret)
+				Group(c, `/:secretKey`, func(c fiber.Router) {
+					c.Get(``, routeGetSecret)
+					c.Put(``, routeUpdateSecret)
+					c.Post(``, routeCreateSecret)
+				}, validSecretKeyMiddleware())
+			}, validKeyMiddleware())
+		}
+		Group(c, `/secrets/myKey`, secretsRoutes, requiresAuth(models.APIKeyRoleAll), middlewareBindMyKey())
+		Group(c, `/secrets/otherKey/:keyID`, secretsRoutes, requiresAuth(models.APIKeyRoleDashboard), middlewareBindKey())
 
 		Group(c, `/control`, func(c fiber.Router) {
 			Group(c, `/profiles`, func(c fiber.Router) {
