@@ -7,6 +7,7 @@ import {
 	Divider,
 	AccordionActions,
 	Tooltip,
+	LinearProgress,
 } from '@material-ui/core'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import Add from '@material-ui/icons/Add'
@@ -20,10 +21,14 @@ import { KeyModal, KeyModalKind } from '../components/keyModal'
 
 export default function Home() {
 	const [keys, setKeys] = useState(undefined as Array<ApiKey> | undefined)
+	const [loadingKeys, setLoadingKeys] = useState(true)
 	const [keyModal, setKeyModal] = useState({ kind: KeyModalKind.Closed, key: undefined as (undefined | ApiKey) })
 
-	const fetchKeys = async () =>
+	const fetchKeys = async () => {
+		setLoadingKeys(true)
 		setKeys(await fetcher.fetch(`/api/v1/keys`))
+		setLoadingKeys(false)
+	}
 
 	useEffect(() => { fetchKeys() }, [])
 
@@ -47,19 +52,28 @@ export default function Home() {
 				<div className="cardContainer">
 					<h3>Keys</h3>
 					<div className="accordionHeader">
-						<div>
-							{keys?.length} key{keys?.length == 1 ? '' : 's'}
+						<div className="accordionHeaderContent">
+							<div>
+								{loadingKeys ? 'loading..' : keys?.length} key{keys?.length == 1 ? '' : 's'}
+							</div>
+							<div>
+								<ButtonGroup color="primary" variant="contained">
+									<Tooltip title="Create Api key">
+										<Button
+											onClick={() => setKeyModal({ kind: KeyModalKind.Create, key: undefined })}
+										>
+											<Add fontSize={'small'} />
+										</Button>
+									</Tooltip>
+								</ButtonGroup>
+							</div>
 						</div>
-						<div>
-							<ButtonGroup color="primary" variant="contained">
-								<Tooltip title="Create Api key">
-									<Button
-										onClick={() => setKeyModal({ kind: KeyModalKind.Create, key: undefined })}
-									>
-										<Add fontSize={'small'} />
-									</Button>
-								</Tooltip>
-							</ButtonGroup>
+						<div className="accordionHeaderProgress">
+							<div>
+								{
+									loadingKeys ? <LinearProgress /> : ''
+								}
+							</div>
 						</div>
 					</div>
 					{keys?.map(key =>
@@ -137,13 +151,20 @@ export default function Home() {
 					border-radius: 10px;
 				}
 				.accordionHeader {
-					padding: 10px;
+					overflow: hidden;
 					border-top-left-radius: 4px;
 					border-top-right-radius: 4px;
+				}
+				.accordionHeaderContent {
+					padding: 10px;
 					background-color: #424242;
 					display: flex;
 					justify-content: space-between;
 					align-items: center;
+				}
+				.accordionHeaderProgress {
+					max-height: 0px;
+					transform: translate(0, -4px);
 				}
 			`}</style>
 		</div >
