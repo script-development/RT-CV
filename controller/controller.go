@@ -28,15 +28,21 @@ func Routes(app *fiber.App, dbConn db.Connection, serverSeed []byte) {
 
 		Group(c, `/scraper`, func(c fiber.Router) {
 			c.Post(`/scanCV`, routeScraperScanCV)
-			Group(c, `/secret/:key`, func(c fiber.Router) {
+		}, requiresAuth(models.APIKeyRoleScraper))
+
+		Group(c, `/secrets`, func(c fiber.Router) {
+			c.Get(``, routeGetSecrets)
+			Group(c, `/:key`, func(c fiber.Router) {
 				c.Delete(``, routeDeleteSecret)
 				Group(c, `/:secretKey`, func(c fiber.Router) {
-					c.Post(``, routeCreateSecret)
-					c.Put(``, routeUpdateSecret)
 					c.Get(``, routeGetSecret)
+					c.Put(``, routeUpdateSecret)
+					c.Post(``, routeCreateSecret)
 				}, validSecretKeyMiddleware())
 			}, validKeyMiddleware())
-		}, requiresAuth(models.APIKeyRoleScraper))
+		}, requiresAuth(
+			models.APIKeyRoleScraper|models.APIKeyRoleInformationObtainer|models.APIKeyRoleController|models.APIKeyRoleDashboard,
+		))
 
 		Group(c, `/control`, func(c fiber.Router) {
 			Group(c, `/profiles`, func(c fiber.Router) {

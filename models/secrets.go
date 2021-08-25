@@ -15,9 +15,9 @@ import (
 // The secret value is encrypted with a key that is not stored on our side and is controlled by the api user
 type Secret struct {
 	db.M  `bson:",inline"`
-	KeyID primitive.ObjectID `bson:"keyId"`
-	Key   string
-	Value string
+	KeyID primitive.ObjectID `bson:"keyId" json:"keyId"`
+	Key   string             `json:"key"`
+	Value string             `json:"-"`
 }
 
 // CollectionName returns the collection name of a secret
@@ -68,6 +68,13 @@ func GetSecretByKey(conn db.Connection, keyID primitive.ObjectID, key string) (*
 		return nil, err
 	}
 	return secret, nil
+}
+
+// GetSecrets gets all secrets from a key
+func GetSecrets(conn db.Connection, keyID primitive.ObjectID) ([]Secret, error) {
+	secrets := []Secret{}
+	err := conn.Find(&Secret{}, &secrets, bson.M{"keyId": keyID})
+	return secrets, err
 }
 
 // DeleteSecretByKey delete a secret

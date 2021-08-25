@@ -93,10 +93,11 @@ func routeUpdateSecret(c *fiber.Ctx) error {
 }
 
 func routeGetSecret(c *fiber.Ctx) error {
+	dbConn := ctx.GetDbConn(c)
 	apiKey := ctx.GetKey(c)
 	keyParam, secretKeyParam := c.Params("key"), c.Params("secretKey")
 
-	secret, err := models.GetSecretByKey(ctx.GetDbConn(c), apiKey.ID, keyParam)
+	secret, err := models.GetSecretByKey(dbConn, apiKey.ID, keyParam)
 	if err != nil {
 		return err
 	}
@@ -107,6 +108,18 @@ func routeGetSecret(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(value)
+}
+
+func routeGetSecrets(c *fiber.Ctx) error {
+	dbConn := ctx.GetDbConn(c)
+	apiKey := ctx.GetKey(c)
+
+	secrets, err := models.GetSecrets(dbConn, apiKey.ID)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(secrets)
 }
 
 func routeDeleteSecret(c *fiber.Ctx) error {
