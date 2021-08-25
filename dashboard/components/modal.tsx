@@ -4,28 +4,32 @@ import React, { useState, useEffect } from 'react'
 export enum ModalKind {
     Closed = 'closed',
     Create = 'create',
+    View = 'view',
     Edit = 'edit',
     Delete = 'delete',
 }
 
 export type ModalContentOptions = {
-    create: string,
-    edit: string,
-    delete: string,
+    create?: string,
+    edit?: string,
+    view?: string,
+    delete?: string,
 } | string
 
 interface ModalProps {
     kind: ModalKind
     onClose: () => void
     onSubmit: () => void
-    title: ModalContentOptions,
+    title: ModalContentOptions
 
-    confirmText?: ModalContentOptions,
+    confirmText?: ModalContentOptions
+    cancelText?: ModalContentOptions
     children?: (kind: ModalKind) => React.ReactNode
-    submitDisabled?: boolean,
+    submitDisabled?: boolean
     apiError?: string
     setApiError?: (error: string) => void
-
+    fullWidth?: boolean
+    showConfirm?: boolean
 }
 
 export function Modal({
@@ -33,11 +37,14 @@ export function Modal({
     onClose,
     onSubmit,
     title,
-    confirmText = { create: 'Create', edit: 'Save', delete: 'Delete' },
+    confirmText = { create: 'Create', edit: 'Save', delete: 'Delete', view: 'View' },
+    cancelText = 'Cancel',
     children,
     apiError = '',
     setApiError = () => { },
     submitDisabled = false,
+    fullWidth = false,
+    showConfirm = true,
 }: ModalProps) {
     // Inner kinds reflects the value of kind only if the kind != KeyModalKind.Closed
     // This makes it so when you close the modal the content won't change while the closing animation is playing
@@ -52,7 +59,7 @@ export function Modal({
         typeof value == 'string' ? value : (value as { [key: string]: string })[innerKind]
 
     return (
-        <Dialog open={kind != ModalKind.Closed} onClose={onClose}>
+        <Dialog open={kind != ModalKind.Closed} onClose={onClose} fullWidth={fullWidth}>
             <Snackbar
                 anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                 open={!!apiError}
@@ -64,18 +71,26 @@ export function Modal({
 
             <DialogTitle>{resolveModalContentOpts(title)}</DialogTitle>
 
+
             <DialogContent>
-                {children?.(innerKind)}
+                <form
+                    onSubmit={e => {
+                        e.preventDefault()
+                        onSubmit()
+                    }}
+                >
+                    {children?.(innerKind)}
+                </form>
             </DialogContent>
 
             <DialogActions>
                 <Button onClick={onClose}>
-                    Cancel
+                    {resolveModalContentOpts(cancelText) || 'Cancel'}
                 </Button>
-                <Button onClick={onSubmit} color="primary" disabled={submitDisabled}>
+                {showConfirm ? <Button onClick={onSubmit} color="primary" disabled={submitDisabled}>
                     {resolveModalContentOpts(confirmText)}
-                </Button>
+                </Button> : ''}
             </DialogActions>
-        </Dialog>
+        </Dialog >
     )
 }

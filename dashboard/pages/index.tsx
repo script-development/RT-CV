@@ -8,11 +8,13 @@ import {
 	AccordionActions,
 	Tooltip,
 	LinearProgress,
+	Breadcrumbs,
 } from '@material-ui/core'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import Add from '@material-ui/icons/Add'
 import Delete from '@material-ui/icons/Delete'
 import Edit from '@material-ui/icons/Edit'
+import Visibility from '@material-ui/icons/Visibility'
 import Head from 'next/head'
 import React, { useEffect, useState } from 'react'
 import { fetcher } from '../src/auth'
@@ -29,14 +31,17 @@ export default function Home() {
 	const [secretModal, setSecretModal] = useState({ kind: ModalKind.Closed, secret: undefined as (undefined | Secret) })
 
 	const fetchData = async () => {
-		setLoading(true)
-		const [keys, secrets] = await Promise.all([
-			fetcher.fetch(`/api/v1/keys`),
-			fetcher.fetch(`/api/v1/secrets/otherKey`),
-		]);
-		setKeys(keys)
-		setSecrets(secrets)
-		setLoading(false)
+		try {
+			setLoading(true)
+			const [keys, secrets] = await Promise.all([
+				fetcher.fetch(`/api/v1/keys`),
+				fetcher.fetch(`/api/v1/secrets/otherKey`),
+			]);
+			setKeys(keys)
+			setSecrets(secrets)
+		} finally {
+			setLoading(false)
+		}
 	}
 
 	useEffect(() => { fetchData() }, [])
@@ -58,6 +63,7 @@ export default function Home() {
 
 			<SecretModal
 				kind={secretModal.kind}
+				secret={secretModal.secret}
 				onClose={() => {
 					setSecretModal({ kind: ModalKind.Closed, secret: undefined })
 					fetchData()
@@ -176,6 +182,26 @@ export default function Home() {
 							</div>
 						</div>
 					</div>
+					{secrets?.map((secret, idx) =>
+						<div key={secret.id} className={"simpleRow" + (secrets.length == (idx + 1) ? ' last' : '')}>
+							<Breadcrumbs>
+								<p>{secret.keyId}</p>
+								<b style={{ color: "white" }}>{secret.key}</b>
+							</Breadcrumbs>
+							<div>
+								<Tooltip title="View secret contents">
+									<Button onClick={() => setSecretModal({ kind: ModalKind.View, secret: secret })}>
+										<Visibility fontSize="small" />
+									</Button>
+								</Tooltip>
+								<Tooltip title="Delete secret">
+									<Button onClick={() => setSecretModal({ kind: ModalKind.Delete, secret: secret })}>
+										<Delete fontSize="small" />
+									</Button>
+								</Tooltip>
+							</div>
+						</div>
+					)}
 				</div>
 			</main>
 
@@ -210,10 +236,10 @@ export default function Home() {
 					overflow: hidden;
 					border-top-left-radius: 4px;
 					border-top-right-radius: 4px;
+					background-color: #424242;
 				}
 				.accordionHeaderContent {
 					padding: 10px;
-					background-color: #424242;
 					display: flex;
 					justify-content: space-between;
 					align-items: center;
@@ -221,6 +247,18 @@ export default function Home() {
 				.accordionHeaderProgress {
 					max-height: 0px;
 					transform: translate(0, -4px);
+				}
+				.simpleRow {
+					border-top: 1px solid rgba(255, 255, 255, 0.12);
+					background-color: #424242;
+					padding: 10px;
+					display: flex;
+					justify-content: space-between;
+					align-items: center;
+				}
+				.simpleRow.last {
+					border-bottom-left-radius: 4px;
+					border-bottom-right-radius: 4px;
 				}
 			`}</style>
 		</div >
