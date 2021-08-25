@@ -11,6 +11,8 @@ class AuthenticatedFetcher {
 
     private rollingKey = new Uint8Array;
 
+    private awaitingFetches: Array<(value: any) => void> = [];
+
     async login(key: string, keyId: string) {
         if (!this.triedToRestoreCredentials) this.tryRestoreCredentials();
 
@@ -64,6 +66,12 @@ class AuthenticatedFetcher {
     }
 
     async fetch(path: string, method: 'POST' | 'GET' | 'PUT' | 'DELETE' = 'GET', data?: any) {
+        await new Promise(res => {
+            if (this.awaitingFetches.length == 0)
+                res(undefined)
+            this.awaitingFetches.push(res)
+        })
+
         if (!this.triedToRestoreCredentials) this.tryRestoreCredentials();
 
         let authHeader = await this.authorizationHeader()
@@ -102,6 +110,10 @@ class AuthenticatedFetcher {
 
         if (resJsonData.error)
             throw resJsonData.error
+
+        this.awaitingFetches.shift()
+        if (this.awaitingFetches.length > 0)
+            this.awaitingFetches[0](undefined)
 
         return resJsonData
     }

@@ -16,21 +16,30 @@ import Edit from '@material-ui/icons/Edit'
 import Head from 'next/head'
 import React, { useEffect, useState } from 'react'
 import { fetcher } from '../src/auth'
-import { ApiKey } from '../src/types'
-import { KeyModal, KeyModalKind } from '../components/keyModal'
+import { ApiKey, Secret } from '../src/types'
+import { KeyModal } from '../components/keyModal'
+import { ModalKind } from '../components/modal'
+import { SecretModal } from '../components/secretModal'
 
 export default function Home() {
 	const [keys, setKeys] = useState(undefined as Array<ApiKey> | undefined)
-	const [loadingKeys, setLoadingKeys] = useState(true)
-	const [keyModal, setKeyModal] = useState({ kind: KeyModalKind.Closed, key: undefined as (undefined | ApiKey) })
+	const [secrets, setSecrets] = useState(undefined as Array<Secret> | undefined)
+	const [loading, setLoading] = useState(true)
+	const [keyModal, setKeyModal] = useState({ kind: ModalKind.Closed, key: undefined as (undefined | ApiKey) })
+	const [secretModal, setSecretModal] = useState({ kind: ModalKind.Closed, secret: undefined as (undefined | Secret) })
 
-	const fetchKeys = async () => {
-		setLoadingKeys(true)
-		setKeys(await fetcher.fetch(`/api/v1/keys`))
-		setLoadingKeys(false)
+	const fetchData = async () => {
+		setLoading(true)
+		const [keys, secrets] = await Promise.all([
+			fetcher.fetch(`/api/v1/keys`),
+			fetcher.fetch(`/api/v1/secrets/otherKey`),
+		]);
+		setKeys(keys)
+		setSecrets(secrets)
+		setLoading(false)
 	}
 
-	useEffect(() => { fetchKeys() }, [])
+	useEffect(() => { fetchData() }, [])
 
 	return (
 		<div>
@@ -42,8 +51,16 @@ export default function Home() {
 				kind={keyModal.kind}
 				apiKey={keyModal.key}
 				onClose={() => {
-					setKeyModal({ kind: KeyModalKind.Closed, key: undefined })
-					fetchKeys()
+					setKeyModal({ kind: ModalKind.Closed, key: undefined })
+					fetchData()
+				}}
+			/>
+
+			<SecretModal
+				kind={secretModal.kind}
+				onClose={() => {
+					setSecretModal({ kind: ModalKind.Closed, secret: undefined })
+					fetchData()
 				}}
 			/>
 
@@ -54,13 +71,18 @@ export default function Home() {
 					<div className="accordionHeader">
 						<div className="accordionHeaderContent">
 							<div>
-								{loadingKeys ? 'loading..' : keys?.length} key{keys?.length == 1 ? '' : 's'}
+								{loading
+									? 'loading..'
+									: keys?.length
+										? `${keys?.length} key${keys?.length == 1 ? '' : 's'}`
+										: 'No keys'
+								}
 							</div>
 							<div>
 								<ButtonGroup color="primary" variant="contained">
 									<Tooltip title="Create Api key">
 										<Button
-											onClick={() => setKeyModal({ kind: KeyModalKind.Create, key: undefined })}
+											onClick={() => setKeyModal({ kind: ModalKind.Create, key: undefined })}
 										>
 											<Add fontSize={'small'} />
 										</Button>
@@ -71,7 +93,7 @@ export default function Home() {
 						<div className="accordionHeaderProgress">
 							<div>
 								{
-									loadingKeys ? <LinearProgress /> : ''
+									loading ? <LinearProgress /> : ''
 								}
 							</div>
 						</div>
@@ -112,14 +134,48 @@ export default function Home() {
 							<Divider />
 							<AccordionActions>
 								<Button
-									onClick={() => setKeyModal({ kind: KeyModalKind.Delete, key: key })}
+									onClick={() => setKeyModal({ kind: ModalKind.Delete, key: key })}
 								><Delete fontSize="small" style={{ marginRight: 6 }} />Delete</Button>
 								<Button
-									onClick={() => setKeyModal({ kind: KeyModalKind.Edit, key: key })}
+									onClick={() => setKeyModal({ kind: ModalKind.Edit, key: key })}
 								><Edit fontSize="small" style={{ marginRight: 6 }} />Edit</Button>
 							</AccordionActions>
 						</Accordion>
 					)}
+				</div>
+
+				<div className="cardContainer">
+					<h3>Secrets</h3>
+					<div className="accordionHeader">
+						<div className="accordionHeaderContent">
+							<div>
+								{loading
+									? 'loading..'
+									: secrets?.length
+										? `${secrets?.length} secret${secrets?.length == 1 ? '' : 's'}`
+										: 'No secrets'
+								}
+							</div>
+							<div>
+								<ButtonGroup color="primary" variant="contained">
+									<Tooltip title="Create secret">
+										<Button
+											onClick={() => setSecretModal({ kind: ModalKind.Create, secret: undefined })}
+										>
+											<Add fontSize={'small'} />
+										</Button>
+									</Tooltip>
+								</ButtonGroup>
+							</div>
+						</div>
+						<div className="accordionHeaderProgress">
+							<div>
+								{
+									loading ? <LinearProgress /> : ''
+								}
+							</div>
+						</div>
+					</div>
 				</div>
 			</main>
 

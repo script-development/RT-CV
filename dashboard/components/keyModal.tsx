@@ -14,13 +14,13 @@ import {
     FormLabel,
     Snackbar,
 } from '@material-ui/core'
-import React, { useEffect } from 'react'
-import { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { ApiKey } from '../src/types'
 import { allRoles, Roles, roleInfo } from '../src/roles'
 import { randomString } from '../src/random'
 import RefreshIcon from '@material-ui/icons/Refresh'
 import { fetcher } from '../src/auth'
+import { Modal, ModalKind } from './modal'
 
 export enum KeyModalKind {
     Closed,
@@ -29,18 +29,15 @@ export enum KeyModalKind {
     Delete,
 }
 
-interface KeyModalArgs {
-    kind: KeyModalKind
+interface KeyModalProps {
+    kind: ModalKind
     onClose: () => void
 
     // Only required if kind = Edit or Delete
     apiKey?: ApiKey
 }
 
-export function KeyModal({ kind, onClose, apiKey = undefined }: KeyModalArgs) {
-    // Inner kinds reflects the value of kind only if the kind != KeyModalKind.Closed
-    // This makes it so when you close the modal the content won't change while the closing animation is playing
-    const [innerKind, setInnerKind] = useState(KeyModalKind.Create)
+export function KeyModal({ kind, onClose, apiKey = undefined }: KeyModalProps) {
     const [state, setState] = useState<ApiKey>({
         domains: ['*'],
         enabled: true,
@@ -51,8 +48,6 @@ export function KeyModal({ kind, onClose, apiKey = undefined }: KeyModalArgs) {
     })
     const [apiError, setApiError] = useState('')
 
-    const titleText = innerKind == KeyModalKind.Create ? 'Create Api key' : innerKind == KeyModalKind.Edit ? 'Edit Api key' : 'Delete Api key'
-    const confirmText = innerKind == KeyModalKind.Create ? 'Create' : innerKind == KeyModalKind.Edit ? 'Save' : 'Delete'
     const formControlStyle = { marginTop: 10 }
     const rolesError = state.roles == 0 ? 'You need at least one role' : undefined
     const disabled = state.system
@@ -60,9 +55,9 @@ export function KeyModal({ kind, onClose, apiKey = undefined }: KeyModalArgs) {
 
     const submit = async () => {
         try {
-            if (innerKind == KeyModalKind.Create)
+            if (kind == ModalKind.Create)
                 await fetcher.post(`/api/v1/keys`, state)
-            else if (innerKind == KeyModalKind.Edit)
+            else if (kind == ModalKind.Edit)
                 await fetcher.put(`/api/v1/keys/${state.id}`, state)
             else
                 await fetcher.delete(`/api/v1/keys/${state.id}`)
@@ -75,44 +70,46 @@ export function KeyModal({ kind, onClose, apiKey = undefined }: KeyModalArgs) {
     const refreshKey = () => setState(v => ({ ...v, key: randomString(32) }))
 
     useEffect(() => {
-        if (kind != KeyModalKind.Closed) setInnerKind(kind)
-        if (apiKey != undefined && apiKey.id != state.id) setState(apiKey)
-        else if (apiKey == undefined && state.id) setState({
-            domains: ['*'],
-            enabled: true,
-            id: '',
-            key: randomString(32),
-            roles: 0,
-            system: false,
-        })
+        if (apiKey != undefined && apiKey.id != state.id)
+            setState(apiKey)
+        else if (apiKey == undefined && state.id)
+            setState({
+                domains: ['*'],
+                enabled: true,
+                id: '',
+                key: randomString(32),
+                roles: 0,
+                system: false,
+            })
     }, [kind, apiKey])
 
     return (
-        <Dialog open={kind != KeyModalKind.Closed} onClose={onClose}>
-            <Snackbar
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                open={!!apiError}
-                onClose={() => setApiError('')}
-                autoHideDuration={6000}
-                message={apiError}
-                key="key-api-error"
-            />
-
-            <DialogTitle>{titleText}</DialogTitle>
-            {
-                innerKind == KeyModalKind.Delete
-                    ? <DialogContent>
-                        <DialogContentText>
-                            {state.system
-                                ? 'System keys cannot be deleted via this UI'
-                                : 'Are you sure you want to delete this api key?'
-                            }
-                        </DialogContentText>
-                    </DialogContent>
-                    : <DialogContent>
+        <Modal
+            kind={kind}
+            onClose={onClose}
+            onSubmit={submit}
+            title={{
+                create: 'Create Api key',
+                edit: 'Edit Api key',
+                delete: 'Delete Api key',
+            }}
+            submitDisabled={!canSubmit}
+            apiError={apiError}
+            setApiError={setApiError}
+        >{(kind: ModalKind) => {
+            if (kind == ModalKind.Delete)
+                return (<DialogContentText>
+                    {state.system
+                        ? 'System keys cannot be deleted via this UI'
+                        : 'Are you sure you want to delete this api key?'
+                    }
+                </DialogContentText>)
+            else
+                return (
+                    <div>
                         <DialogContentText>
                             {
-                                innerKind == KeyModalKind.Create
+                                kind == ModalKind.Create
                                     ? 'create a new api key to authenticate with RT-CV'
                                     : 'Edit this api key'
                             }
@@ -174,36 +171,33 @@ export function KeyModal({ kind, onClose, apiKey = undefined }: KeyModalArgs) {
                                 <div className="apiKey" style={{ color: disabled ? 'gray' : 'white' }}>{state.key}</div>
                             </div>
                         </FormControl>
-                    </DialogContent>}
-            <DialogActions>
-                <Button onClick={onClose}>Cancel</Button>
-                <Button onClick={submit} color="primary" disabled={!canSubmit}>{confirmText}</Button>
-            </DialogActions>
-            <style jsx>{`
-                .checkboxWithFormControl {
-                    display: flex;
-                    align-items: center;
-                    margin: 10px 0;
-                }
-                .apiKeyForm {
-                    display: flex;
-                    align-items: center;
-                    margin: 10px 0;
-                }
-                .apiKeyForm .apiKeyControls {
-                    width: 70px;
-                }
-                .apiKeyForm .apiKey {
-                    padding: 2px 10px 5px 10px;
-                    border-radius: 4px;
-                    background-color: #455a64;
-                    font-family: monospace;
-                    display: block;
-                    flex-grow: 1;
-                    word-break: break-all;
-                }
-            `}</style>
-        </Dialog>
+                        <style jsx>{`
+                        .checkboxWithFormControl {
+                            display: flex;
+                            align-items: center;
+                            margin: 10px 0;
+                        }
+                        .apiKeyForm {
+                            display: flex;
+                            align-items: center;
+                            margin: 10px 0;
+                        }
+                        .apiKeyForm .apiKeyControls {
+                            width: 70px;
+                        }
+                        .apiKeyForm .apiKey {
+                            padding: 2px 10px 5px 10px;
+                            border-radius: 4px;
+                            background-color: #455a64;
+                            font-family: monospace;
+                            display: block;
+                            flex-grow: 1;
+                            word-break: break-all;
+                        }
+                    `}</style>
+                    </div>
+                )
+        }}</Modal>
     )
 }
 
