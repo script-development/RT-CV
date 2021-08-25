@@ -34,7 +34,7 @@ func Routes(app *fiber.App, dbConn db.Connection, serverSeed []byte) {
 			c.Get(``, routeGetSecrets)
 			Group(c, `/:key`, func(c fiber.Router) {
 				c.Delete(``, routeDeleteSecret)
-				Group(c, `/:secretKey`, func(c fiber.Router) {
+				Group(c, `/:encryptionKey`, func(c fiber.Router) {
 					c.Get(``, routeGetSecret)
 					c.Put(``, routeUpdateSecret)
 					c.Post(``, routeCreateSecret)

@@ -21,8 +21,8 @@ func validKeyMiddleware() fiber.Handler {
 // TODO find a better name for this
 func validSecretKeyMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		if len(c.Params("secretKey")) < 16 {
-			return errors.New("secretKey param must have a minimal length of 16 chars")
+		if len(c.Params("encryptionKey")) < 16 {
+			return errors.New("encryptionKey param must have a minimal length of 16 chars")
 		}
 		return c.Next()
 	}
@@ -30,13 +30,13 @@ func validSecretKeyMiddleware() fiber.Handler {
 
 func routeCreateSecret(c *fiber.Ctx) error {
 	apiKey := ctx.GetAPIKeyFromParam(c)
-	keyParam, secretKeyParam := c.Params("key"), c.Params("secretKey")
+	keyParam, encryptionKeyParam := c.Params("key"), c.Params("encryptionKey")
 	body := c.Body()
 	if len(body) == 0 {
 		return errors.New("body cannot be empty")
 	}
 
-	secret, err := models.CreateSecret(apiKey.ID, keyParam, secretKeyParam, body)
+	secret, err := models.CreateSecret(apiKey.ID, keyParam, encryptionKeyParam, body)
 	if err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func routeCreateSecret(c *fiber.Ctx) error {
 		return err
 	}
 
-	secretValue, err := secret.Decrypt(secretKeyParam)
+	secretValue, err := secret.Decrypt(encryptionKeyParam)
 	if err != nil {
 		return err
 	}
@@ -56,7 +56,7 @@ func routeCreateSecret(c *fiber.Ctx) error {
 
 func routeUpdateSecret(c *fiber.Ctx) error {
 	apiKey := ctx.GetAPIKeyFromParam(c)
-	keyParam, secretKeyParam := c.Params("key"), c.Params("secretKey")
+	keyParam, encryptionKeyParam := c.Params("key"), c.Params("encryptionKey")
 	body := c.Body()
 	if len(body) == 0 {
 		return errors.New("body cannot be empty")
@@ -67,19 +67,19 @@ func routeUpdateSecret(c *fiber.Ctx) error {
 		return err
 	}
 	// check if the key provided is equal to the previous key
-	_, err = secret.Decrypt(secretKeyParam)
+	_, err = secret.Decrypt(encryptionKeyParam)
 	if err != nil {
 		return err
 	}
 
-	newSecret, err := models.CreateSecret(apiKey.ID, keyParam, secretKeyParam, body)
+	newSecret, err := models.CreateSecret(apiKey.ID, keyParam, encryptionKeyParam, body)
 	if err != nil {
 		return err
 	}
 	secret.Value = newSecret.Value
 
 	// check if decryption still works
-	secretValue, err := secret.Decrypt(secretKeyParam)
+	secretValue, err := secret.Decrypt(encryptionKeyParam)
 	if err != nil {
 		return err
 	}
@@ -95,14 +95,14 @@ func routeUpdateSecret(c *fiber.Ctx) error {
 func routeGetSecret(c *fiber.Ctx) error {
 	dbConn := ctx.GetDbConn(c)
 	apiKey := ctx.GetAPIKeyFromParam(c)
-	keyParam, secretKeyParam := c.Params("key"), c.Params("secretKey")
+	keyParam, encryptionKeyParam := c.Params("key"), c.Params("encryptionKey")
 
 	secret, err := models.GetSecretByKey(dbConn, apiKey.ID, keyParam)
 	if err != nil {
 		return err
 	}
 
-	value, err := secret.Decrypt(secretKeyParam)
+	value, err := secret.Decrypt(encryptionKeyParam)
 	if err != nil {
 		return err
 	}
