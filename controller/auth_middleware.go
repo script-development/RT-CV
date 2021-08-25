@@ -9,8 +9,20 @@ import (
 	"github.com/script-development/RT-CV/models"
 )
 
+var errAuthMissingRoles = errors.New("you do not have auth roles required to access this route")
+
 func requiresAuth(requiredRoles models.APIKeyRole) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		key := ctx.GetKey(c)
+		// Check if the auth header is already checked earlier in the request
+		// If true we only have to check if the roles match
+		if key != nil {
+			if requiredRoles != 0 && !key.Roles.ContainsSome(requiredRoles) {
+				return ErrorRes(c, 401, errAuthMissingRoles)
+			}
+			return c.Next()
+		}
+
 		// Get values from context
 		auth := ctx.GetAuth(c)
 		logger := ctx.GetLogger(c)
@@ -24,7 +36,7 @@ func requiresAuth(requiredRoles models.APIKeyRole) fiber.Handler {
 
 		// Check required roles matches
 		if requiredRoles != 0 && !key.Roles.ContainsSome(requiredRoles) {
-			return ErrorRes(c, 401, errors.New("you do not have the permissions to access this route"))
+			return ErrorRes(c, 401, errAuthMissingRoles)
 		}
 
 		*logger = *logger.WithFields(log.Fields{
@@ -34,7 +46,10 @@ func requiresAuth(requiredRoles models.APIKeyRole) fiber.Handler {
 		})
 
 		c.SetUserContext(
-			ctx.SetKey(c.UserContext(), key),
+			ctx.SetKey(
+				c.UserContext(),
+				key,
+			),
 		)
 
 		return c.Next()

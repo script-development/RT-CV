@@ -25,15 +25,11 @@ class AuthenticatedFetcher {
         const keyInfo = await this.fetch('/api/v1/auth/keyinfo')
 
         // Check if this key has the required roles
-        const [informationObtainerRole, controllerRole] = keyInfo.roles.reduce((acc: [boolean, boolean], role: any) => {
-            if (role.role == Roles.InformationObtainer) acc[0] = true
-            if (role.role == Roles.Controller) acc[1] = true
-            return acc
-        }, [false, false])
-        if (!informationObtainerRole || !controllerRole) {
+        const hasRequiredRole = keyInfo.roles.some((role: any) => role.role == Roles.Dashboard)
+        if (!hasRequiredRole) {
             this.apiKey = '';
             this.apiKeyId = '';
-            throw 'key does not have the required roles';
+            throw 'key does not have the required role';
         }
 
         this.storeCredentials()
@@ -92,10 +88,10 @@ class AuthenticatedFetcher {
 
                 r = await fetch(url, args(authHeader))
                 if (r.status == 401) {
-                    // FIXME redirect to login screen as something with the credentials is going wrong
-                    console.log(this)
-
                     const resData = await r.json()
+                    if (resData.error)
+                        // redirect to login screen as something with the credentials is going wrong
+                        location.pathname = '/login'
                     throw resData.error
                 }
                 this.storeCredentials()

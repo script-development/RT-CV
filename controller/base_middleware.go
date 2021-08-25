@@ -27,6 +27,9 @@ func InsertData(dbConn db.Connection, serverSeed []byte) fiber.Handler {
 	requestContext = ctx.SetAuth(requestContext, auth.New(keys, serverSeed))
 	requestContext = ctx.SetDbConn(requestContext, dbConn)
 
+	// We set this to nil so we can later run ctx.GetKey without panicing if the key is not yet set
+	requestContext = ctx.SetKey(requestContext, nil)
+
 	// Pre define loggerEntity so we only take once memory
 	loggerEntity := log.Entry{
 		Logger: log.Log.(*log.Logger),
@@ -39,7 +42,10 @@ func InsertData(dbConn db.Connection, serverSeed []byte) fiber.Handler {
 		}
 
 		c.SetUserContext(
-			ctx.SetLogger(requestContext, &loggerEntity),
+			ctx.SetLogger(
+				requestContext,
+				&loggerEntity,
+			),
 		)
 		return c.Next()
 	}

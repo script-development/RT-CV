@@ -3,6 +3,7 @@ export enum Roles {
     Scraper = 1 << i++,
     InformationObtainer = 1 << i++,
     Controller = 1 << i++,
+    Dashboard = 1 << i++,
     Admin = 1 << i++,
 }
 
@@ -10,6 +11,7 @@ export const allRoles: Array<Roles> = [
     Roles.Scraper,
     Roles.InformationObtainer,
     Roles.Controller,
+    Roles.Dashboard,
     Roles.Admin,
 ]
 
@@ -34,6 +36,11 @@ export function roleInfo(role: Roles): undefined | RoleInfo {
             return {
                 title: 'Controller',
                 description: 'Can control the server'
+            }
+        case Roles.Dashboard:
+            return {
+                title: 'Dashboard',
+                description: 'Can access this dashboard and modify server data'
             }
         case Roles.Admin:
             return {

@@ -41,7 +41,7 @@ export default function Home() {
 
 			<h1>RT-CV Login</h1>
 			<form noValidate onSubmit={submit} >
-				<p>Insert a api key with the <b>Information Obtainer</b> and <b>Controller</b> role</p>
+				<p>Insert a api key with the <b>Dashboard</b> role</p>
 				<TextField
 					value={apiKeyId}
 					fullWidth

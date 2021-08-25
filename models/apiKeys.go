@@ -80,16 +80,26 @@ const (
 	// = 4
 	APIKeyRoleController
 
-	// APIKeyRoleAdmin Currently unused
+	// APIKeyRoleDashboard can access the dashboard and modify server state
 	// = 8
+	APIKeyRoleDashboard
+
+	// APIKeyRoleAdmin Currently unused
+	// = 16
 	APIKeyRoleAdmin
 )
 
 var (
 	// APIKeyRoleAll contains all of the above roles and thus can access everything
-	APIKeyRoleAll = APIKeyRoleScraper | APIKeyRoleInformationObtainer | APIKeyRoleController | APIKeyRoleAdmin
+	APIKeyRoleAll = APIKeyRoleScraper | APIKeyRoleInformationObtainer | APIKeyRoleController | APIKeyRoleDashboard | APIKeyRoleAdmin
 	// APIKeyRoleAllArray is an array of all roles
-	APIKeyRoleAllArray = []APIKeyRole{APIKeyRoleScraper, APIKeyRoleInformationObtainer, APIKeyRoleController, APIKeyRoleAdmin}
+	APIKeyRoleAllArray = []APIKeyRole{
+		APIKeyRoleScraper,
+		APIKeyRoleInformationObtainer,
+		APIKeyRoleController,
+		APIKeyRoleDashboard,
+		APIKeyRoleAdmin,
+	}
 )
 
 // Description returns a description of the role
@@ -102,6 +112,8 @@ func (a APIKeyRole) Description() (description string, ok bool) {
 		return "Can obtain information the server has", true
 	case APIKeyRoleController:
 		return "Can control the server", true
+	case APIKeyRoleDashboard:
+		return "Can access the dashboard and modify server state", true
 	case APIKeyRoleAdmin:
 		return "Unused role", true
 	default:
@@ -143,33 +155,31 @@ func (a APIKeyRole) Valid() bool {
 	return a > 0 && a <= APIKeyRoleAll
 }
 
-// CheckNeedToCreateSystemKeys checks weather the required system keys are available and if not creates them
-func CheckNeedToCreateSystemKeys(conn db.Connection) {
-	systemUserRole := APIKeyRoleInformationObtainer | APIKeyRoleController
-
+// CheckDashboardKeyExists checks weather the required system keys are available and if not creates them
+func CheckDashboardKeyExists(conn db.Connection) {
 	keys := []APIKey{}
-	err := conn.Find(&APIKey{}, &keys, bson.M{"system": true, "roles": systemUserRole})
+	err := conn.Find(&APIKey{}, &keys, bson.M{"system": true, "roles": APIKeyRoleDashboard})
 	if err != nil {
 		log.WithError(err).Fatalf("unable to fetch api keys")
 	}
 
 	if len(keys) != 0 {
-		log.Infof("One system key exists with id %s and role %d", keys[0].ID.Hex(), systemUserRole)
+		log.Infof("One system dashboard key exists with id %s and role %d", keys[0].ID.Hex(), APIKeyRoleDashboard)
 		return
 	}
 
-	log.Info("System key does not yet exists, creating one..")
+	log.Info("System dashboard key does not yet exists, creating one..")
 	key := &APIKey{
 		M:       db.NewM(),
 		Enabled: true,
 		Domains: []string{"*"},
 		Key:     string(random.GenerateKey()),
-		Roles:   systemUserRole,
+		Roles:   APIKeyRoleDashboard,
 		System:  true,
 	}
 	err = conn.Insert(key)
 	if err != nil {
-		log.WithError(err).Fatalf("Unable to insert system api keys")
+		log.WithError(err).Fatalf("Unable to insert dashboard system api keys")
 	}
 	log.WithField("key", key.Key).WithField("id", key.ID.Hex()).Info("Created system key")
 }

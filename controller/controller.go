@@ -59,7 +59,7 @@ func Routes(app *fiber.App, dbConn db.Connection, serverSeed []byte) {
 				c.Put(``, routeUpdateKey)
 				c.Delete(``, routeDeleteKey)
 			}, middlewareBindKey())
-		}, requiresAuth(models.APIKeyRoleInformationObtainer|models.APIKeyRoleController))
+		}, requiresAuth(models.APIKeyRoleDashboard))
 	}, InsertData(dbConn, serverSeed))
 
 	app.Static("", "./dashboard/out/index.html", fiber.Static{Compress: true})
