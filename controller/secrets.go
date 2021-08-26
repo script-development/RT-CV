@@ -18,8 +18,7 @@ func validKeyMiddleware() fiber.Handler {
 	}
 }
 
-// TODO find a better name for this
-func validSecretKeyMiddleware() fiber.Handler {
+func validEncryptionKeyMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		if len(c.Params("encryptionKey")) < 16 {
 			return errors.New("encryptionKey param must have a minimal length of 16 chars")

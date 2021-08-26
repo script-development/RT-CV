@@ -38,7 +38,7 @@ func Routes(app *fiber.App, dbConn db.Connection, serverSeed []byte) {
 					c.Get(``, routeGetSecret)
 					c.Put(``, routeUpdateSecret)
 					c.Post(``, routeCreateSecret)
-				}, validSecretKeyMiddleware())
+				}, validEncryptionKeyMiddleware())
 			}, validKeyMiddleware())
 		}
 		Group(c, `/secrets/myKey`, secretsRoutes, requiresAuth(models.APIKeyRoleAll), middlewareBindMyKey())
