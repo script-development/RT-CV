@@ -28,7 +28,7 @@ func Routes(app *fiber.App, dbConn db.Connection, serverSeed []byte) {
 
 		Group(c, `/scraper`, func(c fiber.Router) {
 			c.Post(`/scanCV`, routeScraperScanCV)
-		}, requiresAuth(models.APIKeyRoleScraper))
+		}, requiresAuth(models.APIKeyRoleScraper|models.APIKeyRoleDashboard))
 
 		secretsRoutes := func(c fiber.Router) {
 			c.Get(``, routeGetSecrets)

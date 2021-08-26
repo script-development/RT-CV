@@ -12,7 +12,7 @@ func MustMatchSingle(t *testing.T, p models.Profile, cv models.CV) {
 	p.Domains = []string{"werk.nl"}
 	p.Active = true
 
-	matches := Match("werk.nl", []models.Profile{p}, cv)
+	matches := Match([]string{"werk.nl"}, []models.Profile{p}, cv)
 	Equal(t, 1, len(matches), matches)
 }
 
@@ -20,12 +20,12 @@ func MustNotMatchSingle(t *testing.T, p models.Profile, cv models.CV) {
 	p.Domains = []string{"werk.nl"}
 	p.Active = true
 
-	matches := Match("werk.nl", []models.Profile{p}, cv)
+	matches := Match([]string{"werk.nl"}, []models.Profile{p}, cv)
 	Equal(t, 0, len(matches), matches)
 }
 
 func TestMatchSiteMismatch(t *testing.T) {
-	matches := Match("werk.nl", []models.Profile{{
+	matches := Match([]string{"werk.nl"}, []models.Profile{{
 		Domains: []string{"gangster_at_work.crib"},
 		Active:  true,
 	}}, models.CV{})
@@ -33,7 +33,7 @@ func TestMatchSiteMismatch(t *testing.T) {
 }
 
 func TestMatchNonActive(t *testing.T) {
-	matches := Match("werk.nl", []models.Profile{{Active: false}}, models.CV{})
+	matches := Match([]string{"werk.nl"}, []models.Profile{{Active: false}}, models.CV{})
 	Equal(t, 0, len(matches), matches)
 }
 
@@ -308,4 +308,40 @@ func TestMatchDriversLicense(t *testing.T) {
 		},
 		models.CV{DriversLicenses: []string{"B"}},
 	)
+}
+
+func TestGetMatchSentence(t *testing.T) {
+	sentence := Matches{}.GetMatchSentence()
+	Equal(t, "", sentence)
+
+	sentence = Matches{YearsSinceWork: true}.GetMatchSentence()
+	Equal(t, "jaren sinds werk", sentence)
+
+	sentence = Matches{YearsSinceWork: true, YearsSinceEducation: true}.GetMatchSentence()
+	Equal(t, "jaren sinds werk en jaren sinds laatste opleiding", sentence)
+
+	domain := "*.example.com"
+	zipCode := models.ProfileDutchZipcode{
+		From: 2000,
+		To:   5000,
+	}
+	sentence = Matches{
+		Domain:                &domain,
+		YearsSinceWork:        true,
+		YearsSinceEducation:   true,
+		EducationOrCourse:     true,
+		DesiredProfession:     true,
+		ProfessionExperienced: true,
+		DriversLicense:        true,
+		ZipCode:               &zipCode,
+	}.GetMatchSentence()
+	expectedResult := "domain naam *.example.com" +
+		", jaren sinds werk" +
+		", jaren sinds laatste opleiding" +
+		", opleiding of cursus" +
+		", gewenste werkveld" +
+		", wil profession" +
+		", rijbewijs" +
+		" en postcode in range 2000 - 5000"
+	Equal(t, expectedResult, sentence)
 }
