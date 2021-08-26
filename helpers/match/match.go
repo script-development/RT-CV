@@ -92,13 +92,27 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []AMatch {
 		}
 
 		// Check domain
-		if len(profile.Domains) > 0 {
+		if len(profile.Domains) > 0 && len(domains) > 0 {
 			foundMatch := false
 			for _, domain := range profile.Domains {
+				if domain == "*" {
+					// This is a match all domain name
+					// We can just match the first formatted domain name
+					match.Matches.Domain = &domains[0]
+					foundMatch = true
+				}
+
 				domainParts := strings.Split(normalizeString(domain), ".")
 				domainPartsLen := len(domainParts)
 
 				for formattedDomainsIdx, formattedDomain := range formattedDomains {
+					if len(formattedDomain) == 1 && formattedDomain[0] == "*" {
+						// This is match all domain name *
+						match.Matches.Domain = &domains[formattedDomainsIdx]
+						foundMatch = true
+						break
+					}
+
 					if len(formattedDomain) != domainPartsLen {
 						continue
 					}
@@ -118,8 +132,7 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []AMatch {
 					}
 
 					if matched {
-						matchedDomain := strings.Join(formattedDomains[formattedDomainsIdx], ".")
-						match.Matches.Domain = &matchedDomain
+						match.Matches.Domain = &domains[formattedDomainsIdx]
 						foundMatch = true
 						break
 					}

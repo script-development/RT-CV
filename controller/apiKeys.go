@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/script-development/RT-CV/controller/ctx"
 	"github.com/script-development/RT-CV/db"
+	"github.com/script-development/RT-CV/helpers/validation"
 	"github.com/script-development/RT-CV/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -47,7 +48,10 @@ func routeCreateKey(c *fiber.Ctx) error {
 	} else if len(body.Domains) < 1 {
 		return errors.New("there should at least be one domain")
 	} else {
-		// TODO check if each domain is valid
+		err := validation.ValidDomainList(body.Domains, true)
+		if err != nil {
+			return err
+		}
 		newAPIKey.Domains = body.Domains
 	}
 
@@ -118,7 +122,10 @@ func routeUpdateKey(c *fiber.Ctx) error {
 		if len(body.Domains) < 1 {
 			return errors.New("there should at least be one domain")
 		}
-		// TODO check if each domain is valid
+		err := validation.ValidDomainList(body.Domains, true)
+		if err != nil {
+			return err
+		}
 		apiKey.Domains = body.Domains
 	}
 
