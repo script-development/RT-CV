@@ -64,6 +64,7 @@ export default function Home() {
 			<SecretModal
 				kind={secretModal.kind}
 				secret={secretModal.secret}
+				apiKeys={keys}
 				onClose={() => {
 					setSecretModal({ kind: ModalKind.Closed, secret: undefined })
 					fetchData()

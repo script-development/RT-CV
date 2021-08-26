@@ -51,8 +51,14 @@ func New(keys []models.APIKey, baseSeed []byte) *Auth {
 	return &res
 }
 
-// ErrorInvalidKey is a returned when a key is invalid
-var ErrorInvalidKey = errors.New("invalid authentication key")
+var (
+	// ErrInvalidKey is a returned when a key is invalid
+	ErrInvalidKey = errors.New("invalid authentication key")
+	// ErrNoAuthheader is send when the authentication header is empty
+	ErrNoAuthheader = errors.New("missing authorization header of type Basic")
+	// ErrAuthHeaderToShort is send whenthe authorization is to short to even check
+	ErrAuthHeaderToShort = errors.New("invalid authorization header, must be of type Basic and contain data")
+)
 
 // GetBaseSeed returns the server base seed
 func (a *Auth) GetBaseSeed() []byte {
@@ -95,9 +101,9 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.APIKey, sa
 	authorizationHeaderLen := len(authorizationHeader)
 	if authorizationHeaderLen < 7 {
 		if authorizationHeaderLen == 0 {
-			return nil, salt, errors.New("missing authorization header of type Basic")
+			return nil, salt, ErrNoAuthheader
 		}
-		return nil, salt, errors.New("invalid authorization header, must be of type Basic and contain data")
+		return nil, salt, ErrAuthHeaderToShort
 	}
 
 	if !bytes.Equal([]byte("Basic "), authorizationHeader[:6]) {
@@ -111,7 +117,7 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.APIKey, sa
 
 	parts := bytes.Split(auth, []byte(":"))
 	if len(parts) != 4 {
-		return nil, salt, ErrorInvalidKey
+		return nil, salt, ErrInvalidKey
 	}
 
 	isSha512 := bytes.Equal(parts[0], []byte("sha512"))
@@ -141,7 +147,7 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.APIKey, sa
 
 	knownKey, ok := a.keys[siteID]
 	if !ok {
-		return nil, salt, ErrorInvalidKey
+		return nil, salt, ErrInvalidKey
 	}
 	keyAndSalt := append(knownKey.keyBytes, salt...)
 
@@ -154,7 +160,7 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.APIKey, sa
 
 			// Key + salt combo earlier created lets check if the credentials match
 			if !bytes.Equal(entry.value, key) {
-				return nil, salt, ErrorInvalidKey
+				return nil, salt, ErrInvalidKey
 			}
 
 			hash := sha512.Sum512(append(append(entry.value, knownKey.keyBytes...), entry.salt...))
@@ -169,7 +175,7 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.APIKey, sa
 		hash = sha512.Sum512(append(hash[:], keyAndSalt...))
 
 		if !bytes.Equal(hash[:], key) {
-			return nil, salt, ErrorInvalidKey
+			return nil, salt, ErrInvalidKey
 		}
 
 		// Pre calculate next hash in the chain
@@ -187,7 +193,7 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.APIKey, sa
 
 			// Key + salt combo earlier created lets check if the credentials match
 			if !bytes.Equal(entry.value, key) {
-				return nil, salt, ErrorInvalidKey
+				return nil, salt, ErrInvalidKey
 			}
 
 			hash := sha256.Sum256(append(entry.value, keyAndSalt...))
@@ -202,7 +208,7 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.APIKey, sa
 		hash = sha256.Sum256(append(hash[:], keyAndSalt...))
 
 		if !bytes.Equal(hash[:], key) {
-			return nil, salt, ErrorInvalidKey
+			return nil, salt, ErrInvalidKey
 		}
 
 		// Pre calculate next hash in the chain

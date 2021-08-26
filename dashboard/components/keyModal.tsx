@@ -1,18 +1,13 @@
 import {
     Button,
-    Dialog,
-    DialogTitle,
     DialogContentText,
-    DialogContent,
     TextField,
-    DialogActions,
     Checkbox,
     FormControlLabel,
     Tooltip,
     FormControl,
     FormHelperText,
     FormLabel,
-    Snackbar,
 } from '@material-ui/core'
 import React, { useState, useEffect } from 'react'
 import { ApiKey } from '../src/types'
@@ -162,7 +157,7 @@ export function KeyModal({ kind, onClose, apiKey = undefined }: KeyModalProps) {
                             <FormLabel>Api Key</FormLabel>
                             <div className="apiKeyForm">
                                 <div className="apiKeyControls">
-                                    <Tooltip title={'Refresh key'}>
+                                    <Tooltip title='Refresh key'>
                                         <Button onClick={refreshKey} disabled={disabled}>
                                             <RefreshIcon fontSize="small" />
                                         </Button>

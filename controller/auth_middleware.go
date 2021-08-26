@@ -6,6 +6,7 @@ import (
 	"github.com/apex/log"
 	"github.com/gofiber/fiber/v2"
 	"github.com/script-development/RT-CV/controller/ctx"
+	"github.com/script-development/RT-CV/helpers/auth"
 	"github.com/script-development/RT-CV/models"
 )
 
@@ -24,19 +25,26 @@ func requiresAuth(requiredRoles models.APIKeyRole) fiber.Handler {
 		}
 
 		// Get values from context
-		auth := ctx.GetAuth(c)
+		authService := ctx.GetAuth(c)
 		logger := ctx.GetLogger(c)
 
 		// Check auth header
 		authorizationHeader := c.Get("Authorization")
-		key, salt, err := auth.Authenticate([]byte(authorizationHeader))
+		if len(authorizationHeader) == 0 {
+			// NOTE: there seems to be a bug with fiber it seems where if try to access a non existing route or send an invalid url
+			// c.Get("Authorization") returns an empty string no matter the value of the header send
+			// This might cause some confusuion as you'll receive a auth.ErrNoAuthheader error over a 404 error
+			return ErrorRes(c, fiber.StatusBadRequest, auth.ErrNoAuthheader)
+		}
+
+		key, salt, err := authService.Authenticate([]byte(authorizationHeader))
 		if err != nil {
-			return ErrorRes(c, 401, err)
+			return ErrorRes(c, fiber.StatusUnauthorized, err)
 		}
 
 		// Check required roles matches
 		if requiredRoles != 0 && !key.Roles.ContainsSome(requiredRoles) {
-			return ErrorRes(c, 401, errAuthMissingRoles)
+			return ErrorRes(c, fiber.StatusForbidden, errAuthMissingRoles)
 		}
 
 		*logger = *logger.WithFields(log.Fields{

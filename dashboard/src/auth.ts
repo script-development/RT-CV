@@ -67,9 +67,13 @@ class AuthenticatedFetcher {
 
     async fetch(path: string, method: 'POST' | 'GET' | 'PUT' | 'DELETE' = 'GET', data?: any) {
         try {
+            if (path.replace(/http(s?):\/\//, '').indexOf('//') != -1)
+                throw 'invalid path, path cannot contains empty parts, path: ' + path
+
             await new Promise(res => {
                 if (this.awaitingFetches.length == 0)
                     res(undefined)
+
                 this.awaitingFetches.push(res)
             })
 
@@ -102,6 +106,9 @@ class AuthenticatedFetcher {
                             // redirect to login screen as something with the credentials is going wrong
                             location.pathname = '/login'
                         throw resData.error
+                    } else if (r.status >= 400) {
+                        const resData = await r.json()
+                        throw resData?.error
                     }
                     this.storeCredentials()
                 }
