@@ -112,9 +112,14 @@ func TestCannotAccessCriticalRoutesWithoutCredentials(t *testing.T) {
 			"/api/v1/scraper/scanCV",
 		},
 		{
-			"control",
+			"control profiles",
 			Get,
-			"/api/v1/control/reloadProfiles",
+			"/api/v1/control/profiles",
+		},
+		{
+			"keys",
+			Get,
+			"/api/v1/keys",
 		},
 	}
 
@@ -128,9 +133,8 @@ func TestCannotAccessCriticalRoutesWithoutCredentials(t *testing.T) {
 				NoAuth: true,
 			})
 
-			// 401 = Unauthorized
-			Equal(t, 401, res.StatusCode)
-			Equal(t, `{"error":"missing authorization header of type Basic"}`, string(body))
+			Equal(t, 400, res.StatusCode, route.route)
+			Equal(t, `{"error":"missing authorization header of type Basic"}`, string(body), route.route)
 		})
 	}
 }
