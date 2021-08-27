@@ -80,15 +80,15 @@ type Property struct {
 	Type        PropertyType  `json:"type,omitempty"`  // The data type
 	Enum        []interface{} `json:"enum,omitempty"`  // The value should validate againest one of these
 	Const       interface{}   `json:"const,omitempty"` // Equal to a enum with 1 value
-	Deprecated  bool          `json:"deprecated"`
+	Deprecated  bool          `json:"deprecated,omitempty"`
 	Default     interface{}   `json:"default,omitempty"`
 	Examples    []interface{} `json:"examples,omitempty"`
 	Format      Format        `json:"format,omitempty"`
-	Schema      Version       `json:"$schema"`
-	ID          string        `json:"$id"`
+	Schema      Version       `json:"$schema,omitempty"`
+	ID          string        `json:"$id,omitempty"`
 
 	// type == object
-	Properties        map[string]Property // required field
+	Properties        map[string]Property `json:"properties,omitempty"` // required field
 	Required          []string            `json:"required,omitempty"`
 	MaxProperties     *uint               `json:"maxProperties,omitempty"`
 	MinProperties     *uint               `json:"minProperties,omitempty"`
