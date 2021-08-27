@@ -231,7 +231,7 @@ export function SecretModal({ kind, onClose: onCloseArg, secret, apiKeys }: Secr
                             fullWidth
                         />
                         <div className="toggles">
-                            <Tooltip title='Format code'>
+                            <Tooltip title='Format json'>
                                 <Button
                                     disabled={!!secretValueError}
                                     onClick={() => setSecretValue((prev: string) => JSON.stringify(JSON.parse(prev), null, 2))}
