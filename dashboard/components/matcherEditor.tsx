@@ -3,6 +3,8 @@ import MonacoEditor from "@monaco-editor/react"
 import React, { useState, useEffect, useRef, CSSProperties } from 'react';
 import { CircularProgress, IconButton } from '@material-ui/core';
 import PlayArrow from '@material-ui/icons/PlayArrow'
+import { fetcher } from '../src/auth';
+import { parse } from 'jsonc-parser'
 
 interface MatcherEditorProps {
     style?: CSSProperties
@@ -19,7 +21,13 @@ export default function MatcherEditor({ style }: MatcherEditorProps) {
         monaco.editor.defineTheme('monokai', Monokai)
         monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
             validate: true,
-            schemas: [cvSchema],
+            schemas: [{
+                // For info about how this works see:
+                // https://json-schema.org/learn/getting-started-step-by-step.html
+                uri: schemaUrl(),
+                fileMatch: ['*'],
+                schema: cvSchema,
+            }],
         })
     }
 
@@ -41,11 +49,24 @@ export default function MatcherEditor({ style }: MatcherEditorProps) {
     }
 
     const execute = async () => {
-        setLoading(true)
+        try {
+            setLoading(true)
 
-        await new Promise(res => setTimeout(res, 1000))
+            // We use jsonc here to parse the JSON and convert it back to json
+            // This way we can use comments
+            const parsedCv = parse(inputEditorRef.current.getValue())
+            const requestValue = {
+                cv: parsedCv,
+                debug: true,
+            }
 
-        setLoading(false)
+            const startTime = performance.now()
+            const res = await fetcher.post('/api/v1/scraper/scanCV', requestValue)
+            const endTime = performance.now()
+            outputEditorRef.current.setValue(`// api call took ${Math.round(endTime - startTime)} milliseconds with ${res.length} results\n${JSON.stringify(res, null, '\t')}`)
+        } finally {
+            setLoading(false)
+        }
     }
 
     useEffect(() => { fetchSchema() }, [])
@@ -57,7 +78,7 @@ export default function MatcherEditor({ style }: MatcherEditorProps) {
                     ? <MonacoEditor
                         height="100%"
                         defaultLanguage="json"
-                        defaultValue={`{"//": "let's write some broken code 😈"}`}
+                        defaultValue={`{\n\t// Press ctrl + space to start hacking\n\t\n}`}
                         theme="monokai"
                         beforeMount={handleInputEditorWillMount}
                         onMount={handleInputEditorDidMount}
@@ -82,7 +103,7 @@ export default function MatcherEditor({ style }: MatcherEditorProps) {
                 <MonacoEditor
                     height="100%"
                     defaultLanguage="json"
-                    defaultValue={`{\n\t"//": "press the play button to see the api result"\n}\n`}
+                    defaultValue={`// press the play button to see the api result`}
                     theme="monokai"
                     beforeMount={handleOutputEditorWillMount}
                     onMount={handleOutputEditorDidMount}

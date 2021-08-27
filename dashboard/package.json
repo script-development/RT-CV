@@ -12,6 +12,7 @@
     "@material-ui/data-grid": "^4.0.0-alpha.37",
     "@material-ui/icons": "^4.11.2",
     "@monaco-editor/react": "^4.2.2",
+    "jsonc-parser": "^3.0.0",
     "monaco-editor": "^0.27.0",
     "monaco-themes": "^0.3.3",
     "next": "11.1.0",
