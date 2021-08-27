@@ -18,7 +18,6 @@ import { fetcher } from '../src/auth'
 import { Secret, ApiKey } from '../src/types'
 import { randomString } from '../src/random'
 import { Modal, ModalKind } from './modal'
-import { keys } from '@material-ui/core/styles/createBreakpoints'
 
 const SyntaxHighlighter = dynamic(
     () => import('react-syntax-highlighter'),

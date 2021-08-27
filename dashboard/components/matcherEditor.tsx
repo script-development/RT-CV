@@ -1,21 +1,30 @@
 import Monokai from 'monaco-themes/themes/Monokai.json'
 import MonacoEditor from "@monaco-editor/react"
-import React, { useState, useEffect, useRef, CSSProperties } from 'react';
+import React, { MutableRefObject, useState, useEffect, useRef } from 'react';
 import { CircularProgress, IconButton } from '@material-ui/core';
 import PlayArrow from '@material-ui/icons/PlayArrow'
 import { fetcher } from '../src/auth';
 import { parse } from 'jsonc-parser'
-
-interface MatcherEditorProps {
-    style?: CSSProperties
-}
+import { Monaco } from '@monaco-editor/react'
+import { editor } from 'monaco-editor';
 
 const schemaUrl = () => location.origin + '/api/v1/schema/cv'
 
-export default function MatcherEditor({ style }: MatcherEditorProps) {
+interface MatcherEditorExposedValues {
+    inputEditorRef: MutableRefObject<any>,
+    outputEditorRef: MutableRefObject<any>,
+}
+
+interface MatcherEditorProps {
+    expose?: (values: MatcherEditorExposedValues) => void
+}
+
+export default function MatcherEditor({ expose }: MatcherEditorProps) {
     const [cvSchema, setCvSchema] = useState(undefined)
-    const [inputEditorRef, outputEditorRef] = [useRef(null as any), useRef(null as any)]
+    const [inputValue, setInputValue] = useState(`{\n\t// Press ctrl + space to start hacking\n\t\n}`)
+    const [outputValue, setOutputValue] = useState(`// press the play button to see the api result`)
     const [loading, setLoading] = useState(false)
+    const [inputEditorRef, outputEditorRef] = [useRef(null as any), useRef(null as any)]
 
     const handleInputEditorWillMount = (monaco: any) => {
         monaco.editor.defineTheme('monokai', Monokai)
@@ -34,12 +43,15 @@ export default function MatcherEditor({ style }: MatcherEditorProps) {
     const handleOutputEditorWillMount = (monaco: any) =>
         monaco.editor.defineTheme('monokai', Monokai)
 
-    const handleInputEditorDidMount = (editor: any, monaco: any) =>
+    const handleInputEditorDidMount = (editor: editor.IStandaloneCodeEditor, _: Monaco) => {
         inputEditorRef.current = editor
+        editor.setPosition({ lineNumber: 0, column: 0 })
+    }
 
-    const handleOutputEditorDidMount = (editor: any, monaco: any) =>
+    const handleOutputEditorDidMount = (editor: editor.IStandaloneCodeEditor, _: Monaco) => {
         outputEditorRef.current = editor
-
+        editor.setPosition({ lineNumber: 0, column: 0 })
+    }
 
     const fetchSchema = async () => {
         const r = await fetch('/api/v1/schema/cv')
@@ -69,16 +81,23 @@ export default function MatcherEditor({ style }: MatcherEditorProps) {
         }
     }
 
-    useEffect(() => { fetchSchema() }, [])
+    useEffect(() => {
+        fetchSchema()
+        expose?.({
+            inputEditorRef,
+            outputEditorRef
+        })
+    }, [])
 
     return (
-        <div className="root" style={style}>
+        <div className="root">
             <div className="editor input">
                 {cvSchema
                     ? <MonacoEditor
                         height="100%"
                         defaultLanguage="json"
-                        defaultValue={`{\n\t// Press ctrl + space to start hacking\n\t\n}`}
+                        value={inputValue}
+                        onChange={v => setInputValue(v || '')}
                         theme="monokai"
                         beforeMount={handleInputEditorWillMount}
                         onMount={handleInputEditorDidMount}
@@ -103,7 +122,8 @@ export default function MatcherEditor({ style }: MatcherEditorProps) {
                 <MonacoEditor
                     height="100%"
                     defaultLanguage="json"
-                    defaultValue={`// press the play button to see the api result`}
+                    value={outputValue}
+                    onChange={v => setOutputValue(v || '')}
                     theme="monokai"
                     beforeMount={handleOutputEditorWillMount}
                     onMount={handleOutputEditorDidMount}
@@ -119,9 +139,15 @@ export default function MatcherEditor({ style }: MatcherEditorProps) {
                     flex-wrap: nowrap;
                     justify-content: space-between;
                     align-items: stretch;
+                    height: 100vh;
+                    width: 100vw;
+                    padding-bottom: 50px;
+                    box-sizing: border-box;
+
                 }
                 .editor {
                     width: calc(50% - 10px);
+                    height: 100%;
                 }
                 .editor .loader {
                     pointer-events: none;
