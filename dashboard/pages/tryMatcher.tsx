@@ -3,6 +3,8 @@ import Dynamic from "next/dynamic"
 import React, { useEffect, useState } from "react"
 import { Button, ButtonBase, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@material-ui/core"
 import Info from '@material-ui/icons/Info'
+import ArrowBack from '@material-ui/icons/ArrowBack'
+import Link from 'next/link'
 
 const MatchEditor = Dynamic(
     () => import("../components/matcherEditor"),
@@ -28,15 +30,15 @@ export default function TryMatcher() {
 
     return (
         <div>
-            <Head>
-                <title>RT-CV home</title>
-            </Head>
+            <Head><title>RT-CV try matcher</title></Head>
 
             <div className="header">
                 <div>
-                    <ButtonBase focusRipple style={{ borderRadius: 4 }}>
-                        <h1 className="title">RT-CV</h1>
-                    </ButtonBase>
+                    <Link href="/">
+                        <ButtonBase focusRipple style={{ borderRadius: 4 }}>
+                            <h1 className="title"><span className="arrowBack"><ArrowBack /></span> RT-CV</h1>
+                        </ButtonBase>
+                    </Link>
                 </div>
                 <div>
                     <Button
@@ -97,6 +99,10 @@ export default function TryMatcher() {
                 .header .title {
                     margin: 0;
                     padding: 5px 20px;
+                }
+                .header .title .arrowBack {
+                    position: relative;
+                    top: 2px;
                 }
             `}</style>
         </div>

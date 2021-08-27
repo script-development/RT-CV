@@ -36,7 +36,6 @@ export default function Home() {
 		<div className="container">
 			<Head>
 				<title>RT-CV Login</title>
-				<link rel="icon" href="/favicon.ico" />
 			</Head>
 
 			<h1>RT-CV Login</h1>

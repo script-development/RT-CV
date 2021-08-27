@@ -9,6 +9,7 @@ import {
 	Tooltip,
 	LinearProgress,
 	Breadcrumbs,
+	Icon,
 } from '@material-ui/core'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import Add from '@material-ui/icons/Add'
@@ -16,6 +17,7 @@ import Delete from '@material-ui/icons/Delete'
 import Edit from '@material-ui/icons/Edit'
 import Visibility from '@material-ui/icons/Visibility'
 import Head from 'next/head'
+import Link from 'next/link'
 import React, { useEffect, useState } from 'react'
 import { fetcher } from '../src/auth'
 import { ApiKey, Secret } from '../src/types'
@@ -48,9 +50,7 @@ export default function Home() {
 
 	return (
 		<div>
-			<Head>
-				<title>RT-CV home</title>
-			</Head>
+			<Head><title>RT-CV home</title></Head>
 
 			<KeyModal
 				kind={keyModal.kind}
@@ -73,6 +73,13 @@ export default function Home() {
 
 			<main>
 				<h1>RT-CV</h1>
+
+				<div className="appLinks">
+					<Link href="tryMatcher">
+						<Button color="primary" variant="outlined" startIcon={<Icon>construction</Icon>}>Try the CV matcher</Button>
+					</Link>
+				</div>
+
 				<div className="cardContainer">
 					<h3>Keys</h3>
 					<div className="accordionHeader">
@@ -213,6 +220,12 @@ export default function Home() {
 					justify-content: center;
 					flex-direction: column;
 					align-items: center;
+				}
+				.appLinks {
+					padding: 10px;
+					width: 700px;
+					box-sizing: border-box;
+					max-width: calc(100vw - 20px);
 				}
 				.cardContainer {
 					padding: 10px;
