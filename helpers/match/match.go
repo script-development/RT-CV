@@ -12,8 +12,8 @@ import (
 
 // AMatch contains a match and why something is matched
 type AMatch struct {
-	Matches Matches
-	Profile models.Profile
+	Matches Matches        `json:"matches"`
+	Profile models.Profile `json:"profile"`
 }
 
 // Matches contains the areas of the profile where the match was found
