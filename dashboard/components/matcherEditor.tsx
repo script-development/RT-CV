@@ -8,6 +8,10 @@ import { parse } from 'jsonc-parser'
 import { Monaco } from '@monaco-editor/react'
 import { editor } from 'monaco-editor';
 
+// This is required to fix a bug where if you re-rerender a next.js Head component the monaco editor breaks
+// issue: https://github.com/suren-atoyan/monaco-react/issues/272
+import 'monaco-editor/min/vs/editor/editor.main.css'
+
 const schemaUrl = () => location.origin + '/api/v1/schema/cv'
 
 interface MatcherEditorExposedValues {
@@ -17,9 +21,11 @@ interface MatcherEditorExposedValues {
 
 interface MatcherEditorProps {
     expose?: (values: MatcherEditorExposedValues) => void
+    height?: string
+    top?: string
 }
 
-export default function MatcherEditor({ expose }: MatcherEditorProps) {
+export default function MatcherEditor({ expose, height, top }: MatcherEditorProps) {
     const [cvSchema, setCvSchema] = useState(undefined)
     const [inputValue, setInputValue] = useState(`{\n\t// Press ctrl + space to start hacking\n\t\n}`)
     const [outputValue, setOutputValue] = useState(`// press the play button to see the api result`)
@@ -43,15 +49,11 @@ export default function MatcherEditor({ expose }: MatcherEditorProps) {
     const handleOutputEditorWillMount = (monaco: any) =>
         monaco.editor.defineTheme('monokai', Monokai)
 
-    const handleInputEditorDidMount = (editor: editor.IStandaloneCodeEditor, _: Monaco) => {
+    const handleInputEditorDidMount = (editor: editor.IStandaloneCodeEditor, _: Monaco) =>
         inputEditorRef.current = editor
-        editor.setPosition({ lineNumber: 0, column: 0 })
-    }
 
-    const handleOutputEditorDidMount = (editor: editor.IStandaloneCodeEditor, _: Monaco) => {
+    const handleOutputEditorDidMount = (editor: editor.IStandaloneCodeEditor, _: Monaco) =>
         outputEditorRef.current = editor
-        editor.setPosition({ lineNumber: 0, column: 0 })
-    }
 
     const fetchSchema = async () => {
         const r = await fetch('/api/v1/schema/cv')
@@ -90,7 +92,7 @@ export default function MatcherEditor({ expose }: MatcherEditorProps) {
     }, [])
 
     return (
-        <div className="root">
+        <div className="root" style={{ height, top }}>
             <div className="editor input">
                 {cvSchema
                     ? <MonacoEditor
@@ -135,15 +137,16 @@ export default function MatcherEditor({ expose }: MatcherEditorProps) {
             </div>
             <style jsx>{`
                 .root {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100vw;
+                    height: 100vh;
                     display: flex;
                     flex-wrap: nowrap;
                     justify-content: space-between;
                     align-items: stretch;
-                    height: 100vh;
-                    width: 100vw;
-                    padding-bottom: 50px;
                     box-sizing: border-box;
-
                 }
                 .editor {
                     width: calc(50% - 10px);

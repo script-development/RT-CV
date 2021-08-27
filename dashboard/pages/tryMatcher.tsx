@@ -1,6 +1,6 @@
 import Head from "next/head";
 import Dynamic from "next/dynamic"
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { Button, ButtonBase, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@material-ui/core"
 import Info from '@material-ui/icons/Info'
 
@@ -22,10 +22,8 @@ export default function TryMatcher() {
     }
 
     useEffect(() => {
-        // Monaco editor breaks when we do a state update in this component so i've disabled this for now
-        // I think we can keep the current state as it requires the user to press a button
-        // if (localStorage.getItem('rtcv_confirmed_try_matcher_info') != 'true')
-        //     setInfoDialogOpen(true)
+        if (localStorage.getItem('rtcv_confirmed_try_matcher_info') != 'true')
+            setInfoDialogOpen(true)
     }, [])
 
     return (
@@ -54,6 +52,8 @@ export default function TryMatcher() {
             </div>
 
             <MatchEditor
+                top="50px"
+                height="calc(100vh - 50px)"
             // expose={values => setExposedState}
             />
 
@@ -99,6 +99,6 @@ export default function TryMatcher() {
                     padding: 5px 20px;
                 }
             `}</style>
-        </div >
+        </div>
     )
 }
