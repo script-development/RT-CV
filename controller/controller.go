@@ -77,6 +77,7 @@ func Routes(app *fiber.App, dbConn db.Connection, serverSeed []byte) {
 
 	app.Static("", "./dashboard/out/index.html", fiber.Static{Compress: true})
 	app.Static("login", "./dashboard/out/login.html", fiber.Static{Compress: true})
+	app.Static("tryMatcher", "./dashboard/out/tryMatcher.html", fiber.Static{Compress: true})
 	app.Static("_next", "./dashboard/out/_next", fiber.Static{Compress: true})
 	app.Static("favicon.ico", "./dashboard/out/favicon.ico", fiber.Static{Compress: true})
 	app.Use(func(c *fiber.Ctx) error {
