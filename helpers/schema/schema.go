@@ -2,7 +2,6 @@ package schema
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"strings"
 )
@@ -119,8 +118,12 @@ type Property struct {
 var errInvalidSchemaFromInput = errors.New("argument must be a struct or a poitner to a struct")
 
 // From converts a struct into a value for the  properties part of a json schema
-// FIXME add cache to already converted types
-func From(t reflect.Type) (properties map[string]Property, requiredFields []string, err error) {
+func From(inputType interface{}, schemaID string) (Property, error) {
+	if inputType == nil {
+		return Property{}, errInvalidSchemaFromInput
+	}
+
+	t := reflect.TypeOf(inputType)
 	for {
 		if t.Kind() != reflect.Ptr {
 			break
@@ -128,9 +131,20 @@ func From(t reflect.Type) (properties map[string]Property, requiredFields []stri
 		t = t.Elem()
 	}
 	if t.Kind() != reflect.Struct {
-		return nil, nil, errInvalidSchemaFromInput
+		return Property{}, errInvalidSchemaFromInput
 	}
 
+	properties, requiredFields := parseStruct(t)
+	return Property{
+		Schema:     VersionUsed,
+		ID:         schemaID,
+		Type:       PropertyTypeObject,
+		Properties: properties,
+		Required:   requiredFields,
+	}, nil
+}
+
+func parseStruct(t reflect.Type) (properties map[string]Property, requiredFields []string) {
 	requiredFields = []string{}
 	properties = map[string]Property{}
 
@@ -147,56 +161,8 @@ func From(t reflect.Type) (properties map[string]Property, requiredFields []stri
 			name = customName
 		}
 
-		required := true
-		property := Property{}
-
-		fieldType := field.Type
-		for {
-			if fieldType.Kind() != reflect.Ptr {
-				break
-			}
-			required = false
-			fieldType = fieldType.Elem()
-		}
-
-		switch fieldType.Kind() {
-		case reflect.Bool:
-			property.Type = PropertyTypeBoolean
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			fallthrough
-		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-			fallthrough
-		case reflect.Complex64, reflect.Complex128:
-			fallthrough
-		case reflect.UnsafePointer:
-			property.Type = PropertyTypeInteger
-		case reflect.Float32, reflect.Float64:
-			property.Type = PropertyTypeNumber
-		case reflect.Array:
-			arrayLen := uint(fieldType.Len())
-			property.MinItems = &arrayLen
-			property.MaxItems = &arrayLen
-			fallthrough
-		case reflect.Slice:
-			property.Type = PropertyTypeArray
-			required = false
-		case reflect.Interface:
-		case reflect.Map:
-			// TODO maybe there is some way have not strictly defined keys but strictly defined values
-			property.Type = PropertyTypeObject
-		case reflect.Ptr:
-		case reflect.String:
-			property.Type = PropertyTypeString
-		case reflect.Struct:
-			property.Type = PropertyTypeObject
-			properties, requiredFields, err := From(fieldType)
-			if err != nil {
-				return nil, nil, fmt.Errorf("field %s failed with error: %s", field.Name, err.Error())
-			}
-			property.Properties = properties
-			property.Required = requiredFields
-		case reflect.Chan, reflect.Func:
-			// These fields are ignored by json marshall so we do to
+		property, required, skip := parseType(field.Type)
+		if skip {
 			continue
 		}
 
@@ -206,5 +172,60 @@ func From(t reflect.Type) (properties map[string]Property, requiredFields []stri
 		}
 	}
 
-	return properties, requiredFields, nil
+	return properties, requiredFields
+}
+
+func parseType(t reflect.Type) (property Property, required bool, skip bool) {
+	required = true
+
+	for {
+		if t.Kind() != reflect.Ptr {
+			break
+		}
+		required = false
+		t = t.Elem()
+	}
+
+	switch t.Kind() {
+	case reflect.Bool:
+		property.Type = PropertyTypeBoolean
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		fallthrough
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		fallthrough
+	case reflect.Complex64, reflect.Complex128:
+		fallthrough
+	case reflect.UnsafePointer:
+		property.Type = PropertyTypeInteger
+	case reflect.Float32, reflect.Float64:
+		property.Type = PropertyTypeNumber
+	case reflect.Array:
+		arrayLen := uint(t.Len())
+		property.MinItems = &arrayLen
+		property.MaxItems = &arrayLen
+		fallthrough
+	case reflect.Slice:
+		property.Type = PropertyTypeArray
+		required = false
+		innerProperty, _, skip := parseType(t.Elem())
+		if skip {
+			return property, required, true
+		}
+		property.Items = &innerProperty
+	case reflect.Interface:
+	case reflect.Map:
+		// TODO maybe there is some way have not strictly defined keys but strictly defined values
+		property.Type = PropertyTypeObject
+	case reflect.Ptr:
+	case reflect.String:
+		property.Type = PropertyTypeString
+	case reflect.Struct:
+		property.Type = PropertyTypeObject
+		property.Properties, property.Required = parseStruct(t)
+	case reflect.Chan, reflect.Func:
+		// These fields are ignored by json marshall so we do to
+		return property, required, true
+	}
+
+	return property, required, false
 }

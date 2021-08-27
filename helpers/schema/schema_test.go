@@ -1,7 +1,6 @@
 package schema
 
 import (
-	"reflect"
 	"testing"
 
 	. "github.com/stretchr/testify/assert"
@@ -12,10 +11,11 @@ func TestFromFailsWithWrongDataType(t *testing.T) {
 		"foo",
 		1,
 		true,
+		nil,
 	}
 
 	for _, value := range values {
-		_, _, err := From(reflect.TypeOf(value))
+		_, err := From(value, "")
 		Error(t, err)
 	}
 }
@@ -89,18 +89,30 @@ func TestFrom(t *testing.T) {
 				B [constDummyArraySize]string
 			}{},
 			map[string]Property{
-				"A": {Type: PropertyTypeArray},
-				"B": {Type: PropertyTypeArray, MaxItems: &dummyArraySizeValue, MinItems: &dummyArraySizeValue},
+				"A": {
+					Type: PropertyTypeArray,
+					Items: &Property{
+						Type: PropertyTypeString,
+					},
+				},
+				"B": {
+					Type:     PropertyTypeArray,
+					MaxItems: &dummyArraySizeValue,
+					MinItems: &dummyArraySizeValue,
+					Items: &Property{
+						Type: PropertyTypeString,
+					},
+				},
 			},
 			[]string{},
 		},
 	}
 	for _, s := range scenarios {
 		t.Run(s.name, func(t *testing.T) {
-			properties, requiredFields, err := From(reflect.TypeOf(s.in))
+			property, err := From(s.in, "")
 			NoError(t, err)
-			Equal(t, s.expectedProperties, properties)
-			Equal(t, s.expectedRequiredFields, requiredFields)
+			Equal(t, s.expectedProperties, property.Properties)
+			Equal(t, s.expectedRequiredFields, property.Required)
 		})
 	}
 }
