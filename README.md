@@ -25,7 +25,7 @@ This is an api for CV scrapers to upload found CVs to where this tries to match 
 ## Quickly start hacking:
 
 Only requires GoLang:
-_note that this uses an in memory database that resets every time the app restarts_
+_note that this uses an in memory database that resets every time the app restarts, the default contents is defined in mock/mock.go_
 
 ```bash
 USE_TESTING_DB=true go run .
@@ -36,7 +36,10 @@ USE_TESTING_DB=true go run .
 Requirements:
 
 - GoLang 1.14+
+- nodejs 14+
 - Mongodb _(mongodb compass is a great db viewer)_
+
+API:
 
 ```bash
 cp .env.example .env
@@ -45,7 +48,20 @@ vim .env
 go run .
 ```
 
-Before you start fiddling around with the code make sure to read [CONTRIBUTING.md](/CONTRIBUTING.md)
+Dashboard:
+
+```bash
+cd dashboard
+
+npm i
+npm run build
+```
+
+Before you commit make sure to read [CONTRIBUTING.md](/CONTRIBUTING.md)
+
+## Dashboard
+
+for more information about the dashboard see [/dashboard](/dashboard)
 
 ## Auth
 
