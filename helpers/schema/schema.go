@@ -172,6 +172,8 @@ func parseStruct(t reflect.Type) (properties map[string]Property, requiredFields
 
 		argRequired := false
 		argNotRequired := false
+		argDeprecated := false
+		argUniqueItems := false
 		args := strings.Split(field.Tag.Get("jsonSchema"), ",")
 		for _, arg := range args {
 			switch arg {
@@ -179,6 +181,10 @@ func parseStruct(t reflect.Type) (properties map[string]Property, requiredFields
 				argNotRequired = true
 			case "required":
 				argRequired = true
+			case "deprecated":
+				argDeprecated = true
+			case "uniqueItems":
+				argUniqueItems = true
 			}
 		}
 
@@ -192,6 +198,12 @@ func parseStruct(t reflect.Type) (properties map[string]Property, requiredFields
 		}
 		if argNotRequired {
 			required = false
+		}
+		if argDeprecated {
+			property.Deprecated = true
+		}
+		if argUniqueItems && property.Type == PropertyTypeArray {
+			property.UniqueItems = true
 		}
 
 		properties[name] = property

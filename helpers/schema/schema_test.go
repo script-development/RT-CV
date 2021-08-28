@@ -72,13 +72,17 @@ func TestFrom(t *testing.T) {
 				A *string
 				B *string `jsonSchema:"required"`
 				C string
-				D string `jsonSchema:"notRequired"`
+				D string   `jsonSchema:"notRequired"`
+				E string   `jsonSchema:"notRequired,deprecated"`
+				F []string `jsonSchema:"uniqueItems"`
 			}{},
 			map[string]Property{
 				"A": {Type: PropertyTypeString},
 				"B": {Type: PropertyTypeString},
 				"C": {Type: PropertyTypeString},
 				"D": {Type: PropertyTypeString},
+				"E": {Type: PropertyTypeString, Deprecated: true},
+				"F": {Type: PropertyTypeArray, Items: &Property{Type: PropertyTypeString}, UniqueItems: true},
 			},
 			[]string{"B", "C"},
 		},

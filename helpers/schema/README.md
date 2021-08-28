@@ -9,3 +9,7 @@ Supported struct tags:
 - `jsonSchema:`
     - `"notRequired"` Set the field are not required (by default all fields with the exeption of `ptr`, `array`, `slice` and `map` are set as required)
     - `"required"` Set the field as required
+    - `"deprecated"` Mark the field as deprecated
+    - `"uniqueItems"` Every array antry must be unique _(Only for arrays)_
+
+You can also chain jsonSchema tags using `,`, for example: `jsonSchema:"notRequired,deprecated"`
