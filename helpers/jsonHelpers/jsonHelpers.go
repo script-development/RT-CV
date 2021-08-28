@@ -14,9 +14,10 @@ type RFC3339Nano time.Time
 func (RFC3339Nano) JSONSchemaDescribe() schema.Property {
 	minLen := uint(10)
 	return schema.Property{
-		Title:       "RFC3339 time string",
-		Description: "This field is a RFC3339 (nano) time string that requires an integer to work",
-		Type:        schema.PropertyTypeString,
+		Title: "RFC3339 time string",
+		Description: "This field is a RFC3339 (nano) time string, " +
+			"RFC3339 is basicly an extension of ISO 8601 so that should also be fine here",
+		Type: schema.PropertyTypeString,
 		Examples: []interface{}{
 			"2019-10-12T07:20:50.52Z",
 			"2019-10-12T14:20:50.52+07:00",
