@@ -18,3 +18,8 @@ func routeGetCvSchema(c *fiber.Ctx) error {
 	}
 	return c.JSON(resSchema)
 }
+
+func routeGetOpenAPISchema(_ *fiber.Ctx) error {
+	// TODO make this
+	return nil
+}
