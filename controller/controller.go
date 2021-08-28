@@ -21,7 +21,7 @@ func Routes(app *fiber.App, dbConn db.Connection, serverSeed []byte) {
 
 	b.Group(`/api/v1`, func(b *routeBuilder.Router) {
 		b.Group(`/schema`, func(b *routeBuilder.Router) {
-			b.Get(`/openAPI`, routeGetOpenAPISchema)
+			b.Get(`/openAPI`, routeGetOpenAPISchema(b))
 			b.Get(`/cv`, routeGetCvSchema)
 		})
 
