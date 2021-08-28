@@ -17,21 +17,22 @@ type Period struct {
 }
 
 // CV contains all information that belongs to a curriculum vitae
+// TODO check the json removed fields if we actually should use them
 type CV struct {
-	Title                string           `json:"title"`
-	ReferenceNumber      string           `json:"referenceNumber"`
-	LastChanged          string           `json:"lastChanged"` // iso 8601 time
+	Title                string           `json:"-"`
+	ReferenceNumber      string           `json:"-"`
+	CreatedAt            *string          `json:"-"` // iso 8601 time
+	LastChanged          string           `json:"-"` // iso 8601 time
 	Educations           []Education      `json:"educations"`
 	Courses              []Course         `json:"courses"`
 	WorkExperiences      []WorkExperience `json:"workExperiences"`
 	PreferredJobs        []string         `json:"preferredJobs"`
 	Languages            []Language       `json:"languages"`
-	Competences          []Competence     `json:"competences"`
-	Interests            []Interest       `json:"interests"`
+	Competences          []Competence     `json:"-"`
+	Interests            []Interest       `json:"-"`
 	PersonalDetails      PersonalDetails  `json:"personalDetails"`
-	PersonalPresentation string           `json:"personalPresentation"`
+	PersonalPresentation string           `json:"-"`
 	DriversLicenses      []string         `json:"driversLicenses"`
-	CreatedAt            *string          `json:"createdAt"` // iso 8601 time
 }
 
 // Education is something a user has followed
