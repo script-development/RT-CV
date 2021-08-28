@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/script-development/RT-CV/db"
+	"github.com/script-development/RT-CV/helpers/jsonHelpers"
 	. "github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -21,7 +22,7 @@ func TestGetHtml(t *testing.T) {
 			FirstName:         "D.R. Pietter",
 			SurNamePrefix:     "Ven ther",
 			SurName:           "Steen",
-			DateOfBirth:       time.Now().Format(time.RFC3339Nano),
+			DateOfBirth:       jsonHelpers.RFC3339Nano(time.Now()),
 			Gender:            "Apache helicopter",
 			StreetName:        "Streetname abc",
 			HouseNumber:       "33",

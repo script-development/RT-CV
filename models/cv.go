@@ -7,32 +7,33 @@ import (
 	"strings"
 
 	"github.com/SebastiaanKlippert/go-wkhtmltopdf"
+	"github.com/script-development/RT-CV/helpers/jsonHelpers"
 )
 
 // Period is a period of time from a date to another date
 type Period struct {
-	Start   string `json:"start"` // iso 8601 time
-	End     string `json:"end"`   // iso 8601 time
-	Present bool   `json:"present"`
+	Start   jsonHelpers.RFC3339Nano `json:"start"`
+	End     jsonHelpers.RFC3339Nano `json:"end"`
+	Present bool                    `json:"present"`
 }
 
 // CV contains all information that belongs to a curriculum vitae
 // TODO check the json removed fields if we actually should use them
 type CV struct {
-	Title                string           `json:"-"`
-	ReferenceNumber      string           `json:"-"`
-	CreatedAt            *string          `json:"-"` // iso 8601 time
-	LastChanged          string           `json:"-"` // iso 8601 time
-	Educations           []Education      `json:"educations"`
-	Courses              []Course         `json:"courses"`
-	WorkExperiences      []WorkExperience `json:"workExperiences"`
-	PreferredJobs        []string         `json:"preferredJobs"`
-	Languages            []Language       `json:"languages"`
-	Competences          []Competence     `json:"-"`
-	Interests            []Interest       `json:"-"`
-	PersonalDetails      PersonalDetails  `json:"personalDetails"`
-	PersonalPresentation string           `json:"-"`
-	DriversLicenses      []string         `json:"driversLicenses"`
+	Title                string                   `json:"-"`
+	ReferenceNumber      string                   `json:"-"`
+	CreatedAt            *jsonHelpers.RFC3339Nano `json:"-"`
+	LastChanged          jsonHelpers.RFC3339Nano  `json:"-"`
+	Educations           []Education              `json:"educations"`
+	Courses              []Course                 `json:"courses"`
+	WorkExperiences      []WorkExperience         `json:"workExperiences"`
+	PreferredJobs        []string                 `json:"preferredJobs"`
+	Languages            []Language               `json:"languages"`
+	Competences          []Competence             `json:"-"`
+	Interests            []Interest               `json:"-"`
+	PersonalDetails      PersonalDetails          `json:"personalDetails"`
+	PersonalPresentation string                   `json:"-"`
+	DriversLicenses      []string                 `json:"driversLicenses"`
 }
 
 // Education is something a user has followed
@@ -41,36 +42,36 @@ type Education struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	// TODO find difference between isCompleted and hasdiploma
-	IsCompleted bool   `json:"isCompleted"`
-	HasDiploma  bool   `json:"hasDiploma"`
-	Period      Period `json:"period"`
-	StartDate   string `json:"startDate"` // iso 8601 time
-	EndDate     string `json:"endDate"`   // iso 8601 time
-	Institute   string `json:"institute"`
-	SubsectorID int    `json:"subsectorID"`
+	IsCompleted bool                     `json:"isCompleted"`
+	HasDiploma  bool                     `json:"hasDiploma"`
+	Period      Period                   `json:"period"`
+	StartDate   *jsonHelpers.RFC3339Nano `json:"startDate"`
+	EndDate     *jsonHelpers.RFC3339Nano `json:"endDate"`
+	Institute   string                   `json:"institute"`
+	SubsectorID int                      `json:"subsectorID"`
 }
 
 // Course is something a user has followed
 type Course struct {
-	Name           string `json:"name"`
-	NormalizedName string `json:"normalizedName"`
-	StartDate      string `json:"startDate"` // iso 8601 time
-	EndDate        string `json:"endDate"`   // iso 8601 time
-	IsCompleted    bool   `json:"isCompleted"`
-	Institute      string `json:"institute"`
-	Description    string `json:"description"`
+	Name           string                   `json:"name"`
+	NormalizedName string                   `json:"normalizedName"`
+	StartDate      *jsonHelpers.RFC3339Nano `json:"startDate"`
+	EndDate        *jsonHelpers.RFC3339Nano `json:"endDate"`
+	IsCompleted    bool                     `json:"isCompleted"`
+	Institute      string                   `json:"institute"`
+	Description    string                   `json:"description"`
 }
 
 // WorkExperience is experience in work
 type WorkExperience struct {
-	Description       string `json:"description"`
-	Profession        string `json:"profession"`
-	Period            Period `json:"period"`
-	StartDate         string `json:"startDate"` // iso 8601 time
-	EndDate           string `json:"endDate"`   // iso 8601 time
-	StillEmployed     bool   `json:"stillEmployed"`
-	Employer          string `json:"employer"`
-	WeeklyHoursWorked int    `json:"weeklyHoursWorked"`
+	Description       string                   `json:"description"`
+	Profession        string                   `json:"profession"`
+	Period            Period                   `json:"period"`
+	StartDate         *jsonHelpers.RFC3339Nano `json:"startDate"`
+	EndDate           *jsonHelpers.RFC3339Nano `json:"endDate"`
+	StillEmployed     bool                     `json:"stillEmployed"`
+	Employer          string                   `json:"employer"`
+	WeeklyHoursWorked int                      `json:"weeklyHoursWorked"`
 }
 
 // LanguageProficiency is something that i'm not sure what it is
@@ -98,20 +99,20 @@ type Interest struct {
 
 // PersonalDetails contains personal info
 type PersonalDetails struct {
-	Initials          string `json:"initials"`
-	FirstName         string `json:"firstName"`
-	SurNamePrefix     string `json:"surNamePrefix"`
-	SurName           string `json:"surName"`
-	DateOfBirth       string `json:"dob"` // iso 8601 time
-	Gender            string `json:"gender"`
-	StreetName        string `json:"streetName"`
-	HouseNumber       string `json:"houseNumber"`
-	HouseNumberSuffix string `json:"houseNumberSuffix"`
-	Zip               string `json:"zip"`
-	City              string `json:"city"`
-	Country           string `json:"country"`
-	PhoneNumber       string `json:"phoneNumber"`
-	Email             string `json:"email"`
+	Initials          string                  `json:"initials" jsonSchema:"notRequired"`
+	FirstName         string                  `json:"firstName"`
+	SurNamePrefix     string                  `json:"surNamePrefix" jsonSchema:"notRequired"`
+	SurName           string                  `json:"surName" jsonSchema:"notRequired"`
+	DateOfBirth       jsonHelpers.RFC3339Nano `json:"dob" jsonSchema:"notRequired"`
+	Gender            string                  `json:"gender" jsonSchema:"notRequired"`
+	StreetName        string                  `json:"streetName" jsonSchema:"notRequired"`
+	HouseNumber       string                  `json:"houseNumber" jsonSchema:"notRequired"`
+	HouseNumberSuffix string                  `json:"houseNumberSuffix" jsonSchema:"notRequired"`
+	Zip               string                  `json:"zip" jsonSchema:"notRequired"`
+	City              string                  `json:"city" jsonSchema:"notRequired"`
+	Country           string                  `json:"country" jsonSchema:"notRequired"`
+	PhoneNumber       string                  `json:"phoneNumber" jsonSchema:"notRequired"`
+	Email             string                  `json:"email" jsonSchema:"notRequired"`
 }
 
 // GetHTML generates a HTML document from the input cv

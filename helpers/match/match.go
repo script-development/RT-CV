@@ -148,16 +148,11 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []AMatch {
 			foundMatch := false
 
 			for _, cvEducation := range cv.Educations {
-				if len(cvEducation.Name) == 0 || len(cvEducation.EndDate) == 0 {
+				if len(cvEducation.Name) == 0 || cvEducation.EndDate == nil {
 					continue
 				}
 
-				t, err := time.Parse(time.RFC3339, cvEducation.EndDate)
-				if err != nil {
-					continue
-				}
-
-				if t.AddDate(profile.YearsSinceEducation, 0, 0).After(now) {
+				if cvEducation.EndDate.Time().AddDate(profile.YearsSinceEducation, 0, 0).After(now) {
 					foundMatch = true
 					break
 				}
@@ -165,16 +160,11 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []AMatch {
 
 			if !foundMatch {
 				for _, cvCourse := range cv.Courses {
-					if len(cvCourse.Name) == 0 || len(cvCourse.EndDate) == 0 {
+					if len(cvCourse.Name) == 0 || cvCourse.EndDate == nil {
 						continue
 					}
 
-					t, err := time.Parse(time.RFC3339, cvCourse.EndDate)
-					if err != nil {
-						continue
-					}
-
-					if t.AddDate(profile.YearsSinceEducation, 0, 0).After(now) {
+					if cvCourse.EndDate.Time().AddDate(profile.YearsSinceEducation, 0, 0).After(now) {
 						foundMatch = true
 						break
 					}
@@ -320,16 +310,11 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []AMatch {
 			lastWorkYear := 0
 
 			for _, cvWorkExp := range cv.WorkExperiences {
-				if cvWorkExp.EndDate == "" {
+				if cvWorkExp.EndDate == nil {
 					continue
 				}
 
-				endDate, err := time.Parse(time.RFC3339, cvWorkExp.EndDate)
-				if err != nil {
-					continue
-				}
-
-				endDateYear := endDate.Year()
+				endDateYear := cvWorkExp.EndDate.Time().Year()
 				if endDateYear > lastWorkYear {
 					lastWorkYear = endDateYear
 				}

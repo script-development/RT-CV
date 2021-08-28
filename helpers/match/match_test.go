@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/script-development/RT-CV/helpers/jsonHelpers"
 	"github.com/script-development/RT-CV/models"
 	. "github.com/stretchr/testify/assert"
 )
@@ -173,7 +174,7 @@ func TestMatchEducationYearsSinceEducation(t *testing.T) {
 		models.CV{
 			Educations: []models.Education{{
 				Name:    "Bananenplukker",
-				EndDate: time.Now().AddDate(-1, 0, 0).Format(time.RFC3339),
+				EndDate: jsonHelpers.RFC3339Nano(time.Now().AddDate(-1, 0, 0)).ToPtr(),
 			}},
 		},
 	)
@@ -186,7 +187,7 @@ func TestMatchEducationYearsSinceEducation(t *testing.T) {
 		models.CV{
 			Courses: []models.Course{{
 				Name:    "Bananenplukker",
-				EndDate: time.Now().AddDate(-1, 0, 0).Format(time.RFC3339),
+				EndDate: jsonHelpers.RFC3339Nano(time.Now().AddDate(-1, 0, 0)).ToPtr(),
 			}},
 		},
 	)
@@ -200,15 +201,15 @@ func TestMatchEducationYearsSinceEducation(t *testing.T) {
 			Educations: []models.Education{
 				{
 					Name:    "Bananenplukker",
-					EndDate: time.Now().AddDate(-3, 0, 0).Format(time.RFC3339),
+					EndDate: jsonHelpers.RFC3339Nano(time.Now().AddDate(-3, 0, 0)).ToPtr(),
 				},
 				{
 					Name:    "Bananenplukker",
-					EndDate: time.Now().AddDate(-1, 0, 0).Format(time.RFC3339),
+					EndDate: jsonHelpers.RFC3339Nano(time.Now().AddDate(-1, 0, 0)).ToPtr(),
 				},
 				{
 					Name:    "Bananenplukker",
-					EndDate: time.Now().AddDate(-3, 0, 0).Format(time.RFC3339),
+					EndDate: jsonHelpers.RFC3339Nano(time.Now().AddDate(-3, 0, 0)).ToPtr(),
 				},
 			},
 		},
@@ -222,7 +223,7 @@ func TestMatchEducationYearsSinceEducation(t *testing.T) {
 		models.CV{
 			Educations: []models.Education{{
 				Name:    "Bananenplukker",
-				EndDate: time.Now().AddDate(-2, 0, 0).Format(time.RFC3339),
+				EndDate: jsonHelpers.RFC3339Nano(time.Now().AddDate(-2, 0, 0)).ToPtr(),
 			}},
 		},
 	)
@@ -277,14 +278,14 @@ func TestMatchYearsSinceWork(t *testing.T) {
 	MustMatchSingle(
 		t,
 		models.Profile{YearsSinceWork: &yearsSinceWork},
-		models.CV{WorkExperiences: []models.WorkExperience{{EndDate: time.Now().AddDate(-1, 0, 0).Format(time.RFC3339)}}},
+		models.CV{WorkExperiences: []models.WorkExperience{{EndDate: jsonHelpers.RFC3339Nano(time.Now().AddDate(-1, 0, 0)).ToPtr()}}},
 	)
 
 	yearsSinceWork = 1
 	MustNotMatchSingle(
 		t,
 		models.Profile{YearsSinceWork: &yearsSinceWork},
-		models.CV{WorkExperiences: []models.WorkExperience{{EndDate: time.Now().AddDate(-2, 0, 0).Format(time.RFC3339)}}},
+		models.CV{WorkExperiences: []models.WorkExperience{{EndDate: jsonHelpers.RFC3339Nano(time.Now().AddDate(-2, 0, 0)).ToPtr()}}},
 	)
 }
 
