@@ -3,10 +3,27 @@ package jsonHelpers
 import (
 	"encoding/json"
 	"time"
+
+	"github.com/script-development/RT-CV/helpers/schema"
 )
 
 // RFC3339Nano is a time.Time that json (Un)Marshals from & to RFC3339 nano
 type RFC3339Nano time.Time
+
+// JSONSchemaDescribe implments schema.Describe
+func (RFC3339Nano) JSONSchemaDescribe() schema.Property {
+	minLen := uint(10)
+	return schema.Property{
+		Title:       "RFC3339 time string",
+		Description: "This field is a RFC3339 (nano) time string that requires an integer to work",
+		Type:        schema.PropertyTypeString,
+		Examples: []interface{}{
+			"2019-10-12T07:20:50.52Z",
+			"2019-10-12T14:20:50.52+07:00",
+		},
+		MinLength: &minLen,
+	}
+}
 
 // UnmarshalJSON transforms a RFC3339 string into *a
 func (t *RFC3339Nano) UnmarshalJSON(b []byte) error {

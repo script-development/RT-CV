@@ -6,6 +6,13 @@ import (
 	"strings"
 )
 
+// Describe can be implmented by a type to manually describe the type
+type Describe interface {
+	JSONSchemaDescribe() Property
+}
+
+var reflectDescribe = reflect.TypeOf((*Describe)(nil)).Elem()
+
 // PropertyType contains the value type of a property
 type PropertyType string
 
@@ -83,8 +90,10 @@ type Property struct {
 	Default     interface{}   `json:"default,omitempty"`
 	Examples    []interface{} `json:"examples,omitempty"`
 	Format      Format        `json:"format,omitempty"`
-	Schema      Version       `json:"$schema,omitempty"`
-	ID          string        `json:"$id,omitempty"`
+
+	// Only in the root of the schema
+	Schema Version `json:"$schema,omitempty"`
+	ID     string  `json:"$id,omitempty"`
 
 	// type == object
 	Properties        map[string]Property `json:"properties,omitempty"` // required field
@@ -203,6 +212,17 @@ func parseType(t reflect.Type) (property Property, required bool, skip bool) {
 		}
 		required = false
 		t = t.Elem()
+	}
+
+	if t.Implements(reflectDescribe) {
+		methodName := "JSONSchemaDescribe"
+		valueOfT := reflect.New(t).Elem()
+		output := valueOfT.MethodByName(methodName).Call([]reflect.Value{})[0]
+		property, ok := output.Interface().(Property)
+		if !ok {
+			panic("method " + methodName + " did not return the expected value type")
+		}
+		return property, required, false
 	}
 
 	switch t.Kind() {
