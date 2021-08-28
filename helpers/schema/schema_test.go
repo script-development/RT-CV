@@ -67,6 +67,22 @@ func TestFrom(t *testing.T) {
 			[]string{"renamed_field"},
 		},
 		{
+			"with jsonSchema tag",
+			struct {
+				A *string
+				B *string `jsonSchema:"required"`
+				C string
+				D string `jsonSchema:"notRequired"`
+			}{},
+			map[string]Property{
+				"A": {Type: PropertyTypeString},
+				"B": {Type: PropertyTypeString},
+				"C": {Type: PropertyTypeString},
+				"D": {Type: PropertyTypeString},
+			},
+			[]string{"B", "C"},
+		},
+		{
 			"with nested struct",
 			struct {
 				A NestedStruct

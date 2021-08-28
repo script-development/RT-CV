@@ -161,9 +161,28 @@ func parseStruct(t reflect.Type) (properties map[string]Property, requiredFields
 			name = customName
 		}
 
+		argRequired := false
+		argNotRequired := false
+		args := strings.Split(field.Tag.Get("jsonSchema"), ",")
+		for _, arg := range args {
+			switch arg {
+			case "notRequired":
+				argNotRequired = true
+			case "required":
+				argRequired = true
+			}
+		}
+
 		property, required, skip := parseType(field.Type)
 		if skip {
 			continue
+		}
+
+		if argRequired {
+			required = true
+		}
+		if argNotRequired {
+			required = false
 		}
 
 		properties[name] = property
