@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/script-development/RT-CV/helpers/random"
+	"github.com/script-development/RT-CV/helpers/routeBuilder"
 	"github.com/script-development/RT-CV/models"
 	. "github.com/stretchr/testify/assert"
 )
@@ -13,7 +14,7 @@ func TestApiKeyRoutes(t *testing.T) {
 	app := newTestingRouter(t)
 
 	// Get all api keys
-	_, res := app.MakeRequest(Get, `/api/v1/keys`, TestReqOpts{})
+	_, res := app.MakeRequest(routeBuilder.Get, `/api/v1/keys`, TestReqOpts{})
 
 	// Check if the response contains the api keys inserted in the mock data
 	resKeys := []models.APIKey{}
@@ -34,7 +35,7 @@ func TestApiKeyRoutes(t *testing.T) {
 	// Get each key from earlier by id
 	for _, listKey := range resKeys {
 		keyRoute := `/api/v1/keys/` + listKey.ID.Hex()
-		_, res = app.MakeRequest(Get, keyRoute, TestReqOpts{})
+		_, res = app.MakeRequest(routeBuilder.Get, keyRoute, TestReqOpts{})
 
 		resKey := &models.APIKey{}
 		err = json.Unmarshal(res, resKey)
@@ -46,10 +47,10 @@ func TestApiKeyRoutes(t *testing.T) {
 		keysCountBeforeDeletion := len(resKeys)
 
 		// Send the delete request
-		app.MakeRequest(Delete, keyRoute, TestReqOpts{})
+		app.MakeRequest(routeBuilder.Delete, keyRoute, TestReqOpts{})
 
 		// Count how many keys we have after the deletion
-		_, res := app.MakeRequest(Get, `/api/v1/keys`, TestReqOpts{})
+		_, res := app.MakeRequest(routeBuilder.Get, `/api/v1/keys`, TestReqOpts{})
 		resKeys = []models.APIKey{}
 		err = json.Unmarshal(res, &resKeys)
 		NoError(t, err)
@@ -69,7 +70,7 @@ func TestApiKeyRoutes(t *testing.T) {
 	}
 	body, err := json.Marshal(keyToInsert)
 	NoError(t, err)
-	_, res = app.MakeRequest(Post, `/api/v1/keys`, TestReqOpts{Body: body})
+	_, res = app.MakeRequest(routeBuilder.Post, `/api/v1/keys`, TestReqOpts{Body: body})
 	resKey := &models.APIKey{}
 	err = json.Unmarshal(res, resKey)
 	NoError(t, err)
@@ -77,7 +78,7 @@ func TestApiKeyRoutes(t *testing.T) {
 	Equal(t, *keyToInsert.Key, resKey.Key)
 
 	// Check if we can fetch the newly inserted key
-	_, res = app.MakeRequest(Get, `/api/v1/keys/`+resKey.ID.Hex(), TestReqOpts{})
+	_, res = app.MakeRequest(routeBuilder.Get, `/api/v1/keys/`+resKey.ID.Hex(), TestReqOpts{})
 	resKey = &models.APIKey{}
 	err = json.Unmarshal(res, resKey)
 	NoError(t, err)
@@ -85,14 +86,18 @@ func TestApiKeyRoutes(t *testing.T) {
 
 	// Try to update the key
 	newRandomKey := string(random.GenerateKey())
-	_, res = app.MakeRequest(Put, `/api/v1/keys/`+resKey.ID.Hex(), TestReqOpts{Body: []byte(`{"key": "` + newRandomKey + `"}`)})
+	_, res = app.MakeRequest(
+		routeBuilder.Put,
+		`/api/v1/keys/`+resKey.ID.Hex(),
+		TestReqOpts{Body: []byte(`{"key": "` + newRandomKey + `"}`)},
+	)
 	resKey = &models.APIKey{}
 	err = json.Unmarshal(res, resKey)
 	NoError(t, err)
 	Equal(t, newRandomKey, resKey.Key)
 
 	// check if the key was updated
-	_, res = app.MakeRequest(Get, `/api/v1/keys/`+resKey.ID.Hex(), TestReqOpts{})
+	_, res = app.MakeRequest(routeBuilder.Get, `/api/v1/keys/`+resKey.ID.Hex(), TestReqOpts{})
 	resKey = &models.APIKey{}
 	err = json.Unmarshal(res, resKey)
 	NoError(t, err)

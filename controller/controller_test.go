@@ -11,36 +11,10 @@ import (
 	"github.com/script-development/RT-CV/db/testingdb"
 	"github.com/script-development/RT-CV/helpers/auth"
 	"github.com/script-development/RT-CV/helpers/random"
+	"github.com/script-development/RT-CV/helpers/routeBuilder"
 	"github.com/script-development/RT-CV/mock"
 	. "github.com/stretchr/testify/assert"
 )
-
-type Method uint
-
-const (
-	Get Method = iota
-	Post
-	Patch
-	Put
-	Delete
-)
-
-func (m Method) String() string {
-	switch m {
-	case Get:
-		return "GET"
-	case Post:
-		return "POST"
-	case Patch:
-		return "PATCH"
-	case Put:
-		return "PUT"
-	case Delete:
-		return "DELETE"
-	default:
-		return "GET"
-	}
-}
 
 var testingServerSeed = []byte("static-server-seed")
 
@@ -71,7 +45,7 @@ type TestReqOpts struct {
 	Body   []byte
 }
 
-func (r *testingRouter) MakeRequest(method Method, route string, opts TestReqOpts) (res *http.Response, resBody []byte) {
+func (r *testingRouter) MakeRequest(method routeBuilder.Method, route string, opts TestReqOpts) (res *http.Response, resBody []byte) {
 	var body io.Reader
 	if opts.Body != nil {
 		body = bytes.NewReader(opts.Body)
@@ -103,22 +77,22 @@ func (r *testingRouter) MakeRequest(method Method, route string, opts TestReqOpt
 func TestCannotAccessCriticalRoutesWithoutCredentials(t *testing.T) {
 	routes := []struct {
 		name   string
-		method Method
+		method routeBuilder.Method
 		route  string
 	}{
 		{
 			"scraper",
-			Post,
+			routeBuilder.Post,
 			"/api/v1/scraper/scanCV",
 		},
 		{
 			"control profiles",
-			Get,
+			routeBuilder.Get,
 			"/api/v1/control/profiles",
 		},
 		{
 			"keys",
-			Get,
+			routeBuilder.Get,
 			"/api/v1/keys",
 		},
 	}

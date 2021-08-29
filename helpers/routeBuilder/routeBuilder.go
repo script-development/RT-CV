@@ -1,6 +1,8 @@
 package routeBuilder
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"github.com/gofiber/fiber/v2"
+)
 
 // BaseBuilder is the core builder in here all the routes and middlewares are rememberd
 type BaseBuilder struct {
@@ -8,10 +10,68 @@ type BaseBuilder struct {
 	routes []Route
 }
 
+// Method represends a http method
+type Method uint8
+
+const (
+	// Get is a http method
+	Get Method = iota
+	// Post is a http method
+	Post
+	// Patch is a http method
+	Patch
+	// Put is a http method
+	Put
+	// Delete is a http method
+	Delete
+)
+
+func (m Method) String() string {
+	switch m {
+	case Get:
+		return "GET"
+	case Post:
+		return "POST"
+	case Patch:
+		return "PATCH"
+	case Put:
+		return "PUT"
+	case Delete:
+		return "DELETE"
+	default:
+		return "GET"
+	}
+}
+
+// ContentType represends a content type
+type ContentType uint8
+
+const (
+	// JSON is a content type
+	JSON ContentType = iota
+	// HTML is a content type
+	HTML
+)
+
+func (c ContentType) String() string {
+	switch c {
+	case JSON:
+		return "application/json"
+	case HTML:
+		return "text/html"
+	default:
+		return "text/plain"
+	}
+}
+
 // Route constains information about a route
 type Route struct {
-	path   string
-	method string // GET, POST, PATCH, DELETE
+	FiberPath           string
+	OpenAPIPath         string
+	Params              []string
+	Kind                string
+	Method              Method
+	ResponseContentType ContentType
 }
 
 // New creates a instance of Builder
@@ -46,7 +106,20 @@ func (r *Router) appendPrefix(add string) string {
 	return r.prefix + add
 }
 
-// Group prefixes the routes within the group with a route and adds a middlware to them if spesified
+func (r *Router) newRoute(prefix string, method Method) {
+	fiberPath := r.appendPrefix(prefix)
+	parsedPath := parseFiberPath(fiberPath)
+
+	r.base.routes = append(r.base.routes, Route{
+		FiberPath:           r.appendPrefix(prefix),
+		OpenAPIPath:         parsedPath.AsOpenAPIPath,
+		Params:              parsedPath.Params,
+		Method:              method,
+		ResponseContentType: JSON,
+	})
+}
+
+// Group prefixes the routes within the group with a route and adds a middleware to them if specified
 func (r *Router) Group(prefix string, group func(*Router), middlewares ...func(*fiber.Ctx) error) {
 	group(&Router{
 		prefix: r.appendPrefix(prefix),
@@ -57,55 +130,37 @@ func (r *Router) Group(prefix string, group func(*Router), middlewares ...func(*
 
 // Get defines a GET route
 func (r *Router) Get(prefix string, handlers ...func(*fiber.Ctx) error) {
-	r.base.routes = append(r.base.routes, Route{
-		path:   r.appendPrefix(prefix),
-		method: "GET",
-	})
+	r.newRoute(prefix, Get)
 	r.fiber.Get(prefix, handlers...)
 }
 
 // Post defines a POST route
 func (r *Router) Post(prefix string, handlers ...func(*fiber.Ctx) error) {
-	r.base.routes = append(r.base.routes, Route{
-		path:   r.appendPrefix(prefix),
-		method: "POST",
-	})
+	r.newRoute(prefix, Post)
 	r.fiber.Post(prefix, handlers...)
 }
 
 // Put defines a PUT route
 func (r *Router) Put(prefix string, handlers ...func(*fiber.Ctx) error) {
-	r.base.routes = append(r.base.routes, Route{
-		path:   r.appendPrefix(prefix),
-		method: "PUT",
-	})
+	r.newRoute(prefix, Put)
 	r.fiber.Put(prefix, handlers...)
 }
 
 // Patch defines a PATCH route
 func (r *Router) Patch(prefix string, handlers ...func(*fiber.Ctx) error) {
-	r.base.routes = append(r.base.routes, Route{
-		path:   r.appendPrefix(prefix),
-		method: "PATCH",
-	})
+	r.newRoute(prefix, Patch)
 	r.fiber.Patch(prefix, handlers...)
 }
 
 // Delete defines a DELETE route
 func (r *Router) Delete(prefix string, handlers ...func(*fiber.Ctx) error) {
-	r.base.routes = append(r.base.routes, Route{
-		path:   r.appendPrefix(prefix),
-		method: "DELETE",
-	})
+	r.newRoute(prefix, Delete)
 	r.fiber.Delete(prefix, handlers...)
 }
 
 // Static defines a static file path
+// We also don't store the static resources as they are not really important to the api users
 func (r *Router) Static(prefix, root string, options ...fiber.Static) {
-	r.base.routes = append(r.base.routes, Route{
-		path:   r.appendPrefix(prefix),
-		method: "GET",
-	})
 	r.fiber.Static(prefix, root, options...)
 }
 
