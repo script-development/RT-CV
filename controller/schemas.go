@@ -83,6 +83,10 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 					},
 				}
 
+				if route.Info.Description != "" {
+					routeInfo["description"] = route.Info.Description
+				}
+
 				path := paths[route.OpenAPIPath]
 				switch route.Method {
 				case routeBuilder.Get:

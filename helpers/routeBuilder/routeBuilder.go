@@ -133,7 +133,7 @@ func (r *Router) appendPrefix(add string) string {
 	return r.prefix + add
 }
 
-func (r *Router) newRoute(prefix string, method Method) {
+func (r *Router) newRoute(prefix string, method Method, info R) {
 	fiberPath := r.appendPrefix(prefix)
 	parsedPath := parseFiberPath(fiberPath)
 
@@ -143,6 +143,7 @@ func (r *Router) newRoute(prefix string, method Method) {
 		Params:              parsedPath.Params,
 		Method:              method,
 		ResponseContentType: JSON,
+		Info:                info,
 	})
 }
 
@@ -158,37 +159,37 @@ func (r *Router) Group(prefix string, group func(*Router), middlewares ...func(*
 // NGet defines a get route with information about the route
 func (r *Router) NGet(prefix string, routeDefinition R, middlewares ...func(*fiber.Ctx) error) {
 	routeDefinition.check()
-	r.newRoute(prefix, Get)
+	r.newRoute(prefix, Get, routeDefinition)
 	r.fiber.Get(prefix, append(middlewares, routeDefinition.Fn)...)
 }
 
 // Get defines a GET route
 func (r *Router) Get(prefix string, handlers ...func(*fiber.Ctx) error) {
-	r.newRoute(prefix, Get)
+	r.newRoute(prefix, Get, R{})
 	r.fiber.Get(prefix, handlers...)
 }
 
 // Post defines a POST route
 func (r *Router) Post(prefix string, handlers ...func(*fiber.Ctx) error) {
-	r.newRoute(prefix, Post)
+	r.newRoute(prefix, Post, R{})
 	r.fiber.Post(prefix, handlers...)
 }
 
 // Put defines a PUT route
 func (r *Router) Put(prefix string, handlers ...func(*fiber.Ctx) error) {
-	r.newRoute(prefix, Put)
+	r.newRoute(prefix, Put, R{})
 	r.fiber.Put(prefix, handlers...)
 }
 
 // Patch defines a PATCH route
 func (r *Router) Patch(prefix string, handlers ...func(*fiber.Ctx) error) {
-	r.newRoute(prefix, Patch)
+	r.newRoute(prefix, Patch, R{})
 	r.fiber.Patch(prefix, handlers...)
 }
 
 // Delete defines a DELETE route
 func (r *Router) Delete(prefix string, handlers ...func(*fiber.Ctx) error) {
-	r.newRoute(prefix, Delete)
+	r.newRoute(prefix, Delete, R{})
 	r.fiber.Delete(prefix, handlers...)
 }
 
