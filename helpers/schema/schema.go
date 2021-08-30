@@ -81,15 +81,17 @@ const VersionUsed = Version("https://json-schema.org/draft/2020-12/schema")
 
 // Property represends a map / struct entry
 type Property struct {
-	Title       string        `json:"title,omitempty"`
-	Description string        `json:"description,omitempty"`
-	Type        PropertyType  `json:"type,omitempty"`  // The data type
-	Enum        []interface{} `json:"enum,omitempty"`  // The value should validate againest one of these
-	Const       interface{}   `json:"const,omitempty"` // Equal to a enum with 1 value
-	Deprecated  bool          `json:"deprecated,omitempty"`
-	Default     interface{}   `json:"default,omitempty"`
-	Examples    []interface{} `json:"examples,omitempty"`
-	Format      Format        `json:"format,omitempty"`
+	Title       string              `json:"title,omitempty"`
+	Description string              `json:"description,omitempty"`
+	Type        PropertyType        `json:"type,omitempty"`  // The data type
+	Enum        []interface{}       `json:"enum,omitempty"`  // The value should validate againest one of these
+	Const       interface{}         `json:"const,omitempty"` // Equal to a enum with 1 value
+	Deprecated  bool                `json:"deprecated,omitempty"`
+	Default     interface{}         `json:"default,omitempty"`
+	Examples    []interface{}       `json:"examples,omitempty"`
+	Format      Format              `json:"format,omitempty"`
+	Ref         string              `json:"$ref,omitempty"`
+	Defs        map[string]Property `json:"$defs,omitempty"`
 
 	// Only in the root of the schema
 	Schema Version `json:"$schema,omitempty"`
@@ -124,36 +126,64 @@ type Property struct {
 
 }
 
-var errInvalidSchemaFromInput = errors.New("argument must be a struct or a poitner to a struct")
+var errInvalidSchemaFromInput = errors.New("argument must be a struct, map, slice or array or a pointer to one of those")
+
+// WithMeta adds the Schema and ID field to the returned property
+type WithMeta struct {
+	SchemaID string
+}
 
 // From converts a struct into a value for the  properties part of a json schema
-func From(inputType interface{}, schemaID string) (Property, error) {
+// baseRefPath might look something like #/components/schemas/
+func From(
+	inputType interface{},
+	baseRefPath string,
+	addRef func(key string, property Property),
+	hasRef func(key string) bool,
+	meta *WithMeta,
+) (Property, error) {
 	if inputType == nil {
 		return Property{}, errInvalidSchemaFromInput
 	}
 
 	t := reflect.TypeOf(inputType)
+outerLoop:
 	for {
-		if t.Kind() != reflect.Ptr {
-			break
+		switch t.Kind() {
+		case reflect.Ptr:
+			t = t.Elem()
+		default:
+			break outerLoop
 		}
-		t = t.Elem()
 	}
-	if t.Kind() != reflect.Struct {
+
+	var res Property
+	switch t.Kind() {
+	case reflect.Struct:
+		properties, requiredFields := parseStruct(t, baseRefPath, addRef, hasRef)
+		res = Property{
+			Type:       PropertyTypeObject,
+			Properties: properties,
+			Required:   requiredFields,
+		}
+	case reflect.Map, reflect.Array, reflect.Slice:
+		res, _, _ = parseType(t, baseRefPath, addRef, hasRef)
+	default:
 		return Property{}, errInvalidSchemaFromInput
 	}
-
-	properties, requiredFields := parseStruct(t)
-	return Property{
-		Schema:     VersionUsed,
-		ID:         schemaID,
-		Type:       PropertyTypeObject,
-		Properties: properties,
-		Required:   requiredFields,
-	}, nil
+	if meta != nil {
+		res.Schema = VersionUsed
+		res.ID = meta.SchemaID
+	}
+	return res, nil
 }
 
-func parseStruct(t reflect.Type) (properties map[string]Property, requiredFields []string) {
+func parseStruct(
+	t reflect.Type,
+	baseRefPath string,
+	addRef func(key string, property Property),
+	hasRef func(key string) bool,
+) (properties map[string]Property, requiredFields []string) {
 	requiredFields = []string{}
 	properties = map[string]Property{}
 
@@ -188,7 +218,7 @@ func parseStruct(t reflect.Type) (properties map[string]Property, requiredFields
 			}
 		}
 
-		property, required, skip := parseType(field.Type)
+		property, required, skip := parseType(field.Type, baseRefPath, addRef, hasRef)
 		if skip {
 			continue
 		}
@@ -215,7 +245,12 @@ func parseStruct(t reflect.Type) (properties map[string]Property, requiredFields
 	return properties, requiredFields
 }
 
-func parseType(t reflect.Type) (property Property, required bool, skip bool) {
+func parseType(
+	t reflect.Type,
+	baseRefPath string,
+	addRef func(key string, property Property),
+	hasRef func(key string) bool,
+) (property Property, required bool, skip bool) {
 	required = true
 
 	for {
@@ -258,7 +293,7 @@ func parseType(t reflect.Type) (property Property, required bool, skip bool) {
 	case reflect.Slice:
 		property.Type = PropertyTypeArray
 		required = false
-		innerProperty, _, skip := parseType(t.Elem())
+		innerProperty, _, skip := parseType(t.Elem(), baseRefPath, addRef, hasRef)
 		if skip {
 			return property, required, true
 		}
@@ -271,8 +306,33 @@ func parseType(t reflect.Type) (property Property, required bool, skip bool) {
 	case reflect.String:
 		property.Type = PropertyTypeString
 	case reflect.Struct:
-		property.Type = PropertyTypeObject
-		property.Properties, property.Required = parseStruct(t)
+		key := ""
+		if t.Name() != "" {
+			parts := append(strings.Split(t.PkgPath(), "/")[3:], t.Name())
+			for idx, part := range parts {
+				// convert every part first letter to an uppercase
+				parts[idx] = strings.ToUpper(part[0:1]) + part[1:]
+			}
+			key = strings.Join(parts, "")
+		}
+
+		if key == "" || !hasRef(key) {
+			// This is here for when a same type struct is embedded inside of itself
+			addRef(key, property)
+
+			properties, required := parseStruct(t, baseRefPath, addRef, hasRef)
+			property = Property{
+				Required:   required,
+				Type:       PropertyTypeObject,
+				Properties: properties,
+			}
+			if key != "" {
+				addRef(key, property)
+				property = Property{Ref: baseRefPath + key}
+			}
+		} else {
+			property = Property{Ref: baseRefPath + key}
+		}
 	case reflect.Chan, reflect.Func:
 		// These fields are ignored by json marshall so we do to
 		return property, required, true

@@ -15,13 +15,27 @@ import (
 )
 
 var routeGetCvSchema = routeBuilder.R{
-	Description: "returns cv as a json schema",
-	Res:         schema.Property{},
+	Description: "returns cv as a json schema, " +
+		"currently used in the dashboard for the try matcher page to give intelligent suggestions",
+	Res: schema.Property{},
 	Fn: func(c *fiber.Ctx) error {
-		resSchema, err := schema.From(models.CV{}, "/api/v1/schema/cv")
+		defs := map[string]schema.Property{}
+		resSchema, err := schema.From(
+			models.CV{},
+			"#/$defs/",
+			func(key string, value schema.Property) {
+				defs[key] = value
+			},
+			func(key string) bool {
+				_, ok := defs[key]
+				return ok
+			},
+			&schema.WithMeta{SchemaID: "/api/v1/schema/cv"},
+		)
 		if err != nil {
 			return err
 		}
+		resSchema.Defs = defs
 		return c.JSON(resSchema)
 	},
 }
@@ -71,30 +85,71 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 			}
 
 			type pathMethods struct {
-				Get        IMap `json:"get,omitempty"`
-				Post       IMap `json:"post,omitempty"`
-				Patch      IMap `json:"patch,omitempty"`
-				Put        IMap `json:"put,omitempty"`
-				Delete     IMap `json:"delete,omitempty"`
-				Parameters IMap `json:"parameters,omitempty"`
+				Get        IMap   `json:"get,omitempty"`
+				Post       IMap   `json:"post,omitempty"`
+				Patch      IMap   `json:"patch,omitempty"`
+				Put        IMap   `json:"put,omitempty"`
+				Delete     IMap   `json:"delete,omitempty"`
+				Parameters []IMap `json:"parameters,omitempty"`
+			}
+
+			errRes := IMap{
+				"description": "unexpected error",
+				"content": IMap{
+					"application/json": IMap{
+						"schema": IMap{
+							"$ref": "#/components/schemas/Error",
+						},
+					},
+				},
+			}
+
+			componentsSchema := IMap{
+				"Error": schema.Property{
+					Type:     schema.PropertyTypeObject,
+					Required: []string{"error"},
+					Properties: map[string]schema.Property{
+						"error": {
+							Type: schema.PropertyTypeString,
+						},
+					},
+				},
 			}
 
 			paths := map[string]pathMethods{}
+
 			for _, route := range r.Routes() {
+				contentInfo := IMap{}
+				if route.Info.Res != nil {
+					schemaValue, err := schema.From(
+						route.Info.Res,
+						"#/components/schemas/",
+						func(key string, value schema.Property) {
+							componentsSchema[key] = value
+						},
+						func(key string) bool {
+							_, ok := componentsSchema[key]
+							return ok
+						},
+						nil,
+					)
+					if err != nil {
+						return err
+					}
+					contentInfo["schema"] = schemaValue
+				}
+
+				okRes := IMap{
+					"description": "response",
+					"content": IMap{
+						route.ResponseContentType.String(): contentInfo,
+					},
+				}
+
 				routeInfo := IMap{
 					"responses": IMap{
-						"200": IMap{
-							"description": "response",
-							"content": IMap{
-								route.ResponseContentType.String(): IMap{},
-							},
-						},
-						"default": IMap{
-							"description": "unexpected error",
-							"content": IMap{
-								route.ResponseContentType.String(): IMap{},
-							},
-						},
+						"200":     okRes,
+						"default": errRes,
 					},
 				}
 
@@ -116,17 +171,21 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 					path.Delete = routeInfo
 				}
 
-				if len(route.Params) > 0 {
-					if path.Parameters == nil {
-						path.Parameters = IMap{}
-					}
-					for _, param := range route.Params {
-						path.Parameters[param] = IMap{
-							"name":     param,
-							"in":       "query",
-							"required": true,
+			paramsLoop:
+				for _, param := range route.Params {
+					for _, p := range path.Parameters {
+						if p["name"] == param {
+							continue paramsLoop
 						}
 					}
+					path.Parameters = append(path.Parameters, IMap{
+						"name":     param,
+						"in":       "path",
+						"required": true,
+						"schema": IMap{
+							"type": "string",
+						},
+					})
 				}
 				paths[route.OpenAPIPath] = path
 			}
@@ -147,8 +206,9 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 						"url":  "https://github.com/script-development/RT-CV/blob/main/LICENSE",
 					},
 				},
-				"servers": []IMap{{"url": origin}},
-				"paths":   paths,
+				"servers":    []IMap{{"url": origin}},
+				"paths":      paths,
+				"components": IMap{"schemas": componentsSchema},
 			}
 
 			// cache the response so we re-use it later on
