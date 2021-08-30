@@ -147,6 +147,7 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 				}
 
 				routeInfo := IMap{
+					"summary": strings.TrimPrefix(route.OpenAPIPath, "/api/v1"),
 					"responses": IMap{
 						"200":     okRes,
 						"default": errRes,
