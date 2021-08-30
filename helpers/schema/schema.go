@@ -4,6 +4,8 @@ import (
 	"errors"
 	"reflect"
 	"strings"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // Describe can be implmented by a type to manually describe the type
@@ -11,7 +13,10 @@ type Describe interface {
 	JSONSchemaDescribe() Property
 }
 
-var reflectDescribe = reflect.TypeOf((*Describe)(nil)).Elem()
+var (
+	reflectDescribe = reflect.TypeOf((*Describe)(nil)).Elem()
+	reflectObjectID = reflect.TypeOf(primitive.ObjectID{})
+)
 
 // PropertyType contains the value type of a property
 type PropertyType string
@@ -269,6 +274,11 @@ func parseType(
 		if !ok {
 			panic("method " + methodName + " did not return the expected value type")
 		}
+		return property, required, false
+	}
+
+	if t.PkgPath()+"."+t.Name() == reflectObjectID.PkgPath()+"."+reflectObjectID.Name() {
+		property.Type = PropertyTypeString
 		return property, required, false
 	}
 

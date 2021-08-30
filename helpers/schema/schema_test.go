@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	. "github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func TestFromFailsWithWrongDataType(t *testing.T) {
@@ -127,6 +128,18 @@ func TestFrom(t *testing.T) {
 				},
 			},
 			[]string{},
+		},
+		{
+			"custom data types",
+			struct {
+				A primitive.ObjectID
+			}{},
+			map[string]Property{
+				"A": {
+					Type: PropertyTypeString,
+				},
+			},
+			[]string{"A"},
 		},
 	}
 	for _, s := range scenarios {
