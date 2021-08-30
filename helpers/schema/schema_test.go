@@ -15,7 +15,13 @@ func TestFromFailsWithWrongDataType(t *testing.T) {
 	}
 
 	for _, value := range values {
-		_, err := From(value, "")
+		_, err := From(
+			value,
+			"",
+			func(string, Property) {},
+			func(string) bool { return true },
+			&WithMeta{},
+		)
 		Error(t, err)
 	}
 }
@@ -93,11 +99,7 @@ func TestFrom(t *testing.T) {
 			}{},
 			map[string]Property{
 				"A": {
-					Type: PropertyTypeObject,
-					Properties: map[string]Property{
-						"B": {Type: PropertyTypeString},
-					},
-					Required: []string{"B"},
+					Ref: "#/testing/HelpersSchemaNestedStruct",
 				},
 			},
 			[]string{"A"},
@@ -129,7 +131,13 @@ func TestFrom(t *testing.T) {
 	}
 	for _, s := range scenarios {
 		t.Run(s.name, func(t *testing.T) {
-			property, err := From(s.in, "")
+			property, err := From(
+				s.in,
+				"#/testing/",
+				func(key string, property Property) {},
+				func(key string) bool { return true },
+				nil,
+			)
 			NoError(t, err)
 			Equal(t, s.expectedProperties, property.Properties)
 			Equal(t, s.expectedRequiredFields, property.Required)
