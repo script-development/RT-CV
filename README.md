@@ -57,6 +57,11 @@ Before you commit make sure to read [CONTRIBUTING.md](/CONTRIBUTING.md)
 
 for more information about the dashboard see [/dashboard](/dashboard)
 
+## API Documentation
+
+There is a auto generated OpenAPI v3 schema available at `GET /api/v1/schema/openAPI`
+You can download that as a `.json` and convert it to [human readable documentation](https://openapi-generator.tech/docs/generators#documentation-generators) using [openapi-generator](https://openapi-generator.tech) _([how to](https://stackoverflow.com/questions/59727169/how-to-generate-api-documentation-using-openapi-generator))_
+
 ## Auth
 
 How to generate a token:
