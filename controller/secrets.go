@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/script-development/RT-CV/controller/ctx"
+	"github.com/script-development/RT-CV/helpers/routeBuilder"
 	"github.com/script-development/RT-CV/models"
 )
 
@@ -91,45 +92,58 @@ func routeUpdateSecret(c *fiber.Ctx) error {
 	return c.JSON(secretValue)
 }
 
-func routeGetSecret(c *fiber.Ctx) error {
-	dbConn := ctx.GetDbConn(c)
-	apiKey := ctx.GetAPIKeyFromParam(c)
-	keyParam, encryptionKeyParam := c.Params("key"), c.Params("encryptionKey")
+var routeGetSecret = routeBuilder.R{
+	Description: "Get a secret stored for this API Key and key pair",
+	Res:         IMap{},
+	Fn: func(c *fiber.Ctx) error {
+		dbConn := ctx.GetDbConn(c)
+		apiKey := ctx.GetAPIKeyFromParam(c)
+		keyParam, encryptionKeyParam := c.Params("key"), c.Params("encryptionKey")
 
-	secret, err := models.GetSecretByKey(dbConn, apiKey.ID, keyParam)
-	if err != nil {
-		return err
-	}
+		secret, err := models.GetSecretByKey(dbConn, apiKey.ID, keyParam)
+		if err != nil {
+			return err
+		}
 
-	value, err := secret.Decrypt(encryptionKeyParam)
-	if err != nil {
-		return err
-	}
+		value, err := secret.Decrypt(encryptionKeyParam)
+		if err != nil {
+			return err
+		}
 
-	return c.JSON(value)
+		return c.JSON(value)
+	},
 }
 
-func routeGetSecrets(c *fiber.Ctx) error {
-	dbConn := ctx.GetDbConn(c)
-	apiKey := ctx.GetAPIKeyFromParam(c)
+var routeGetSecrets = routeBuilder.R{
+	Description: "Get all the stored secrets in the database for this specific API key " +
+		"(this is without the secret value)",
+	Res: []models.Secret{},
+	Fn: func(c *fiber.Ctx) error {
+		dbConn := ctx.GetDbConn(c)
+		apiKey := ctx.GetAPIKeyFromParam(c)
 
-	secrets, err := models.GetSecrets(dbConn, apiKey.ID)
-	if err != nil {
-		return err
-	}
+		secrets, err := models.GetSecrets(dbConn, apiKey.ID)
+		if err != nil {
+			return err
+		}
 
-	return c.JSON(secrets)
+		return c.JSON(secrets)
+	},
 }
 
-func routeGetAllSecretsFromAllKeys(c *fiber.Ctx) error {
-	dbConn := ctx.GetDbConn(c)
+var routeGetAllSecretsFromAllKeys = routeBuilder.R{
+	Description: "Get all the stored secrets in the database for all the API keys" +
+		"(this is without the secret value)",
+	Res: []models.Secret{},
+	Fn: func(c *fiber.Ctx) error {
+		dbConn := ctx.GetDbConn(c)
 
-	secrets, err := models.GetSecretsFromAllKeys(dbConn)
-	if err != nil {
-		return err
-	}
-
-	return c.JSON(secrets)
+		secrets, err := models.GetSecretsFromAllKeys(dbConn)
+		if err != nil {
+			return err
+		}
+		return c.JSON(secrets)
+	},
 }
 
 func routeDeleteSecret(c *fiber.Ctx) error {

@@ -12,6 +12,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// TODO Better schema suport
+
 // IMap is a wrapper around map[string]interface{} that's faster to use
 type IMap map[string]interface{}
 
@@ -21,13 +23,13 @@ func Routes(app *fiber.App, dbConn db.Connection, serverSeed []byte) {
 
 	b.Group(`/api/v1`, func(b *routeBuilder.Router) {
 		b.Group(`/schema`, func(b *routeBuilder.Router) {
-			b.NGet(`/openAPI`, routeGetOpenAPISchema(b))
-			b.NGet(`/cv`, routeGetCvSchema)
+			b.Get(`/openAPI`, routeGetOpenAPISchema(b))
+			b.Get(`/cv`, routeGetCvSchema)
 		})
 
 		b.Group(`/auth`, func(b *routeBuilder.Router) {
-			b.NGet(`/keyinfo`, routeGetKeyInfo, requiresAuth(0))
-			b.NGet(`/seed`, routeAuthSeed)
+			b.Get(`/keyinfo`, routeGetKeyInfo, requiresAuth(0))
+			b.Get(`/seed`, routeAuthSeed)
 		})
 
 		b.Group(`/scraper`, func(b *routeBuilder.Router) {

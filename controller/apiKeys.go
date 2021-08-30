@@ -6,19 +6,24 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/script-development/RT-CV/controller/ctx"
 	"github.com/script-development/RT-CV/db"
+	"github.com/script-development/RT-CV/helpers/routeBuilder"
 	"github.com/script-development/RT-CV/helpers/validation"
 	"github.com/script-development/RT-CV/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func routeGetKeys(c *fiber.Ctx) error {
-	dbConn := ctx.GetDbConn(c)
-	keys, err := models.GetAPIKeys(dbConn)
-	if err != nil {
-		return err
-	}
-	return c.JSON(keys)
+var routeGetKeys = routeBuilder.R{
+	Description: "get all api keys from the database",
+	Res:         []models.APIKey{},
+	Fn: func(c *fiber.Ctx) error {
+		dbConn := ctx.GetDbConn(c)
+		keys, err := models.GetAPIKeys(dbConn)
+		if err != nil {
+			return err
+		}
+		return c.JSON(keys)
+	},
 }
 
 type apiKeyModifyCreateData struct {
@@ -95,9 +100,13 @@ func routeDeleteKey(c *fiber.Ctx) error {
 	return c.JSON(apiKey)
 }
 
-func routeGetKey(c *fiber.Ctx) error {
-	apiKey := ctx.GetAPIKeyFromParam(c)
-	return c.JSON(apiKey)
+var routeGetKey = routeBuilder.R{
+	Description: "get an api key from the database based on it's ID",
+	Res:         models.APIKey{},
+	Fn: func(c *fiber.Ctx) error {
+		apiKey := ctx.GetAPIKeyFromParam(c)
+		return c.JSON(apiKey)
+	},
 }
 
 func routeUpdateKey(c *fiber.Ctx) error {

@@ -13,3 +13,11 @@ func TestRouteGetCvSchema(t *testing.T) {
 		TestReqOpts{NoAuth: true},
 	)
 }
+
+func TestRouteGetOpenAPISchema(t *testing.T) {
+	newTestingRouter(t).MakeRequest(
+		routeBuilder.Get,
+		"/api/v1/schema/openAPI",
+		TestReqOpts{NoAuth: true},
+	)
+}

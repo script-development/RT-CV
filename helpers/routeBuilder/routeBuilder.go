@@ -156,17 +156,11 @@ func (r *Router) Group(prefix string, group func(*Router), middlewares ...func(*
 	})
 }
 
-// NGet defines a get route with information about the route
-func (r *Router) NGet(prefix string, routeDefinition R, middlewares ...func(*fiber.Ctx) error) {
+// Get defines a get route with information about the route
+func (r *Router) Get(prefix string, routeDefinition R, middlewares ...func(*fiber.Ctx) error) {
 	routeDefinition.check()
 	r.newRoute(prefix, Get, routeDefinition)
 	r.fiber.Get(prefix, append(middlewares, routeDefinition.Fn)...)
-}
-
-// Get defines a GET route
-func (r *Router) Get(prefix string, handlers ...func(*fiber.Ctx) error) {
-	r.newRoute(prefix, Get, R{})
-	r.fiber.Get(prefix, handlers...)
 }
 
 // Post defines a POST route

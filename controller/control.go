@@ -4,13 +4,18 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/script-development/RT-CV/controller/ctx"
 	"github.com/script-development/RT-CV/db"
+	"github.com/script-development/RT-CV/helpers/routeBuilder"
 	"github.com/script-development/RT-CV/models"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func routeAllProfiles(c *fiber.Ctx) error {
-	profiles := ctx.GetProfiles(c)
-	return c.JSON(profiles)
+var routeAllProfiles = routeBuilder.R{
+	Description: "get all profiles stored in the database",
+	Res:         []models.Profile{},
+	Fn: func(c *fiber.Ctx) error {
+		profiles := ctx.GetProfiles(c)
+		return c.JSON(profiles)
+	},
 }
 
 func middlewareBindProfile() fiber.Handler {
@@ -32,9 +37,13 @@ func middlewareBindProfile() fiber.Handler {
 	}
 }
 
-func routeGetProfile(c *fiber.Ctx) error {
-	profile := ctx.GetProfile(c)
-	return c.JSON(profile)
+var routeGetProfile = routeBuilder.R{
+	Description: "get a profile based on it's ID from the database",
+	Res:         models.Profile{},
+	Fn: func(c *fiber.Ctx) error {
+		profile := ctx.GetProfile(c)
+		return c.JSON(profile)
+	},
 }
 
 func routeCreateProfile(c *fiber.Ctx) error {
