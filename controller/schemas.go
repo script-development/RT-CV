@@ -26,7 +26,10 @@ var routeGetCvSchema = routeBuilder.R{
 	},
 }
 
+var routeGetOpenAPISchemaCache IMap
+
 func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
+	// TODO we use a lot of IMap in here, we should use a typed struct
 	return routeBuilder.R{
 		Description: "returns openapi as a json schema",
 		Res:         IMap{},
@@ -53,6 +56,14 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 				} else {
 					origin = "http://" + host
 				}
+			}
+
+			// Check if we have a cached version of the response as it's
+			if routeGetOpenAPISchemaCache != nil {
+				// Replace the only variable that changes form server to server
+				routeGetOpenAPISchemaCache["servers"] = []IMap{{"url": origin}}
+
+				return c.JSON(routeGetOpenAPISchemaCache)
 			}
 
 			type pathMethods struct {
@@ -116,7 +127,7 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 				paths[route.OpenAPIPath] = path
 			}
 
-			return c.JSON(IMap{
+			res := IMap{
 				"openapi": "3.0.3",
 				"info": IMap{
 					"version":        "1.0.0",
@@ -134,7 +145,12 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 				},
 				"servers": []IMap{{"url": origin}},
 				"paths":   paths,
-			})
+			}
+
+			// cache the response so we re-use it later on
+			routeGetOpenAPISchemaCache = res
+
+			return c.JSON(res)
 		},
 	}
 }
