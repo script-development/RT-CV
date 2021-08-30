@@ -91,18 +91,22 @@ var routeCreateKey = routeBuilder.R{
 	},
 }
 
-func routeDeleteKey(c *fiber.Ctx) error {
-	apiKey := ctx.GetAPIKeyFromParam(c)
-	if apiKey.System {
-		return errors.New("you are not allowed to remove system keys")
-	}
+var routeDeleteKey = routeBuilder.R{
+	Description: "delete an api key",
+	Res:         models.APIKey{},
+	Fn: func(c *fiber.Ctx) error {
+		apiKey := ctx.GetAPIKeyFromParam(c)
+		if apiKey.System {
+			return errors.New("you are not allowed to remove system keys")
+		}
 
-	dbConn := ctx.GetDbConn(c)
-	err := dbConn.DeleteByID(apiKey)
-	if err != nil {
-		return err
-	}
-	return c.JSON(apiKey)
+		dbConn := ctx.GetDbConn(c)
+		err := dbConn.DeleteByID(apiKey)
+		if err != nil {
+			return err
+		}
+		return c.JSON(apiKey)
+	},
 }
 
 var routeGetKey = routeBuilder.R{

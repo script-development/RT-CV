@@ -158,13 +158,17 @@ var routeGetAllSecretsFromAllKeys = routeBuilder.R{
 	},
 }
 
-func routeDeleteSecret(c *fiber.Ctx) error {
-	apiKey := ctx.GetAPIKeyFromParam(c)
-	keyParam := c.Params("key")
+var routeDeleteSecret = routeBuilder.R{
+	Description: "Delete a secret stored in the database",
+	Res:         IMap{},
+	Fn: func(c *fiber.Ctx) error {
+		apiKey := ctx.GetAPIKeyFromParam(c)
+		keyParam := c.Params("key")
 
-	err := models.DeleteSecretByKey(ctx.GetDbConn(c), apiKey.ID, keyParam)
-	if err != nil {
-		return err
-	}
-	return c.JSON(IMap{"status": "ok"})
+		err := models.DeleteSecretByKey(ctx.GetDbConn(c), apiKey.ID, keyParam)
+		if err != nil {
+			return err
+		}
+		return c.JSON(IMap{"status": "ok"})
+	},
 }

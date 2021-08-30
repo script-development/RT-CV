@@ -185,9 +185,10 @@ func (r *Router) Patch(prefix string, routeDefinition R, handlers ...func(*fiber
 }
 
 // Delete defines a DELETE route
-func (r *Router) Delete(prefix string, handlers ...func(*fiber.Ctx) error) {
-	r.newRoute(prefix, Delete, R{})
-	r.fiber.Delete(prefix, handlers...)
+func (r *Router) Delete(prefix string, routeDefinition R, handlers ...func(*fiber.Ctx) error) {
+	routeDefinition.check()
+	r.newRoute(prefix, Delete, routeDefinition)
+	r.fiber.Delete(prefix, append(handlers, routeDefinition.Fn)...)
 }
 
 // Static defines a static file path

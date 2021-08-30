@@ -82,21 +82,25 @@ func routeModifyProfile(c *fiber.Ctx) error {
 	return c.JSON(profile)
 }
 
-func routeDeleteProfile(c *fiber.Ctx) error {
-	profile := ctx.GetProfile(c)
-	dbConn := ctx.GetDbConn(c)
-	err := dbConn.DeleteByID(profile)
-	if err != nil {
-		return err
-	}
+var routeDeleteProfile = routeBuilder.R{
+	Description: "Delete a profile stored in the database",
+	Res:         models.Profile{},
+	Fn: func(c *fiber.Ctx) error {
+		profile := ctx.GetProfile(c)
+		dbConn := ctx.GetDbConn(c)
+		err := dbConn.DeleteByID(profile)
+		if err != nil {
+			return err
+		}
 
-	// Update the cached local profiles list
-	profilesInDB, err := models.GetProfiles(dbConn)
-	if err != nil {
-		return err
-	}
-	ctxProfiles := ctx.GetProfiles(c)
-	*ctxProfiles = profilesInDB
+		// Update the cached local profiles list
+		profilesInDB, err := models.GetProfiles(dbConn)
+		if err != nil {
+			return err
+		}
+		ctxProfiles := ctx.GetProfiles(c)
+		*ctxProfiles = profilesInDB
 
-	return c.JSON(profile)
+		return c.JSON(profile)
+	},
 }
