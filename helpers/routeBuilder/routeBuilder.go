@@ -171,15 +171,17 @@ func (r *Router) Post(prefix string, routeDefinition R, handlers ...func(*fiber.
 }
 
 // Put defines a PUT route
-func (r *Router) Put(prefix string, handlers ...func(*fiber.Ctx) error) {
-	r.newRoute(prefix, Put, R{})
-	r.fiber.Put(prefix, handlers...)
+func (r *Router) Put(prefix string, routeDefinition R, handlers ...func(*fiber.Ctx) error) {
+	routeDefinition.check()
+	r.newRoute(prefix, Put, routeDefinition)
+	r.fiber.Put(prefix, append(handlers, routeDefinition.Fn)...)
 }
 
 // Patch defines a PATCH route
-func (r *Router) Patch(prefix string, handlers ...func(*fiber.Ctx) error) {
-	r.newRoute(prefix, Patch, R{})
-	r.fiber.Patch(prefix, handlers...)
+func (r *Router) Patch(prefix string, routeDefinition R, handlers ...func(*fiber.Ctx) error) {
+	routeDefinition.check()
+	r.newRoute(prefix, Patch, routeDefinition)
+	r.fiber.Patch(prefix, append(handlers, routeDefinition.Fn)...)
 }
 
 // Delete defines a DELETE route

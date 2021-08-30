@@ -61,42 +61,47 @@ var routeCreateSecret = routeBuilder.R{
 	},
 }
 
-func routeUpdateSecret(c *fiber.Ctx) error {
-	apiKey := ctx.GetAPIKeyFromParam(c)
-	keyParam, encryptionKeyParam := c.Params("key"), c.Params("encryptionKey")
-	body := c.Body()
-	if len(body) == 0 {
-		return errors.New("body cannot be empty")
-	}
+var routeUpdateSecret = routeBuilder.R{
+	Description: "Update a secret key stored in the database",
+	Res:         IMap{},
+	Body:        IMap{},
+	Fn: func(c *fiber.Ctx) error {
+		apiKey := ctx.GetAPIKeyFromParam(c)
+		keyParam, encryptionKeyParam := c.Params("key"), c.Params("encryptionKey")
+		body := c.Body()
+		if len(body) == 0 {
+			return errors.New("body cannot be empty")
+		}
 
-	secret, err := models.GetSecretByKey(ctx.GetDbConn(c), apiKey.ID, keyParam)
-	if err != nil {
-		return err
-	}
-	// check if the key provided is equal to the previous key
-	_, err = secret.Decrypt(encryptionKeyParam)
-	if err != nil {
-		return err
-	}
+		secret, err := models.GetSecretByKey(ctx.GetDbConn(c), apiKey.ID, keyParam)
+		if err != nil {
+			return err
+		}
+		// check if the key provided is equal to the previous key
+		_, err = secret.Decrypt(encryptionKeyParam)
+		if err != nil {
+			return err
+		}
 
-	newSecret, err := models.CreateSecret(apiKey.ID, keyParam, encryptionKeyParam, body)
-	if err != nil {
-		return err
-	}
-	secret.Value = newSecret.Value
+		newSecret, err := models.CreateSecret(apiKey.ID, keyParam, encryptionKeyParam, body)
+		if err != nil {
+			return err
+		}
+		secret.Value = newSecret.Value
 
-	// check if decryption still works
-	secretValue, err := secret.Decrypt(encryptionKeyParam)
-	if err != nil {
-		return err
-	}
+		// check if decryption still works
+		secretValue, err := secret.Decrypt(encryptionKeyParam)
+		if err != nil {
+			return err
+		}
 
-	err = ctx.GetDbConn(c).UpdateByID(secret)
-	if err != nil {
-		return err
-	}
+		err = ctx.GetDbConn(c).UpdateByID(secret)
+		if err != nil {
+			return err
+		}
 
-	return c.JSON(secretValue)
+		return c.JSON(secretValue)
+	},
 }
 
 var routeGetSecret = routeBuilder.R{

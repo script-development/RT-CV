@@ -114,61 +114,66 @@ var routeGetKey = routeBuilder.R{
 	},
 }
 
-func routeUpdateKey(c *fiber.Ctx) error {
-	dbConn := ctx.GetDbConn(c)
-	apiKey := ctx.GetAPIKeyFromParam(c)
-	authenticator := ctx.GetAuth(c)
-	if apiKey.System {
-		return errors.New("you are not allowed to remove system keys")
-	}
-
-	body := apiKeyModifyCreateData{}
-	err := c.BodyParser(&body)
-	if err != nil {
-		return err
-	}
-
-	if body.Enabled != nil {
-		apiKey.Enabled = *body.Enabled
-	}
-
-	if body.Domains != nil {
-		if len(body.Domains) < 1 {
-			return errors.New("there should at least be one domain")
+var routeUpdateKey = routeBuilder.R{
+	Description: "Update an api key",
+	Body:        apiKeyModifyCreateData{},
+	Res:         models.APIKey{},
+	Fn: func(c *fiber.Ctx) error {
+		dbConn := ctx.GetDbConn(c)
+		apiKey := ctx.GetAPIKeyFromParam(c)
+		authenticator := ctx.GetAuth(c)
+		if apiKey.System {
+			return errors.New("you are not allowed to remove system keys")
 		}
-		err := validation.ValidDomainList(body.Domains, true)
+
+		body := apiKeyModifyCreateData{}
+		err := c.BodyParser(&body)
 		if err != nil {
 			return err
 		}
-		apiKey.Domains = body.Domains
-	}
 
-	keyChanged := false
-	if body.Key != nil {
-		if len(*body.Key) < 16 {
-			return errors.New("key must have a length of at least 16 chars")
+		if body.Enabled != nil {
+			apiKey.Enabled = *body.Enabled
 		}
-		keyChanged = apiKey.Key != *body.Key
-		apiKey.Key = *body.Key
-	}
 
-	if body.Roles != nil {
-		if !body.Roles.Valid() {
-			return errors.New("roles are invalid")
+		if body.Domains != nil {
+			if len(body.Domains) < 1 {
+				return errors.New("there should at least be one domain")
+			}
+			err := validation.ValidDomainList(body.Domains, true)
+			if err != nil {
+				return err
+			}
+			apiKey.Domains = body.Domains
 		}
-		apiKey.Roles = *body.Roles
-	}
 
-	err = dbConn.UpdateByID(apiKey)
-	if err != nil {
-		return err
-	}
+		keyChanged := false
+		if body.Key != nil {
+			if len(*body.Key) < 16 {
+				return errors.New("key must have a length of at least 16 chars")
+			}
+			keyChanged = apiKey.Key != *body.Key
+			apiKey.Key = *body.Key
+		}
 
-	if keyChanged {
-		authenticator.RefreshKey(*apiKey)
-	}
+		if body.Roles != nil {
+			if !body.Roles.Valid() {
+				return errors.New("roles are invalid")
+			}
+			apiKey.Roles = *body.Roles
+		}
 
-	return c.JSON(apiKey)
+		err = dbConn.UpdateByID(apiKey)
+		if err != nil {
+			return err
+		}
+
+		if keyChanged {
+			authenticator.RefreshKey(*apiKey)
+		}
+
+		return c.JSON(apiKey)
+	},
 }
 
 // middlewareBindMyKey sets the APIKeyFromParam to the api key used to authenticate
