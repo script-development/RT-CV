@@ -141,6 +141,18 @@ func TestFrom(t *testing.T) {
 			},
 			[]string{"A"},
 		},
+		{
+			"embedded fields",
+			struct {
+				NestedStruct
+				A string
+			}{},
+			map[string]Property{
+				"A": {Type: PropertyTypeString},
+				"B": {Type: PropertyTypeString},
+			},
+			[]string{"B", "A"},
+		},
 	}
 	for _, s := range scenarios {
 		t.Run(s.name, func(t *testing.T) {

@@ -164,9 +164,10 @@ func (r *Router) Get(prefix string, routeDefinition R, middlewares ...func(*fibe
 }
 
 // Post defines a POST route
-func (r *Router) Post(prefix string, handlers ...func(*fiber.Ctx) error) {
-	r.newRoute(prefix, Post, R{})
-	r.fiber.Post(prefix, handlers...)
+func (r *Router) Post(prefix string, routeDefinition R, handlers ...func(*fiber.Ctx) error) {
+	routeDefinition.check()
+	r.newRoute(prefix, Post, routeDefinition)
+	r.fiber.Post(prefix, append(handlers, routeDefinition.Fn)...)
 }
 
 // Put defines a PUT route

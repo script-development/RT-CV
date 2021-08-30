@@ -46,29 +46,34 @@ var routeGetProfile = routeBuilder.R{
 	},
 }
 
-func routeCreateProfile(c *fiber.Ctx) error {
-	var profile models.Profile
-	err := c.BodyParser(&profile)
-	if err != nil {
-		return err
-	}
+var routeCreateProfile = routeBuilder.R{
+	Description: "create a new profile that can match scraped CVs",
+	Res:         models.Profile{},
+	Body:        models.Profile{},
+	Fn: func(c *fiber.Ctx) error {
+		var profile models.Profile
+		err := c.BodyParser(&profile)
+		if err != nil {
+			return err
+		}
 
-	// FIXME add validation to profile
+		// FIXME add validation to profile
 
-	// Set the ID of the profile
-	profile.M = db.NewM()
+		// Set the ID of the profile
+		profile.M = db.NewM()
 
-	// Save the profile to the database
-	dbConn := ctx.GetDbConn(c)
-	err = dbConn.Insert(&profile)
-	if err != nil {
-		return err
-	}
+		// Save the profile to the database
+		dbConn := ctx.GetDbConn(c)
+		err = dbConn.Insert(&profile)
+		if err != nil {
+			return err
+		}
 
-	ctxProfiles := ctx.GetProfiles(c)
-	*ctxProfiles = append(*ctxProfiles, profile)
+		ctxProfiles := ctx.GetProfiles(c)
+		*ctxProfiles = append(*ctxProfiles, profile)
 
-	return c.JSON(profile)
+		return c.JSON(profile)
+	},
 }
 
 func routeModifyProfile(c *fiber.Ctx) error {

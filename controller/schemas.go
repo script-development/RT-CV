@@ -40,6 +40,17 @@ var routeGetCvSchema = routeBuilder.R{
 	},
 }
 
+var errResponse = IMap{
+	"description": "unexpected error",
+	"content": IMap{
+		"application/json": IMap{
+			"schema": IMap{
+				"$ref": "#/components/schemas/Error",
+			},
+		},
+	},
+}
+
 var routeGetOpenAPISchemaCache IMap
 
 func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
@@ -93,17 +104,6 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 				Parameters []IMap `json:"parameters,omitempty"`
 			}
 
-			errRes := IMap{
-				"description": "unexpected error",
-				"content": IMap{
-					"application/json": IMap{
-						"schema": IMap{
-							"$ref": "#/components/schemas/Error",
-						},
-					},
-				},
-			}
-
 			componentsSchema := IMap{
 				"Error": schema.Property{
 					Type:     schema.PropertyTypeObject,
@@ -119,7 +119,8 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 			paths := map[string]pathMethods{}
 
 			for _, route := range r.Routes() {
-				contentInfo := IMap{}
+				// Create the response value
+				responseContent := IMap{}
 				if route.Info.Res != nil {
 					schemaValue, err := schema.From(
 						route.Info.Res,
@@ -136,28 +137,55 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 					if err != nil {
 						return err
 					}
-					contentInfo["schema"] = schemaValue
+					responseContent["schema"] = schemaValue
 				}
-
-				okRes := IMap{
+				okResponse := IMap{
 					"description": "response",
 					"content": IMap{
-						route.ResponseContentType.String(): contentInfo,
+						route.ResponseContentType.String(): responseContent,
 					},
 				}
 
+				// Create the actual information about this route's method
 				routeInfo := IMap{
 					"summary": strings.TrimPrefix(route.OpenAPIPath, "/api/v1"),
 					"responses": IMap{
-						"200":     okRes,
-						"default": errRes,
+						"200":     okResponse,
+						"default": errResponse,
 					},
 				}
-
 				if route.Info.Description != "" {
 					routeInfo["description"] = route.Info.Description
 				}
 
+				// Create the request body expected value
+				if route.Info.Body != nil {
+					schemaValue, err := schema.From(
+						route.Info.Body,
+						"#/components/schemas/",
+						func(key string, value schema.Property) {
+							componentsSchema[key] = value
+						},
+						func(key string) bool {
+							_, ok := componentsSchema[key]
+							return ok
+						},
+						nil,
+					)
+					if err != nil {
+						return err
+					}
+					routeInfo["requestBody"] = IMap{
+						"description": "request data",
+						"content": IMap{
+							"application/json": IMap{
+								"schema": schemaValue,
+							},
+						},
+					}
+				}
+
+				// Insert the above created routeInfo
 				path := paths[route.OpenAPIPath]
 				switch route.Method {
 				case routeBuilder.Get:
@@ -174,6 +202,7 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 
 			paramsLoop:
 				for _, param := range route.Params {
+					// Insert the url params
 					for _, p := range path.Parameters {
 						if p["name"] == param {
 							continue paramsLoop

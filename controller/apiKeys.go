@@ -33,57 +33,62 @@ type apiKeyModifyCreateData struct {
 	Roles   *models.APIKeyRole `json:"roles"`
 }
 
-func routeCreateKey(c *fiber.Ctx) error {
-	dbConn := ctx.GetDbConn(c)
-	authenticator := ctx.GetAuth(c)
+var routeCreateKey = routeBuilder.R{
+	Description: "create a new api key",
+	Body:        apiKeyModifyCreateData{},
+	Res:         models.APIKey{},
+	Fn: func(c *fiber.Ctx) error {
+		dbConn := ctx.GetDbConn(c)
+		authenticator := ctx.GetAuth(c)
 
-	body := apiKeyModifyCreateData{}
-	err := c.BodyParser(&body)
-	if err != nil {
-		return err
-	}
-
-	newAPIKey := &models.APIKey{
-		M:       db.NewM(),
-		Enabled: body.Enabled == nil || *body.Enabled,
-	}
-
-	if body.Domains == nil {
-		return errors.New("domains should be set")
-	} else if len(body.Domains) < 1 {
-		return errors.New("there should at least be one domain")
-	} else {
-		err := validation.ValidDomainList(body.Domains, true)
+		body := apiKeyModifyCreateData{}
+		err := c.BodyParser(&body)
 		if err != nil {
 			return err
 		}
-		newAPIKey.Domains = body.Domains
-	}
 
-	if body.Key == nil {
-		return errors.New("key should be set")
-	} else if len(*body.Key) < 16 {
-		return errors.New("key must have a length of at least 16 chars")
-	} else {
-		newAPIKey.Key = *body.Key
-	}
+		newAPIKey := &models.APIKey{
+			M:       db.NewM(),
+			Enabled: body.Enabled == nil || *body.Enabled,
+		}
 
-	if body.Roles == nil {
-		return errors.New("roles should be set")
-	} else if !body.Roles.Valid() {
-		return errors.New("roles are invalid")
-	} else {
-		newAPIKey.Roles = *body.Roles
-	}
+		if body.Domains == nil {
+			return errors.New("domains should be set")
+		} else if len(body.Domains) < 1 {
+			return errors.New("there should at least be one domain")
+		} else {
+			err := validation.ValidDomainList(body.Domains, true)
+			if err != nil {
+				return err
+			}
+			newAPIKey.Domains = body.Domains
+		}
 
-	err = dbConn.Insert(newAPIKey)
-	if err != nil {
-		return err
-	}
+		if body.Key == nil {
+			return errors.New("key should be set")
+		} else if len(*body.Key) < 16 {
+			return errors.New("key must have a length of at least 16 chars")
+		} else {
+			newAPIKey.Key = *body.Key
+		}
 
-	authenticator.AddKey(*newAPIKey)
+		if body.Roles == nil {
+			return errors.New("roles should be set")
+		} else if !body.Roles.Valid() {
+			return errors.New("roles are invalid")
+		} else {
+			newAPIKey.Roles = *body.Roles
+		}
 
-	return c.JSON(newAPIKey)
+		err = dbConn.Insert(newAPIKey)
+		if err != nil {
+			return err
+		}
+
+		authenticator.AddKey(*newAPIKey)
+
+		return c.JSON(newAPIKey)
+	},
 }
 
 func routeDeleteKey(c *fiber.Ctx) error {

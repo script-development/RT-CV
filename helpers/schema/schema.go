@@ -223,6 +223,19 @@ func parseStruct(
 			}
 		}
 
+		// Check for embedded field and inline the fields
+		if field.Type.Kind() == reflect.Struct && field.Anonymous {
+			fieldProperties, fieldRequiredFields := parseStruct(field.Type, baseRefPath, addRef, hasRef)
+			requiredFields = append(requiredFields, fieldRequiredFields...)
+			for key, property := range fieldProperties {
+				_, ok := properties[key]
+				if !ok {
+					properties[key] = property
+				}
+			}
+			continue
+		}
+
 		property, required, skip := parseType(field.Type, baseRefPath, addRef, hasRef)
 		if skip {
 			continue

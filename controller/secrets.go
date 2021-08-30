@@ -28,30 +28,37 @@ func validEncryptionKeyMiddleware() fiber.Handler {
 	}
 }
 
-func routeCreateSecret(c *fiber.Ctx) error {
-	apiKey := ctx.GetAPIKeyFromParam(c)
-	keyParam, encryptionKeyParam := c.Params("key"), c.Params("encryptionKey")
-	body := c.Body()
-	if len(body) == 0 {
-		return errors.New("body cannot be empty")
-	}
+var routeCreateSecret = routeBuilder.R{
+	Description: "Create a secret for this specific api key and key combination.\n" +
+		"note 1: we will never store the secret / encryption key on our side that's up to you.\n" +
+		"note 2: the body must contain a valid json structure it doesn't matter what content",
+	Res:  IMap{},
+	Body: IMap{},
+	Fn: func(c *fiber.Ctx) error {
+		apiKey := ctx.GetAPIKeyFromParam(c)
+		keyParam, encryptionKeyParam := c.Params("key"), c.Params("encryptionKey")
+		body := c.Body()
+		if len(body) == 0 {
+			return errors.New("body cannot be empty")
+		}
 
-	secret, err := models.CreateSecret(apiKey.ID, keyParam, encryptionKeyParam, body)
-	if err != nil {
-		return err
-	}
+		secret, err := models.CreateSecret(apiKey.ID, keyParam, encryptionKeyParam, body)
+		if err != nil {
+			return err
+		}
 
-	err = ctx.GetDbConn(c).Insert(secret)
-	if err != nil {
-		return err
-	}
+		err = ctx.GetDbConn(c).Insert(secret)
+		if err != nil {
+			return err
+		}
 
-	secretValue, err := secret.Decrypt(encryptionKeyParam)
-	if err != nil {
-		return err
-	}
+		secretValue, err := secret.Decrypt(encryptionKeyParam)
+		if err != nil {
+			return err
+		}
 
-	return c.JSON(secretValue)
+		return c.JSON(secretValue)
+	},
 }
 
 func routeUpdateSecret(c *fiber.Ctx) error {
