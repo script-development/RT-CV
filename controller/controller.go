@@ -12,8 +12,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// TODO Better schema suport
-
 // IMap is a wrapper around map[string]interface{} that's faster to use
 type IMap map[string]interface{}
 
@@ -78,9 +76,9 @@ func Routes(app *fiber.App, dbConn db.Connection, serverSeed []byte) {
 
 	_, err := os.Stat("./dashboard/out")
 	if err == os.ErrNotExist {
-		log.Warn("dashboard not build, you won't beable to use the dashboard")
+		log.Warn("dashboard not build, you won't be able to use the dashboard")
 	} else if err != nil {
-		log.WithError(err).Warn("unable to set dashboard routes, you won't beable to use the dashboard")
+		log.WithError(err).Warn("unable to set dashboard routes, you won't be able to use the dashboard")
 	} else {
 		b.Static("", "./dashboard/out/index.html", fiber.Static{Compress: true})
 		b.Static("login", "./dashboard/out/login.html", fiber.Static{Compress: true})

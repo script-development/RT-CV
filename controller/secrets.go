@@ -10,21 +10,25 @@ import (
 )
 
 // TODO find a better name for this
-func validKeyMiddleware() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		if len(c.Params("key")) == 0 {
-			return errors.New("key param cannot be empty")
-		}
-		return c.Next()
+func validKeyMiddleware() routeBuilder.M {
+	return routeBuilder.M{
+		Fn: func(c *fiber.Ctx) error {
+			if len(c.Params("key")) == 0 {
+				return errors.New("key param cannot be empty")
+			}
+			return c.Next()
+		},
 	}
 }
 
-func validEncryptionKeyMiddleware() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		if len(c.Params("encryptionKey")) < 16 {
-			return errors.New("encryptionKey param must have a minimal length of 16 chars")
-		}
-		return c.Next()
+func validEncryptionKeyMiddleware() routeBuilder.M {
+	return routeBuilder.M{
+		Fn: func(c *fiber.Ctx) error {
+			if len(c.Params("encryptionKey")) < 16 {
+				return errors.New("encryptionKey param must have a minimal length of 16 chars")
+			}
+			return c.Next()
+		},
 	}
 }
 

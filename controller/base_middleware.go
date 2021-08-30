@@ -8,11 +8,12 @@ import (
 	"github.com/script-development/RT-CV/controller/ctx"
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/auth"
+	"github.com/script-development/RT-CV/helpers/routeBuilder"
 	"github.com/script-development/RT-CV/models"
 )
 
 // InsertData adds the profiles to every route
-func InsertData(dbConn db.Connection, serverSeed []byte) fiber.Handler {
+func InsertData(dbConn db.Connection, serverSeed []byte) routeBuilder.M {
 	profiles, err := models.GetProfiles(dbConn)
 	if err != nil {
 		log.Fatal(err.Error())
@@ -35,18 +36,20 @@ func InsertData(dbConn db.Connection, serverSeed []byte) fiber.Handler {
 		Logger: log.Log.(*log.Logger),
 	}
 
-	return func(c *fiber.Ctx) error {
-		// reset loggerEntity
-		loggerEntity = log.Entry{
-			Logger: loggerEntity.Logger,
-		}
+	return routeBuilder.M{
+		Fn: func(c *fiber.Ctx) error {
+			// reset loggerEntity
+			loggerEntity = log.Entry{
+				Logger: loggerEntity.Logger,
+			}
 
-		c.SetUserContext(
-			ctx.SetLogger(
-				requestContext,
-				&loggerEntity,
-			),
-		)
-		return c.Next()
+			c.SetUserContext(
+				ctx.SetLogger(
+					requestContext,
+					&loggerEntity,
+				),
+			)
+			return c.Next()
+		},
 	}
 }

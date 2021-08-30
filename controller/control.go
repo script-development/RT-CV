@@ -18,22 +18,24 @@ var routeAllProfiles = routeBuilder.R{
 	},
 }
 
-func middlewareBindProfile() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		profileParam := c.Params(`profile`)
-		profiles := ctx.GetProfiles(c)
-		for _, profile := range *profiles {
-			if profile.ID.Hex() == profileParam {
-				c.SetUserContext(
-					ctx.SetProfile(
-						c.UserContext(),
-						&profile,
-					),
-				)
-				return c.Next()
+func middlewareBindProfile() routeBuilder.M {
+	return routeBuilder.M{
+		Fn: func(c *fiber.Ctx) error {
+			profileParam := c.Params(`profile`)
+			profiles := ctx.GetProfiles(c)
+			for _, profile := range *profiles {
+				if profile.ID.Hex() == profileParam {
+					c.SetUserContext(
+						ctx.SetProfile(
+							c.UserContext(),
+							&profile,
+						),
+					)
+					return c.Next()
+				}
 			}
-		}
-		return mongo.ErrNoDocuments
+			return mongo.ErrNoDocuments
+		},
 	}
 }
 

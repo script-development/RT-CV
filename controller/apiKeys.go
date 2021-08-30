@@ -181,46 +181,50 @@ var routeUpdateKey = routeBuilder.R{
 }
 
 // middlewareBindMyKey sets the APIKeyFromParam to the api key used to authenticate
-func middlewareBindMyKey() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		apiKey := ctx.GetKey(c)
+func middlewareBindMyKey() routeBuilder.M {
+	return routeBuilder.M{
+		Fn: func(c *fiber.Ctx) error {
+			apiKey := ctx.GetKey(c)
 
-		c.SetUserContext(
-			ctx.SetAPIKeyFromParam(
-				c.UserContext(),
-				apiKey,
-			),
-		)
+			c.SetUserContext(
+				ctx.SetAPIKeyFromParam(
+					c.UserContext(),
+					apiKey,
+				),
+			)
 
-		return c.Next()
+			return c.Next()
+		},
 	}
 }
 
-func middlewareBindKey() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		keyParam := c.Params(`keyID`)
-		keyID, err := primitive.ObjectIDFromHex(keyParam)
-		if err != nil {
-			return err
-		}
-		dbConn := ctx.GetDbConn(c)
-		apiKey := models.APIKey{}
-		err = dbConn.FindOne(&apiKey, bson.M{
-			"_id": keyID,
-		}, db.FindOptions{
-			NoDefaultFilters: true,
-		})
-		if err != nil {
-			return err
-		}
+func middlewareBindKey() routeBuilder.M {
+	return routeBuilder.M{
+		Fn: func(c *fiber.Ctx) error {
+			keyParam := c.Params(`keyID`)
+			keyID, err := primitive.ObjectIDFromHex(keyParam)
+			if err != nil {
+				return err
+			}
+			dbConn := ctx.GetDbConn(c)
+			apiKey := models.APIKey{}
+			err = dbConn.FindOne(&apiKey, bson.M{
+				"_id": keyID,
+			}, db.FindOptions{
+				NoDefaultFilters: true,
+			})
+			if err != nil {
+				return err
+			}
 
-		c.SetUserContext(
-			ctx.SetAPIKeyFromParam(
-				c.UserContext(),
-				&apiKey,
-			),
-		)
+			c.SetUserContext(
+				ctx.SetAPIKeyFromParam(
+					c.UserContext(),
+					&apiKey,
+				),
+			)
 
-		return c.Next()
+			return c.Next()
+		},
 	}
 }

@@ -118,6 +118,8 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 
 			paths := map[string]pathMethods{}
 
+			allTags := []routeBuilder.Tag{}
+
 			for _, route := range r.Routes() {
 				// Create the response value
 				responseContent := IMap{}
@@ -156,6 +158,25 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 				}
 				if route.Info.Description != "" {
 					routeInfo["description"] = route.Info.Description
+				}
+
+				if len(route.Info.Tags) > 0 {
+					tagsList := make([]string, len(route.Info.Tags))
+					for idx, tag := range route.Info.Tags {
+						tagsList[idx] = tag.Name
+
+						alreadyDefined := false
+						for _, tagFromAllTags := range allTags {
+							if tagFromAllTags.Name == tag.Name {
+								alreadyDefined = true
+								break
+							}
+						}
+						if !alreadyDefined {
+							allTags = append(allTags, tag)
+						}
+					}
+					routeInfo["tags"] = tagsList
 				}
 
 				// Create the request body expected value
@@ -239,6 +260,7 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 				"servers":    []IMap{{"url": origin}},
 				"paths":      paths,
 				"components": IMap{"schemas": componentsSchema},
+				"tags":       allTags,
 			}
 
 			// cache the response so we re-use it later on

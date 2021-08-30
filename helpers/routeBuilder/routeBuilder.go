@@ -1,8 +1,16 @@
 package routeBuilder
 
 import (
+	"fmt"
+
 	"github.com/gofiber/fiber/v2"
 )
+
+// Tag is meta information for a route
+type Tag struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
 
 // R gives this package more information about a route
 // From the fiber handler (fn(c *fiber.Ctx) error) we cannot know the expected input and output data
@@ -16,6 +24,13 @@ type R struct {
 	// Optional
 	// Body can be set to hint the route builder what kind of body this request expects
 	Body interface{}
+	Tags []Tag
+}
+
+// M gives this package more information about a middleware
+type M struct {
+	Tags []Tag
+	Fn   fiber.Handler
 }
 
 func (r R) check() {
@@ -118,6 +133,7 @@ type Router struct {
 	prefix string
 	fiber  fiber.Router
 	base   *BaseBuilder
+	tags   []Tag
 }
 
 func (r *Router) appendPrefix(add string) string {
@@ -133,9 +149,45 @@ func (r *Router) appendPrefix(add string) string {
 	return r.prefix + add
 }
 
-func (r *Router) newRoute(prefix string, method Method, info R) {
+func appendTags(tags, other []Tag) []Tag {
+outerLoop:
+	for _, otherTag := range other {
+		// Firstly lets check for tag duplicates
+		for _, tag := range tags {
+			if tag.Name == otherTag.Name {
+				if tag.Description != otherTag.Description {
+					msg := fmt.Sprintf(
+						"found 2 tags with the same name but diffrent description, "+
+							"tagname: %s, description 1: %s, description 2: %s",
+						tag.Name,
+						tag.Description,
+						otherTag.Description,
+					)
+					panic(msg)
+				}
+				continue outerLoop
+			}
+		}
+
+		tags = append(tags, otherTag)
+	}
+	return tags
+}
+
+func (r *Router) appendTags(middlewares []M) []Tag {
+	tags := r.tags
+	for _, middleware := range middlewares {
+		tags = appendTags(tags, middleware.Tags)
+	}
+	return tags
+}
+
+func (r *Router) newRoute(prefix string, method Method, info R, middlewares []M) {
 	fiberPath := r.appendPrefix(prefix)
 	parsedPath := parseFiberPath(fiberPath)
+
+	// Append all middleware tags to Info.Tags
+	info.Tags = appendTags(r.appendTags(middlewares), info.Tags)
 
 	r.base.routes = append(r.base.routes, Route{
 		FiberPath:           r.appendPrefix(prefix),
@@ -147,48 +199,60 @@ func (r *Router) newRoute(prefix string, method Method, info R) {
 	})
 }
 
+func getHandlers(middleware []M, route *R) []func(*fiber.Ctx) error {
+	handlers := make([]func(*fiber.Ctx) error, len(middleware))
+	for idx, middleware := range middleware {
+		handlers[idx] = middleware.Fn
+	}
+	if route != nil {
+		handlers = append(handlers, route.Fn)
+	}
+	return handlers
+}
+
 // Group prefixes the routes within the group with a route and adds a middleware to them if specified
-func (r *Router) Group(prefix string, group func(*Router), middlewares ...func(*fiber.Ctx) error) {
+func (r *Router) Group(prefix string, group func(*Router), middlewares ...M) {
 	group(&Router{
+		tags:   r.appendTags(middlewares),
 		prefix: r.appendPrefix(prefix),
-		fiber:  r.fiber.Group(prefix, middlewares...),
+		fiber:  r.fiber.Group(prefix, getHandlers(middlewares, nil)...),
 		base:   r.base,
 	})
 }
 
 // Get defines a get route with information about the route
-func (r *Router) Get(prefix string, routeDefinition R, middlewares ...func(*fiber.Ctx) error) {
+func (r *Router) Get(prefix string, routeDefinition R, middlewares ...M) {
 	routeDefinition.check()
-	r.newRoute(prefix, Get, routeDefinition)
-	r.fiber.Get(prefix, append(middlewares, routeDefinition.Fn)...)
+	r.newRoute(prefix, Get, routeDefinition, middlewares)
+	r.fiber.Get(prefix, getHandlers(middlewares, &routeDefinition)...)
 }
 
 // Post defines a POST route
-func (r *Router) Post(prefix string, routeDefinition R, handlers ...func(*fiber.Ctx) error) {
+func (r *Router) Post(prefix string, routeDefinition R, middlewares ...M) {
 	routeDefinition.check()
-	r.newRoute(prefix, Post, routeDefinition)
-	r.fiber.Post(prefix, append(handlers, routeDefinition.Fn)...)
+	r.newRoute(prefix, Post, routeDefinition, middlewares)
+	r.fiber.Post(prefix, getHandlers(middlewares, &routeDefinition)...)
 }
 
 // Put defines a PUT route
-func (r *Router) Put(prefix string, routeDefinition R, handlers ...func(*fiber.Ctx) error) {
+func (r *Router) Put(prefix string, routeDefinition R, middlewares ...M) {
 	routeDefinition.check()
-	r.newRoute(prefix, Put, routeDefinition)
-	r.fiber.Put(prefix, append(handlers, routeDefinition.Fn)...)
+	r.newRoute(prefix, Put, routeDefinition, middlewares)
+	r.fiber.Put(prefix, getHandlers(middlewares, &routeDefinition)...)
 }
 
 // Patch defines a PATCH route
-func (r *Router) Patch(prefix string, routeDefinition R, handlers ...func(*fiber.Ctx) error) {
+func (r *Router) Patch(prefix string, routeDefinition R, middlewares ...M) {
 	routeDefinition.check()
-	r.newRoute(prefix, Patch, routeDefinition)
-	r.fiber.Patch(prefix, append(handlers, routeDefinition.Fn)...)
+	r.newRoute(prefix, Patch, routeDefinition, middlewares)
+	r.fiber.Patch(prefix, getHandlers(middlewares, &routeDefinition)...)
 }
 
 // Delete defines a DELETE route
-func (r *Router) Delete(prefix string, routeDefinition R, handlers ...func(*fiber.Ctx) error) {
+func (r *Router) Delete(prefix string, routeDefinition R, middlewares ...M) {
 	routeDefinition.check()
-	r.newRoute(prefix, Delete, routeDefinition)
-	r.fiber.Delete(prefix, append(handlers, routeDefinition.Fn)...)
+	r.newRoute(prefix, Delete, routeDefinition, middlewares)
+	r.fiber.Delete(prefix, getHandlers(middlewares, &routeDefinition)...)
 }
 
 // Static defines a static file path
