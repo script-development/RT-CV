@@ -38,6 +38,10 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 			if origin == "" {
 				// Some web browsers don't have the Origin header so we also check for the host header
 				host := c.Get("Host")
+				if host == "" {
+					host = "localhost:4000"
+				}
+
 				toCheck := []string{
 					"localhost",
 					"127.0.0.1",
