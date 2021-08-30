@@ -21,13 +21,13 @@ func Routes(app *fiber.App, dbConn db.Connection, serverSeed []byte) {
 
 	b.Group(`/api/v1`, func(b *routeBuilder.Router) {
 		b.Group(`/schema`, func(b *routeBuilder.Router) {
-			b.Get(`/openAPI`, routeGetOpenAPISchema(b))
-			b.Get(`/cv`, routeGetCvSchema)
+			b.NGet(`/openAPI`, routeGetOpenAPISchema(b))
+			b.NGet(`/cv`, routeGetCvSchema)
 		})
 
 		b.Group(`/auth`, func(b *routeBuilder.Router) {
-			b.Get(`/keyinfo`, requiresAuth(0), routeGetKeyInfo)
-			b.Get(`/seed`, routeAuthSeed)
+			b.NGet(`/keyinfo`, routeGetKeyInfo, requiresAuth(0))
+			b.NGet(`/seed`, routeAuthSeed)
 		})
 
 		b.Group(`/scraper`, func(b *routeBuilder.Router) {

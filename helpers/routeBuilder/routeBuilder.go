@@ -4,6 +4,32 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// R gives this package more information about a route
+// From the fiber handler (fn(c *fiber.Ctx) error) we cannot know the expected input and output data
+type R struct {
+	// Required
+	Description string
+	// Res gives the routes
+	Res interface{}
+	Fn  func(c *fiber.Ctx) error
+
+	// Optional
+	// Body can be set to hint the route builder what kind of body this request expects
+	Body interface{}
+}
+
+func (r R) check() {
+	if r.Description == "" {
+		panic("routeBuilder.R description cannot be empty")
+	}
+	if r.Res == nil {
+		panic("routeBuilder.Res must be defined")
+	}
+	if r.Fn == nil {
+		panic("routeBuilder.Fn must be defined")
+	}
+}
+
 // BaseBuilder is the core builder in here all the routes and middlewares are rememberd
 type BaseBuilder struct {
 	fiber  *fiber.App
@@ -72,6 +98,7 @@ type Route struct {
 	Kind                string
 	Method              Method
 	ResponseContentType ContentType
+	Info                R
 }
 
 // New creates a instance of Builder
@@ -126,6 +153,13 @@ func (r *Router) Group(prefix string, group func(*Router), middlewares ...func(*
 		fiber:  r.fiber.Group(prefix, middlewares...),
 		base:   r.base,
 	})
+}
+
+// NGet defines a get route with information about the route
+func (r *Router) NGet(prefix string, routeDefinition R, middlewares ...func(*fiber.Ctx) error) {
+	routeDefinition.check()
+	r.newRoute(prefix, Get)
+	r.fiber.Get(prefix, append(middlewares, routeDefinition.Fn)...)
 }
 
 // Get defines a GET route
