@@ -36,7 +36,7 @@ export default function TryMatcher() {
                 <div>
                     <Link href="/">
                         <ButtonBase focusRipple style={{ borderRadius: 4 }}>
-                            <h1 className="title"><span className="arrowBack"><ArrowBack /></span> RT-CV</h1>
+                            <h1 className="title"><span className="arrowBack"><ArrowBack fontSize="small" /></span> RT-CV</h1>
                         </ButtonBase>
                     </Link>
                 </div>

@@ -15,6 +15,7 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import Add from '@material-ui/icons/Add'
 import Delete from '@material-ui/icons/Delete'
 import Edit from '@material-ui/icons/Edit'
+import MenuBook from '@material-ui/icons/MenuBook'
 import Visibility from '@material-ui/icons/Visibility'
 import Head from 'next/head'
 import Link from 'next/link'
@@ -75,8 +76,11 @@ export default function Home() {
 				<h1>RT-CV</h1>
 
 				<div className="appLinks">
-					<Link href="tryMatcher">
-						<Button color="primary" variant="outlined" startIcon={<Icon>construction</Icon>}>Try the CV matcher</Button>
+					<Link href="/tryMatcher">
+						<Button style={{ marginRight: 5, marginBottom: 5 }} color="primary" variant="outlined" startIcon={<Icon>construction</Icon>}>Try the CV matcher</Button>
+					</Link>
+					<Link href="/docs">
+						<Button style={{ marginRight: 5, marginBottom: 5 }} color="primary" variant="outlined" startIcon={<MenuBook />}>API docs</Button>
 					</Link>
 				</div>
 
