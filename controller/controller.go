@@ -80,6 +80,8 @@ func Routes(app *fiber.App, dbConn db.Connection, serverSeed []byte) {
 	} else if err != nil {
 		log.WithError(err).Warn("unable to set dashboard routes, you won't be able to use the dashboard")
 	} else {
+		// FIXME we currently need to manually add every dashboard route here.
+		// It would be nice if these where auto generated
 		b.Static("", "./dashboard/out/index.html", fiber.Static{Compress: true})
 		b.Static("login", "./dashboard/out/login.html", fiber.Static{Compress: true})
 		b.Static("tryMatcher", "./dashboard/out/tryMatcher.html", fiber.Static{Compress: true})

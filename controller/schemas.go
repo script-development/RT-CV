@@ -16,7 +16,7 @@ import (
 
 var routeGetCvSchema = routeBuilder.R{
 	Description: "returns cv as a json schema, " +
-		"currently used in the dashboard for the try matcher page to give intelligent suggestions",
+		"currently used in the dashboard for the /tryMatcher page to give intelligent suggestions",
 	Res: schema.Property{},
 	Fn: func(c *fiber.Ctx) error {
 		defs := map[string]schema.Property{}
@@ -54,10 +54,11 @@ var errResponse = IMap{
 var routeGetOpenAPISchemaCache IMap
 
 func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
-	// TODO we use a lot of IMap in here, we should use a typed struct
+	// FIXME replace IMap with structs
 	return routeBuilder.R{
-		Description: "returns openapi as a json schema",
-		Res:         IMap{},
+		Description: "Returns the api schema as an openapi schema\n" +
+			"This schema is currently used by the /docs page",
+		Res: IMap{},
 		Fn: func(c *fiber.Ctx) error {
 			origin := c.Get("Origin")
 			if origin == "" {
