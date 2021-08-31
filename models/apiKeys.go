@@ -182,5 +182,5 @@ func CheckDashboardKeyExists(conn db.Connection) {
 	if err != nil {
 		log.WithError(err).Fatalf("Unable to insert dashboard system api keys")
 	}
-	log.WithField("key", key.Key).WithField("id", key.ID.Hex()).Info("Created system key")
+	log.WithField("key", key.Key).WithField("id", key.ID.Hex()).Info("Created dashboard key")
 }

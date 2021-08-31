@@ -37,6 +37,7 @@ func main() {
 	useTestingDB := os.Getenv("USE_TESTING_DB")
 	if useTestingDB == "true" || useTestingDB == "TRUE" {
 		dbConn = mock.NewMockDB()
+		log.WithField("id", mock.DashboardKey.ID.Hex()).WithField("key", mock.DashboardKey.Key).Info("Mock dashboard key")
 	} else {
 		dbConn = mongo.ConnectToDB()
 	}
@@ -57,7 +58,7 @@ func main() {
 	app.Use(logger.New())
 
 	// Setup the app routes
-	controller.Routes(app, dbConn, serverSeed)
+	controller.Routes(app, dbConn, serverSeed, false)
 
 	testingDieAfterInit := os.Getenv("TESTING_DIE_AFTER_INIT")
 	if testingDieAfterInit == "true" || testingDieAfterInit == "TRUE" {

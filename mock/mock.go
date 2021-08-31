@@ -4,6 +4,7 @@ import (
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/db/testingdb"
 	"github.com/script-development/RT-CV/models"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var (
@@ -12,7 +13,7 @@ var (
 		M:       db.NewM(),
 		Enabled: true,
 		Domains: []string{"werk.nl"},
-		Key:     "abc",
+		Key:     "aaa",
 		Roles:   models.APIKeyRoleAll,
 	}
 	// Key2 is a mock api key
@@ -20,7 +21,7 @@ var (
 		M:       db.NewM(),
 		Enabled: true,
 		Domains: []string{"werk.nl"},
-		Key:     "abc",
+		Key:     "bbb",
 		Roles:   models.APIKeyRoleScraper,
 	}
 	// Key3 is a mock api key
@@ -28,8 +29,19 @@ var (
 		M:       db.NewM(),
 		Enabled: true,
 		Domains: []string{"werk.nl"},
-		Key:     "def",
+		Key:     "ccc",
 		Roles:   models.APIKeyRoleInformationObtainer,
+	}
+	// DashboardKey is the mock key for the dashboard
+	DashboardKey = &models.APIKey{
+		M: db.M{
+			ID: primitive.ObjectID{0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11},
+		},
+		System:  true,
+		Enabled: true,
+		Domains: []string{"*"},
+		Key:     "ddd",
+		Roles:   models.APIKeyRoleDashboard,
 	}
 )
 
@@ -98,6 +110,7 @@ func NewMockDB() *testingdb.TestConnection {
 		Key1,
 		Key2,
 		Key3,
+		DashboardKey,
 	)
 
 	// Insert secrets

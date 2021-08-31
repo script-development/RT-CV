@@ -16,7 +16,7 @@ import (
 type IMap map[string]interface{}
 
 // Routes defines the routes used
-func Routes(app *fiber.App, dbConn db.Connection, serverSeed []byte) {
+func Routes(app *fiber.App, dbConn db.Connection, serverSeed []byte, testing bool) {
 	b := routeBuilder.New(app)
 
 	b.Group(`/api/v1`, func(b *routeBuilder.Router) {
@@ -76,9 +76,13 @@ func Routes(app *fiber.App, dbConn db.Connection, serverSeed []byte) {
 
 	_, err := os.Stat("./dashboard/out")
 	if err == os.ErrNotExist {
-		log.Warn("dashboard not build, you won't be able to use the dashboard")
+		if !testing {
+			log.Warn("dashboard not build, you won't be able to use the dashboard")
+		}
 	} else if err != nil {
-		log.WithError(err).Warn("unable to set dashboard routes, you won't be able to use the dashboard")
+		if !testing {
+			log.WithError(err).Warn("unable to set dashboard routes, you won't be able to use the dashboard")
+		}
 	} else {
 		// FIXME we currently need to manually add every dashboard route here.
 		// It would be nice if these where auto generated

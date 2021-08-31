@@ -31,12 +31,12 @@ func newTestingRouter(t *testing.T) *testingRouter {
 		ErrorHandler: FiberErrorHandler,
 	})
 
-	Routes(app, db, testingServerSeed)
+	Routes(app, db, testingServerSeed, true)
 	return &testingRouter{
 		t:        t,
 		fiber:    app,
 		db:       db,
-		accessor: auth.NewAccessorHelper(mock.Key1.ID, "abc", string(random.StringBytes(32)), testingServerSeed),
+		accessor: auth.NewAccessorHelper(mock.Key1.ID, "aaa", string(random.StringBytes(32)), testingServerSeed),
 	}
 }
 

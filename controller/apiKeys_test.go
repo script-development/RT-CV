@@ -20,7 +20,7 @@ func TestApiKeyRoutes(t *testing.T) {
 	resKeys := []models.APIKey{}
 	err := json.Unmarshal(res, &resKeys)
 	NoError(t, err)
-	Len(t, resKeys, 3) // The mock data contains 3 keys
+	Len(t, resKeys, 4) // The mock data contains 4 keys
 
 	// get current keys in the
 	allKeysInDB := []models.APIKey{}
@@ -55,7 +55,12 @@ func TestApiKeyRoutes(t *testing.T) {
 		err = json.Unmarshal(res, &resKeys)
 		NoError(t, err)
 
-		Equal(t, keysCountBeforeDeletion-1, len(resKeys))
+		if listKey.System {
+			// System keys cannot be removed
+			Equal(t, keysCountBeforeDeletion, len(resKeys))
+		} else {
+			Equal(t, keysCountBeforeDeletion-1, len(resKeys))
+		}
 	}
 
 	// Try to insert key
