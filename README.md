@@ -2,7 +2,8 @@
 
 _Real time curriculum vitae matcher_
 
-This is an api for CV scrapers to upload found CVs to where this tries to match it to a list of user defined search profiles _(hence the name realtime)_. The actions taken when a CV is matched is based on the search profile.
+This is an api for CV scrapers to upload found CVs to where this tries to match it to a list of user defined search profiles at the moment of a CV upload _(hence the name realtime)_. The actions taken when a CV is matched is based on the search profile.
+This tool also provides helper tools for managing secrets and keys.
 
 **What this isn't:**
 
@@ -10,11 +11,14 @@ This is an api for CV scrapers to upload found CVs to where this tries to match 
 - A gui where you can search for CVs (this is only an API nor a database)
 - A CV database (it might cache some cv information but **CVs are never written to disk by this program**)
 
-**Goals:**
+**What this is:**
 
-- Easy to understand API for uploading scraped CVs to and to set search profiles
-- GDPR compliant
-- Fast
+An API that matches defined search profiles to scraped CVs.
+On one side you have your CV scraper that scraps CVs and uploads them to this API.
+On the other side you have a controller program build by you that defines the search profiles where scraped CVs should be compared to.
+The API can also store scraper secrets like site login credentials.
+
+We intent to make this API GDPR compliant.
 
 ## Quickly start hacking:
 
