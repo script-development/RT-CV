@@ -1,23 +1,11 @@
 import type { AppProps } from 'next/app'
 import Head from 'next/head'
 import CssBaseline from '@material-ui/core/CssBaseline'
-import { createTheme, ThemeProvider } from '@material-ui/core/styles'
-import { red } from '@material-ui/core/colors'
+import { ThemeProvider } from '@material-ui/core/styles'
 import { useEffect } from 'react'
 import { fetcher } from '../src/auth'
 import { useRouter } from 'next/router'
-
-const theme = createTheme({
-  palette: {
-    type: 'dark',
-    // https://material-ui.com/customization/color/#playground
-    primary: { main: '#ff9800' }, // orange
-    secondary: { main: '#ff6e40' }, // red
-    error: {
-      main: red.A400,
-    },
-  },
-});
+import { theme } from '../src/theme'
 
 function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter()

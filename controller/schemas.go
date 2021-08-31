@@ -246,7 +246,7 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 				"info": IMap{
 					"version":        "1.0.0",
 					"title":          "RT-CV",
-					"description":    "Real time curriculum vitae matcher",
+					"description":    schemaDescription,
 					"termsOfService": "https://github.com/script-development/RT-CV/blob/main/LICENSE",
 					"contact": IMap{
 						"name": "API Support",

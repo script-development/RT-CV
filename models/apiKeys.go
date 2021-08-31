@@ -104,26 +104,27 @@ var (
 
 // Description returns a description of the role
 // Only works on single roles
-func (a APIKeyRole) Description() (description string, ok bool) {
+func (a APIKeyRole) Description() (description, slug string, ok bool) {
 	switch a {
 	case APIKeyRoleScraper:
-		return "Can insert scraped data", true
+		return "Can insert scraped data", "scraper", true
 	case APIKeyRoleInformationObtainer:
-		return "Can obtain information the server has", true
+		return "Can obtain information the server has", "information-obtainer", true
 	case APIKeyRoleController:
-		return "Can control the server", true
+		return "Can control the server", "controller", true
 	case APIKeyRoleDashboard:
-		return "Can access the dashboard and modify server state", true
+		return "Can access the dashboard and modify server state", "dashboard", true
 	case APIKeyRoleAdmin:
-		return "Unused role", true
+		return "Unused role", "admin", true
 	default:
-		return "Unknown role", false
+		return "Unknown role", "unknown", false
 	}
 }
 
 // APIRole contains information about a APIKeyRole
 type APIRole struct {
 	Role        APIKeyRole `json:"role"`
+	Slug        string     `json:"slug"`
 	Description string     `json:"description"`
 }
 
@@ -132,8 +133,8 @@ func (a APIKeyRole) ConvertToAPIRoles() []APIRole {
 	res := []APIRole{}
 	for _, role := range APIKeyRoleAllArray {
 		if a&role == role {
-			description, _ := role.Description()
-			res = append(res, APIRole{Role: role, Description: description})
+			description, slug, _ := role.Description()
+			res = append(res, APIRole{Role: role, Slug: slug, Description: description})
 		}
 	}
 	return res

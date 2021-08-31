@@ -142,9 +142,13 @@ type WithMeta struct {
 // baseRefPath might look something like #/components/schemas/
 func From(
 	inputType interface{},
+	// When pointing to a reference we don't know where that reference is placed so this is defined by you
 	baseRefPath string,
+	// Add a reference to a property, we need to create these to overcome circular references
 	addRef func(key string, property Property),
+	// Hasref should return true if a given reference is already created
 	hasRef func(key string) bool,
+	// Meta can add extra schema information
 	meta *WithMeta,
 ) (Property, error) {
 	if inputType == nil {

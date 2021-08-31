@@ -18,8 +18,8 @@ var errAuthMissingRoles = errors.New("you do not have auth roles required to acc
 func requiresAuth(requiredRoles models.APIKeyRole) routeBuilder.M {
 	tags := []routeBuilder.Tag{
 		{
-			Name:        "auth",
-			Description: "route requires authentication",
+			Name:        "Auth all route",
+			Description: "route that requires authentication",
 		},
 	}
 
@@ -27,8 +27,12 @@ func requiresAuth(requiredRoles models.APIKeyRole) routeBuilder.M {
 	for _, role := range requiredRolesList {
 		roleStr := strconv.FormatUint(uint64(role.Role), 10)
 		tags = append(tags, routeBuilder.Tag{
-			Name:        "auth-" + roleStr,
-			Description: fmt.Sprintf("route required authentication id %s, description: %s", roleStr, role.Description),
+			Name: "Auth Role " + role.Slug,
+			Description: fmt.Sprintf(
+				"route required authentication id %s, description: %s",
+				roleStr,
+				role.Description,
+			),
 		})
 	}
 

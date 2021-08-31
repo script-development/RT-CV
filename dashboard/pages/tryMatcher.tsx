@@ -1,10 +1,9 @@
 import Head from "next/head";
 import Dynamic from "next/dynamic"
 import React, { useEffect, useState } from "react"
-import { Button, ButtonBase, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@material-ui/core"
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@material-ui/core"
 import Info from '@material-ui/icons/Info'
-import ArrowBack from '@material-ui/icons/ArrowBack'
-import Link from 'next/link'
+import Header from '../components/header'
 
 const MatchEditor = Dynamic(
     () => import("../components/matcherEditor"),
@@ -32,26 +31,17 @@ export default function TryMatcher() {
         <div>
             <Head><title>RT-CV try matcher</title></Head>
 
-            <div className="header">
-                <div>
-                    <Link href="/">
-                        <ButtonBase focusRipple style={{ borderRadius: 4 }}>
-                            <h1 className="title"><span className="arrowBack"><ArrowBack fontSize="small" /></span> RT-CV</h1>
-                        </ButtonBase>
-                    </Link>
-                </div>
-                <div>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        size="small"
-                        startIcon={<Info />}
-                        onClick={() => setInfoDialogOpen(true)}
-                    >
-                        Info
-                    </Button>
-                </div>
-            </div>
+            <Header>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    size="small"
+                    startIcon={<Info />}
+                    onClick={() => setInfoDialogOpen(true)}
+                >
+                    Info
+                </Button>
+            </Header>
 
             <MatchEditor
                 top="50px"
@@ -81,30 +71,7 @@ export default function TryMatcher() {
                 </DialogActions>
             </Dialog>
 
-            <style jsx>{`
-                .header {
-                    height: 50px;
-                    background-color: #424242;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 0 10px;
-                }
-                .header > div {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    height: 100%;
-                }
-                .header .title {
-                    margin: 0;
-                    padding: 5px 20px;
-                }
-                .header .title .arrowBack {
-                    position: relative;
-                    top: 2px;
-                }
-            `}</style>
+
         </div>
     )
 }
