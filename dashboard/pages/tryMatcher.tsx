@@ -57,7 +57,7 @@ export default function TryMatcher() {
                 <DialogContent>
                     <DialogContentText>
                         On this page you can try out the matcher and see the matching profiles.
-                        On the <b>right side you input the CV</b> and on the <b>left side you'll see the matched profiles</b>.
+                        On the <b>right side you input the CV</b> and on the <b>left side you'll see the matched profiles</b> and why it was matched.
                     </DialogContentText>
                     <DialogContentText>
                         The profiles available to match are the profiles in the database.
