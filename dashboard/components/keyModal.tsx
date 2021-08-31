@@ -37,7 +37,7 @@ export function KeyModal({ kind, onClose, apiKey = undefined }: KeyModalProps) {
         domains: ['*'],
         enabled: true,
         id: '',
-        key: randomString(32),
+        key: '',
         roles: 0,
         system: false,
     })
@@ -77,6 +77,10 @@ export function KeyModal({ kind, onClose, apiKey = undefined }: KeyModalProps) {
                 system: false,
             })
     }, [kind, apiKey])
+
+    useEffect(() => {
+        setState(s => ({ ...s, key: randomString(32) }))
+    }, [])
 
     return (
         <Modal

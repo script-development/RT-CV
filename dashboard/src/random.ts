@@ -1,6 +1,6 @@
 export function randomString(length: number): string {
     const cryptoRandomValues = new Uint32Array(length);
-    window.crypto.getRandomValues(cryptoRandomValues);
+    crypto.getRandomValues(cryptoRandomValues);
 
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let str = '';

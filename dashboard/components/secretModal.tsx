@@ -55,18 +55,28 @@ export function SecretModal({ kind, onClose: onCloseArg, secret, apiKeys }: Secr
         onCloseArg()
     }
 
+    const loadReactSyntaxHighlighter = async () => {
+        try {
+            const [_, styles] = await Promise.all([
+                // Pre load the highlighter component
+                import('react-syntax-highlighter'),
+                // Load the styles
+                import('react-syntax-highlighter/dist/esm/styles/hljs'),
+            ])
+            syntaxHighlighterStyle = styles.monokaiSublime
+        } catch (e) {
+            console.log(e)
+        }
+    }
+
     useEffect(() => {
         if (kind == ModalKind.Create && typeof secretValue != 'string')
             setSecretValue('{}')
         if (kind == ModalKind.Create && keyId === undefined && apiKeys)
             setKeyId(apiKeys.filter(key => key.enabled)[0].id)
-
-        if (kind != ModalKind.Closed && syntaxHighlighterStyle === undefined) {
+        if (kind != ModalKind.Closed && syntaxHighlighterStyle === undefined)
             // When the modal is opend start pre-loading the highlighter
-            import('react-syntax-highlighter')
-            // Also loadin the highlighter style
-            import('react-syntax-highlighter/dist/esm/styles/hljs').then(v => syntaxHighlighterStyle = v.monokaiSublime)
-        }
+            loadReactSyntaxHighlighter()
     }, [kind])
 
     const submit = async () => {
