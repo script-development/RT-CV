@@ -63,7 +63,7 @@ export default function TryMatcher() {
                         The profiles available to match are the profiles in the database.
                     </DialogContentText>
                     <DialogContentText>
-                        Note that this is made mainly developers for debugging and testing purposes.
+                        Note that this is made to be used by developers for debugging and testing purposes.
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
