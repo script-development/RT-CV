@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/script-development/RT-CV/controller/ctx"
@@ -36,14 +37,32 @@ var routeScraperScanCV = routeBuilder.R{
 			return c.JSON(matchedProfiles)
 		}
 		if len(matchedProfiles) > 0 {
+			var wg sync.WaitGroup
+
 			for _, aMatch := range matchedProfiles {
 				_, err := body.CV.GetPDF(aMatch.Profile, aMatch.Matches.GetMatchSentence())
 				if err != nil {
 					return fmt.Errorf("unable to generate PDF from CV, err: %s", err.Error())
 				}
-				fmt.Println("emails to send:", aMatch.Profile.OnMatch.SendMail)
-				fmt.Println("http calls todo", aMatch.Profile.OnMatch.HTTPCall)
+
+				wg.Add(len(aMatch.Profile.OnMatch.HTTPCall) + len(aMatch.Profile.OnMatch.SendMail))
+
+				for _, http := range aMatch.Profile.OnMatch.HTTPCall {
+					go func(http models.ProfileHTTPCallData) {
+						http.MakeRequest()
+						wg.Done()
+					}(http)
+				}
+
+				for _, email := range aMatch.Profile.OnMatch.SendMail {
+					go func(email models.ProfileSendEmailData) {
+						email.SendEmail()
+						wg.Done()
+					}(email)
+				}
 			}
+
+			wg.Wait()
 		}
 
 		return c.JSON(matchedProfiles)

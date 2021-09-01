@@ -7,6 +7,7 @@ import (
 	"regexp"
 
 	"github.com/script-development/RT-CV/db"
+	"github.com/valyala/fasthttp"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -107,10 +108,31 @@ type ProfileSendEmailData struct {
 	Email string `json:"email"`
 }
 
+// SendEmail sends an email
+func (*ProfileSendEmailData) SendEmail() {
+	// FIXME implment this
+}
+
 // ProfileHTTPCallData defines a http address that should be called when a match was made
 type ProfileHTTPCallData struct {
 	URI    string `json:"uri"`
 	Method string `json:"method"`
+}
+
+// MakeRequest creates a http request
+func (d *ProfileHTTPCallData) MakeRequest() {
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
+	req.SetRequestURI(d.URI)
+	req.Header.SetMethod(d.Method)
+
+	// FIXME set request timeout
+	// FIXME set body data or url data
+
+	resp := fasthttp.AcquireResponse()
+	defer fasthttp.ReleaseResponse(resp)
+
+	fasthttp.Do(req, resp)
 }
 
 // ValidateCreateNewProfile validates a new profile to create
