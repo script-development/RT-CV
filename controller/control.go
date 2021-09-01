@@ -59,7 +59,10 @@ var routeCreateProfile = routeBuilder.R{
 			return err
 		}
 
-		// FIXME add validation to profile
+		err = profile.ValidateCreateNewProfile()
+		if err != nil {
+			return err
+		}
 
 		// Set the ID of the profile
 		profile.M = db.NewM()
@@ -80,7 +83,7 @@ var routeCreateProfile = routeBuilder.R{
 
 func routeModifyProfile(c *fiber.Ctx) error {
 	profile := ctx.GetProfile(c)
-	// FIXME
+	// FIXME implment route
 	return c.JSON(profile)
 }
 

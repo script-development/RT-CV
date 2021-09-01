@@ -71,9 +71,11 @@ var (
 		Educations: []models.ProfileEducation{{
 			Name: "Default",
 		}},
-		Emails: []models.ProfileEmail{{
-			Email: "abc@example.com",
-		}},
+		OnMatch: models.ProfileOnMatch{
+			SendMail: []models.ProfileSendEmailData{{
+				Email: "abc@example.com",
+			}},
+		},
 		Zipcodes: []models.ProfileDutchZipcode{{
 			From: 2000,
 			To:   8000,
@@ -96,7 +98,6 @@ var (
 		ProfessionExperienced: nil,
 		DriversLicenses:       nil,
 		Educations:            nil,
-		Emails:                nil,
 		Zipcodes:              nil,
 	}
 )

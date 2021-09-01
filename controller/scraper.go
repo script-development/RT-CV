@@ -41,10 +41,8 @@ var routeScraperScanCV = routeBuilder.R{
 				if err != nil {
 					return fmt.Errorf("unable to generate PDF from CV, err: %s", err.Error())
 				}
-				fmt.Println(aMatch.Profile.Emails)
-				// for _, email := range profile.Emails {
-				// 	email.Email.Name
-				// }
+				fmt.Println("emails to send:", aMatch.Profile.OnMatch.SendMail)
+				fmt.Println("http calls todo", aMatch.Profile.OnMatch.HTTPCall)
 			}
 		}
 

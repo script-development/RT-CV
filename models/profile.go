@@ -1,6 +1,11 @@
 package models
 
 import (
+	"errors"
+	"fmt"
+	"net/url"
+	"regexp"
+
 	"github.com/script-development/RT-CV/db"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -28,8 +33,10 @@ type Profile struct {
 	YearsSinceEducation   int                `json:"yearsSinceEducation"`
 	Educations            []ProfileEducation `json:"educations"`
 
-	Emails   []ProfileEmail        `json:"emails"`
 	Zipcodes []ProfileDutchZipcode `json:"zipCodes"`
+
+	// What should happen on a match
+	OnMatch ProfileOnMatch `json:"onMatch"`
 }
 
 // CollectionName returns the collection name of the Profile
@@ -77,11 +84,6 @@ type ProfileEducation struct {
 	// SubsectorID     int
 }
 
-// ProfileEmail only contains an email address
-type ProfileEmail struct {
-	Email string `json:"email"`
-}
-
 // type ProfileProfession struct {
 // 	ID        int `gorm:"primaryKey"`
 // 	ProfileID int
@@ -92,4 +94,70 @@ type ProfileEmail struct {
 type ProfileDutchZipcode struct {
 	From uint16 `json:"from"`
 	To   uint16 `json:"to"`
+}
+
+// ProfileOnMatch defines what should happen when a profile is matched to a CV
+type ProfileOnMatch struct {
+	SendMail []ProfileSendEmailData `json:"sendMail"`
+	HTTPCall []ProfileHTTPCallData  `json:"httpCall"`
+}
+
+// ProfileSendEmailData only contains an email address atm
+type ProfileSendEmailData struct {
+	Email string `json:"email"`
+}
+
+// ProfileHTTPCallData defines a http address that should be called when a match was made
+type ProfileHTTPCallData struct {
+	URI    string `json:"uri"`
+	Method string `json:"method"`
+}
+
+// ValidateCreateNewProfile validates a new profile to create
+func (p *Profile) ValidateCreateNewProfile() error {
+	// TODO this needs more validation
+
+	if p.Name == "" {
+		return errors.New("name must be set")
+	}
+
+	if len(p.OnMatch.SendMail) == 0 && len(p.OnMatch.HTTPCall) == 0 {
+		return errors.New("at least on of the profile onMatch options be set")
+	}
+	emailRegex := regexp.MustCompile(
+		"^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@" +
+			"[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?" +
+			"(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$",
+	)
+	for idx, mail := range p.OnMatch.SendMail {
+		if len(mail.Email) < 3 || len(mail.Email) > 254 || !emailRegex.MatchString(mail.Email) {
+			return fmt.Errorf("onMatch.sendMail[%d].email: invalid email address", idx)
+		}
+	}
+	for idx, call := range p.OnMatch.HTTPCall {
+		uri, err := url.Parse(call.URI)
+		if err != nil {
+			return fmt.Errorf("onMatch.httpCall[%d].uri: %s", idx, err.Error())
+		}
+		if uri.Scheme != "http" && uri.Scheme != "https" {
+			return fmt.Errorf("onMatch.httpCall[%d].uri: url schema must be set to http or https", idx)
+		}
+		if uri.User != nil {
+			return fmt.Errorf("onMatch.httpCall[%d].uri: user information is not allowed", idx)
+		}
+		if uri.Host == "" && uri.Opaque == "" {
+			return fmt.Errorf("onMatch.httpCall[%d].uri: host must be set", idx)
+		}
+		switch call.Method {
+		case "", "GET", "POST", "PATCH", "PUT", "DELETE":
+		default:
+			return fmt.Errorf(
+				"onMatch.httpCall[%d].method: not a valid method, must be one of "+
+					`"GET", "POST", "PATCH", "PUT", "DELETE" or empty to default to GET`,
+				idx,
+			)
+		}
+	}
+
+	return nil
 }

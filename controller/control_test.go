@@ -58,7 +58,15 @@ func TestProfileRoutes(t *testing.T) {
 	}
 
 	// Try to insert profile
-	profileToInsert := models.Profile{Name: "newly inserted profile"}
+	profileToInsert := models.Profile{
+		Name: "newly inserted profile",
+		OnMatch: models.ProfileOnMatch{
+			HTTPCall: []models.ProfileHTTPCallData{{
+				URI:    "http://localhost",
+				Method: "GET",
+			}},
+		},
+	}
 	body, err := json.Marshal(profileToInsert)
 	NoError(t, err)
 	_, res = app.MakeRequest(routeBuilder.Post, `/api/v1/control/profiles`, TestReqOpts{Body: body})
