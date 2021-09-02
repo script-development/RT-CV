@@ -14,10 +14,11 @@ import (
 // Secret contains a secret value that can be stored in the database by a api user
 // The secret value is encrypted with a key that is not stored on our side and is controlled by the api user
 type Secret struct {
-	db.M  `bson:",inline"`
-	KeyID primitive.ObjectID `bson:"keyId" json:"keyId"`
-	Key   string             `json:"key"`
-	Value string             `json:"-"`
+	db.M        `bson:",inline"`
+	KeyID       primitive.ObjectID `bson:"keyId" json:"keyId"`
+	Key         string             `json:"key"`
+	Value       string             `json:"-"`
+	Description string             `json:"description"`
 }
 
 // CollectionName returns the collection name of a secret
@@ -26,7 +27,7 @@ func (*Secret) CollectionName() string {
 }
 
 // CreateSecret creates a secret
-func CreateSecret(keyID primitive.ObjectID, key string, encryptionKey string, value []byte) (*Secret, error) {
+func CreateSecret(keyID primitive.ObjectID, key string, encryptionKey string, value []byte, description string) (*Secret, error) {
 	data, err := crypto.Encrypt(value, []byte(encryptionKey))
 	if err != nil {
 		return nil, err
@@ -35,16 +36,17 @@ func CreateSecret(keyID primitive.ObjectID, key string, encryptionKey string, va
 		return nil, errors.New("expected json value")
 	}
 	return &Secret{
-		M:     db.NewM(),
-		KeyID: keyID,
-		Key:   key,
-		Value: base64.URLEncoding.EncodeToString(data),
+		M:           db.NewM(),
+		KeyID:       keyID,
+		Key:         key,
+		Value:       base64.URLEncoding.EncodeToString(data),
+		Description: description,
 	}, nil
 }
 
 // UnsafeMustCreateSecret Creates a secret and panics if an error is returned
-func UnsafeMustCreateSecret(keyID primitive.ObjectID, key string, encryptionKey string, value []byte) *Secret {
-	s, err := CreateSecret(keyID, key, encryptionKey, value)
+func UnsafeMustCreateSecret(keyID primitive.ObjectID, key string, encryptionKey string, value []byte, description string) *Secret {
+	s, err := CreateSecret(keyID, key, encryptionKey, value, description)
 	if err != nil {
 		panic(err)
 	}

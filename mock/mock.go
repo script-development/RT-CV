@@ -116,8 +116,20 @@ func NewMockDB() *testingdb.TestConnection {
 
 	// Insert secrets
 	conn.UnsafeInsert(
-		models.UnsafeMustCreateSecret(Key1.ID, "foo", "very-secret-key-of-more-than-16-chars", []byte(`{"foo": 1}`)),
-		models.UnsafeMustCreateSecret(Key2.ID, "bar", "very-secret-key-of-more-than-16-chars", []byte(`{"bar": 2}`)),
+		models.UnsafeMustCreateSecret(
+			Key1.ID,
+			"foo",
+			"very-secret-key-of-more-than-16-chars",
+			[]byte(`{"foo": 1}`),
+			"test secret 1 from mock data",
+		),
+		models.UnsafeMustCreateSecret(
+			Key2.ID,
+			"bar",
+			"very-secret-key-of-more-than-16-chars",
+			[]byte(`{"bar": 2}`),
+			"test secret 2 from mock data",
+		),
 	)
 
 	// Insert profiles

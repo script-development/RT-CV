@@ -42,6 +42,7 @@ export default function Home() {
 			]);
 			setKeys(keys)
 			setSecrets(secrets)
+			console.log(secrets)
 		} finally {
 			setLoading(false)
 		}
@@ -196,10 +197,13 @@ export default function Home() {
 					</div>
 					{secrets?.map((secret, idx) =>
 						<div key={secret.id} className={"simpleRow" + (secrets.length == (idx + 1) ? ' last' : '')}>
-							<Breadcrumbs>
-								<p>{secret.keyId}</p>
-								<b style={{ color: "white" }}>{secret.key}</b>
-							</Breadcrumbs>
+							<div className="secretIdentifier">
+								<Breadcrumbs>
+									<p>{secret.keyId}</p>
+									<b style={{ color: "white" }}>{secret.key}</b>
+								</Breadcrumbs>
+								{secret.description ? <p className="description">{secret.description}</p> : undefined}
+							</div>
 							<div>
 								<Tooltip title="View secret contents">
 									<Button onClick={() => setSecretModal({ kind: ModalKind.View, secret: secret })}>
@@ -277,6 +281,9 @@ export default function Home() {
 				.simpleRow.last {
 					border-bottom-left-radius: 4px;
 					border-bottom-right-radius: 4px;
+				}
+				.secretIdentifier .description {
+					color: rgba(255, 255, 255, .8);
 				}
 			`}</style>
 		</div >

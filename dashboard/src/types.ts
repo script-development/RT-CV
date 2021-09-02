@@ -11,4 +11,5 @@ export interface Secret {
     id: string
     keyId: string
     key: string
+    description: string
 }

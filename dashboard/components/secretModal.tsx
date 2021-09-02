@@ -38,6 +38,7 @@ export function SecretModal({ kind, onClose: onCloseArg, secret, apiKeys }: Secr
     const [decryptionKeyError, setDecryptionKeyError] = useState('encryption key value must have a minimal length of 16 chars')
     const [apiError, setApiError] = useState('')
     const [key, setKey] = useState('')
+    const [description, setDescription] = useState('')
     // If kind == 'create' this might contains a string value. If kind == 'view' this might contains the decrypted value as json so probably an array or object
     const [secretValue, setSecretValue] = useState(undefined as any)
     const [secretValueError, setSecretValueError] = useState('')
@@ -92,7 +93,10 @@ export function SecretModal({ kind, onClose: onCloseArg, secret, apiKeys }: Secr
                 case ModalKind.Create:
                     await fetcher.post(
                         `/api/v1/secrets/otherKey/${keyId}/${key}/${decryptionKey}`,
-                        JSON.parse(secretValue),
+                        {
+                            value: JSON.parse(secretValue),
+                            description,
+                        },
                     )
                     onClose()
                     break
@@ -189,6 +193,18 @@ export function SecretModal({ kind, onClose: onCloseArg, secret, apiKeys }: Secr
                         fullWidth
                     />
 
+                    <div className="marginTop">
+                        <TextField
+                            id='description'
+                            label='Description'
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            variant="filled"
+                            multiline
+                            fullWidth
+                        />
+                    </div>
+
                     <div className="inputWithButton marginTop">
                         <TextField
                             id="secret"
@@ -210,7 +226,12 @@ export function SecretModal({ kind, onClose: onCloseArg, secret, apiKeys }: Secr
                         />
                         <div className="toggles">
                             <Tooltip title='Generate random value'>
-                                <Button onClick={() => setDecryptionKey(randomString(32))}>
+                                <Button
+                                    onClick={() => {
+                                        setDecryptionKey(randomString(32))
+                                        setDecryptionKeyError('')
+                                    }}
+                                >
                                     <RefreshIcon fontSize="small" />
                                 </Button>
                             </Tooltip>

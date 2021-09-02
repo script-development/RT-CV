@@ -18,7 +18,7 @@ func TestSecretRoutes(t *testing.T) {
 	// Insert key works
 	route := fmt.Sprintf("/api/v1/secrets/myKey/%v/%v", valueKey, encryptionKey)
 	_, body := app.MakeRequest(routeBuilder.Post, route, TestReqOpts{
-		Body: []byte(contents),
+		Body: []byte(fmt.Sprintf(`{"value": %s}`, contents)),
 	})
 	Equal(t, contents, string(body))
 
@@ -29,7 +29,7 @@ func TestSecretRoutes(t *testing.T) {
 	// Update the secret
 	contents = `{"key":"other value"}`
 	_, body = app.MakeRequest(routeBuilder.Put, route, TestReqOpts{
-		Body: []byte(contents),
+		Body: []byte(fmt.Sprintf(`{"value": %s}`, contents)),
 	})
 	Equal(t, contents, string(body))
 

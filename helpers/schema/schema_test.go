@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"encoding/json"
 	"testing"
 
 	. "github.com/stretchr/testify/assert"
@@ -133,11 +134,13 @@ func TestFrom(t *testing.T) {
 			"custom data types",
 			struct {
 				A primitive.ObjectID
+				B json.RawMessage
 			}{},
 			map[string]Property{
 				"A": {
 					Type: PropertyTypeString,
 				},
+				"B": {},
 			},
 			[]string{"A"},
 		},

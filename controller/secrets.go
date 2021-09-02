@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"encoding/json"
 	"errors"
 
 	"github.com/gofiber/fiber/v2"
@@ -33,24 +34,32 @@ func validEncryptionKeyMiddleware() routeBuilder.M {
 	}
 }
 
+// RouteUpdateOrCreateSecret is the post data for the route below
+type RouteUpdateOrCreateSecret struct {
+	Value       json.RawMessage
+	Description string
+}
+
 var routeUpdateOrCreateSecret = routeBuilder.R{
 	Description: "Create or Update a secret for this specific api key and key combination.\n" +
 		"note 1: we will never store the secret / encryption key on our side that's up to you.\n" +
 		"note 2: the body must contain a valid json structure it doesn't matter what content",
 	Res:  IMap{},
-	Body: IMap{},
+	Body: RouteUpdateOrCreateSecret{},
 	Fn: func(c *fiber.Ctx) error {
 		apiKey := ctx.GetAPIKeyFromParam(c)
 		keyParam, encryptionKeyParam := c.Params("key"), c.Params("encryptionKey")
-		body := c.Body()
-		if len(body) == 0 {
-			return errors.New("body cannot be empty")
+
+		body := RouteUpdateOrCreateSecret{}
+		err := c.BodyParser(&body)
+		if err != nil {
+			return err
 		}
 
 		dbConn := ctx.GetDbConn(c)
 		secret, err := models.GetSecretByKey(dbConn, apiKey.ID, keyParam)
 		if err == mongo.ErrNoDocuments {
-			secret, err := models.CreateSecret(apiKey.ID, keyParam, encryptionKeyParam, body)
+			secret, err := models.CreateSecret(apiKey.ID, keyParam, encryptionKeyParam, body.Value, body.Description)
 			if err != nil {
 				return err
 			}
@@ -75,7 +84,7 @@ var routeUpdateOrCreateSecret = routeBuilder.R{
 				return err
 			}
 
-			newSecret, err := models.CreateSecret(apiKey.ID, keyParam, encryptionKeyParam, body)
+			newSecret, err := models.CreateSecret(apiKey.ID, keyParam, encryptionKeyParam, body.Value, body.Description)
 			if err != nil {
 				return err
 			}

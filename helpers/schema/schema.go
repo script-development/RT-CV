@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"encoding/json"
 	"errors"
 	"reflect"
 	"strings"
@@ -14,8 +15,9 @@ type Describe interface {
 }
 
 var (
-	reflectDescribe = reflect.TypeOf((*Describe)(nil)).Elem()
-	reflectObjectID = reflect.TypeOf(primitive.ObjectID{})
+	reflectDescribe       = reflect.TypeOf((*Describe)(nil)).Elem()
+	reflectObjectID       = reflect.TypeOf(primitive.ObjectID{})
+	reflectJSONRawMessage = reflect.TypeOf(json.RawMessage{})
 )
 
 // PropertyType contains the value type of a property
@@ -294,9 +296,16 @@ func parseType(
 		return property, required, false
 	}
 
-	if t.PkgPath()+"."+t.Name() == reflectObjectID.PkgPath()+"."+reflectObjectID.Name() {
+	fullTypePath := func(reflectType reflect.Type) string {
+		return reflectType.PkgPath() + "." + reflectType.Name()
+	}
+
+	switch fullTypePath(t) {
+	case fullTypePath(reflectObjectID):
 		property.Type = PropertyTypeString
 		return property, required, false
+	case fullTypePath(reflectJSONRawMessage):
+		return property, false, false
 	}
 
 	switch t.Kind() {
