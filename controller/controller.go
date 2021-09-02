@@ -40,8 +40,8 @@ func Routes(app *fiber.App, dbConn db.Connection, serverSeed []byte, testing boo
 				b.Delete(``, routeDeleteSecret)
 				b.Group(`/:encryptionKey`, func(b *routeBuilder.Router) {
 					b.Get(``, routeGetSecret)
-					b.Put(``, routeUpdateSecret)
-					b.Post(``, routeCreateSecret)
+					b.Put(``, routeUpdateOrCreateSecret)
+					b.Post(``, routeUpdateOrCreateSecret)
 				}, validEncryptionKeyMiddleware())
 			}, validKeyMiddleware())
 		}
