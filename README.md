@@ -63,3 +63,18 @@ Make sure to read
 
 - [/dashboard](/dashboard)
 - [/CONTRIBUTING.md](/CONTRIBUTING.md)
+
+## Docker
+
+Build the project using
+
+```sh
+docker build -t rtcv:latest .
+```
+
+Run the project using
+_Note that you probably want to change the environment variables_
+
+```sh
+docker run -it --rm -e USE_TESTING_DB=true -p 4000:4000 rtcv:latest
+```
