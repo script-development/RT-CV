@@ -20,7 +20,7 @@ func main() {
 	random.Seed()
 
 	// Generate a server random seed used for auth
-	serverSeed := random.StringBytes(64)
+	serverSeed := string(random.StringBytes(64))
 
 	// Loading the .env if available
 	_, err := os.Stat(".env")

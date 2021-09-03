@@ -23,7 +23,7 @@ Notes:
 
 - The functions below don't exist they explain the kind of function that should be called
 - sha256 can also be used, use use replace sha512 with sha256 everywhere below
-- the ` + "`sha512`" + ` function should return the bytes and not hex value, the bytes are then used in the next hash not the hex value
+- the ` + "`sha512`" + ` function should return a hex value not the bytes
 
 #### On app init
 
@@ -40,7 +40,7 @@ key = sha512(seed + apiKey + salt);
 ` + mdBlockCodeSample("js", `
 key = sha512(key + apiKey + salt);
 return (
-  "Authorization: Basic " + base64(`+"`sha512:${apiKeyID}:${salt}:${key.hex()}`"+`)
+  "Authorization: Basic " + base64(`+"`sha512:${apiKeyID}:${salt}:${key}`"+`)
 );
 `) + `
 
@@ -50,7 +50,7 @@ return (
 
 ` + mdBlockCodeSample("js", `
 return (
-  "Authorization: Basic " + base64(`+"`sha512:${apiKeyID}:${salt}:${key.hex()}`"+`)
+  "Authorization: Basic " + base64(`+"`sha512:${apiKeyID}:${salt}:${key}`"+`)
 );
 `) + `
 

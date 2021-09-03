@@ -14,7 +14,7 @@ func TestAuthenticate(t *testing.T) {
 	key2ID := primitive.NewObjectID()
 	key3ID := primitive.NewObjectID()
 
-	authSeed := []byte("unsafe-testing-seed")
+	authSeed := "unsafe-testing-seed"
 
 	auth := New([]models.APIKey{
 		{
@@ -41,7 +41,7 @@ func TestAuthenticate(t *testing.T) {
 	}, authSeed)
 
 	// No key provided
-	_, _, err := auth.Authenticate([]byte{})
+	_, _, err := auth.Authenticate("")
 	assert.Error(t, err)
 
 	// First time key usage

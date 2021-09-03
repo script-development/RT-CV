@@ -13,7 +13,7 @@ import (
 )
 
 // InsertData adds the profiles to every route
-func InsertData(dbConn db.Connection, serverSeed []byte) routeBuilder.M {
+func InsertData(dbConn db.Connection, serverSeed string) routeBuilder.M {
 	profiles, err := models.GetProfiles(dbConn)
 	if err != nil {
 		log.Fatal(err.Error())

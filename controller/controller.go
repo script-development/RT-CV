@@ -16,7 +16,7 @@ import (
 type IMap map[string]interface{}
 
 // Routes defines the routes used
-func Routes(app *fiber.App, dbConn db.Connection, serverSeed []byte, testing bool) {
+func Routes(app *fiber.App, dbConn db.Connection, serverSeed string, testing bool) {
 	b := routeBuilder.New(app)
 
 	b.Group(`/api/v1`, func(b *routeBuilder.Router) {

@@ -16,7 +16,7 @@ import (
 	. "github.com/stretchr/testify/assert"
 )
 
-var testingServerSeed = []byte("static-server-seed")
+var testingServerSeed = "static-server-seed"
 
 type testingRouter struct {
 	t        *testing.T

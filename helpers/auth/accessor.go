@@ -1,51 +1,47 @@
 package auth
 
 import (
-	"bytes"
-	"crypto/sha512"
 	"encoding/base64"
-	"encoding/hex"
+	"strings"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // TestAccessor can be used in tests to generate auth headers
 type TestAccessor struct {
-	rollingKey      []byte
-	keyBytes        []byte
-	saltBytes       []byte
-	keyAndSaltBytes []byte // = keyBytes + saltBytes
-	keyID           string
-	authSeed        []byte
+	rollingKey string
+	key        string
+	salt       string
+	keyAndSalt string // = keyBytes + saltBytes
+	keyID      string
+	authSeed   string
 }
 
 // NewAccessorHelper creates a TestAccessor that can be used to generate auth headers
-func NewAccessorHelper(keyID primitive.ObjectID, key, salt string, authSeed []byte) *TestAccessor {
-	keyBytes := []byte(key)
-	saltBytes := []byte(salt)
-	keyandSaltBytes := append(keyBytes, saltBytes...)
+func NewAccessorHelper(keyID primitive.ObjectID, key, salt, authSeed string) *TestAccessor {
+	keyandSalt := key + salt
 
-	h := sha512.Sum512(append(authSeed, keyandSaltBytes...))
+	h := hashSha(hashSha512, authSeed+keyandSalt)
 	return &TestAccessor{
-		rollingKey:      h[:],
-		keyBytes:        keyBytes,
-		saltBytes:       saltBytes,
-		keyAndSaltBytes: keyandSaltBytes,
-		keyID:           keyID.Hex(),
-		authSeed:        authSeed,
+		rollingKey: h,
+		key:        key,
+		salt:       salt,
+		keyAndSalt: keyandSalt,
+		keyID:      keyID.Hex(),
+		authSeed:   authSeed,
 	}
 }
 
 // Key generates a new key
-func (a *TestAccessor) Key() []byte {
-	newRollingKey := sha512.Sum512(append(a.rollingKey, a.keyAndSaltBytes...))
-	a.rollingKey = newRollingKey[:]
+func (a *TestAccessor) Key() string {
+	a.rollingKey = hashSha(hashSha512, a.rollingKey+a.keyAndSalt)
 
-	src := bytes.Join([][]byte{
-		[]byte("sha512:" + a.keyID),
-		a.saltBytes,
-		[]byte(hex.EncodeToString(a.rollingKey)),
-	}, []byte(":"))
+	token := strings.Join([]string{
+		"sha512",
+		a.keyID,
+		a.salt,
+		a.rollingKey,
+	}, ":")
 
-	return []byte("Basic " + base64.URLEncoding.EncodeToString(src))
+	return "Basic " + base64.URLEncoding.EncodeToString([]byte(token))
 }

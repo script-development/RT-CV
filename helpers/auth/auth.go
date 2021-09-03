@@ -1,37 +1,54 @@
 package auth
 
 import (
-	"bytes"
 	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
+	"strings"
 
 	"github.com/script-development/RT-CV/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+type hashMethod uint8
+
+var (
+	hashSha512 = hashMethod(0)
+	hashSha256 = hashMethod(1)
+)
+
+func hashSha(method hashMethod, in string) string {
+	if method == hashSha256 {
+		res := sha256.Sum256([]byte(in))
+		return hex.EncodeToString(res[:])
+	}
+
+	res := sha512.Sum512([]byte(in))
+	return hex.EncodeToString(res[:])
+}
+
 // Auth can be used to check authentication headers
 type Auth struct {
 	keys     map[string]key
-	baseSeed []byte
+	baseSeed string
 }
 
 type key struct {
-	keyBytes []byte
-	apiKey   models.APIKey
-	sha512   []rollingHash
-	sha256   []rollingHash
+	key    string
+	apiKey models.APIKey
+	sha512 []rollingHash
+	sha256 []rollingHash
 }
 
 type rollingHash struct {
-	salt  []byte
-	value []byte
+	salt  string
+	value string
 }
 
 // New returns a new Auth instance that can be used to check auth tokens
-func New(keys []models.APIKey, baseSeed []byte) *Auth {
+func New(keys []models.APIKey, baseSeed string) *Auth {
 	res := Auth{
 		keys:     map[string]key{},
 		baseSeed: baseSeed,
@@ -42,10 +59,10 @@ func New(keys []models.APIKey, baseSeed []byte) *Auth {
 		}
 
 		res.keys[dbKey.ID.Hex()] = key{
-			apiKey:   dbKey,
-			keyBytes: []byte(dbKey.Key),
-			sha512:   []rollingHash{},
-			sha256:   []rollingHash{},
+			apiKey: dbKey,
+			key:    dbKey.Key,
+			sha512: []rollingHash{},
+			sha256: []rollingHash{},
 		}
 	}
 	return &res
@@ -61,7 +78,7 @@ var (
 )
 
 // GetBaseSeed returns the server base seed
-func (a *Auth) GetBaseSeed() []byte {
+func (a *Auth) GetBaseSeed() string {
 	return a.baseSeed
 }
 
@@ -75,10 +92,10 @@ func (a *Auth) RefreshKey(updatedKey models.APIKey) {
 	}
 
 	a.keys[id] = key{
-		apiKey:   updatedKey,
-		keyBytes: []byte(updatedKey.Key),
-		sha512:   []rollingHash{},
-		sha256:   []rollingHash{},
+		apiKey: updatedKey,
+		key:    updatedKey.Key,
+		sha512: []rollingHash{},
+		sha256: []rollingHash{},
 	}
 }
 
@@ -89,15 +106,15 @@ func (a *Auth) AddKey(newKey models.APIKey) {
 	}
 
 	a.keys[newKey.ID.Hex()] = key{
-		apiKey:   newKey,
-		keyBytes: []byte(newKey.Key),
-		sha512:   []rollingHash{},
-		sha256:   []rollingHash{},
+		apiKey: newKey,
+		key:    newKey.Key,
+		sha512: []rollingHash{},
+		sha256: []rollingHash{},
 	}
 }
 
 // Authenticate check is a authorizationHeader is correct
-func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.APIKey, salt []byte, err error) {
+func (a *Auth) Authenticate(authorizationHeader string) (site *models.APIKey, salt string, err error) {
 	authorizationHeaderLen := len(authorizationHeader)
 	if authorizationHeaderLen < 7 {
 		if authorizationHeaderLen == 0 {
@@ -106,22 +123,25 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.APIKey, sa
 		return nil, salt, ErrAuthHeaderToShort
 	}
 
-	if !bytes.Equal([]byte("Basic "), authorizationHeader[:6]) {
+	if "Basic " != authorizationHeader[:6] {
 		return nil, salt, errors.New("authorization must be of type Basic")
 	}
 
-	auth, err := base64.URLEncoding.DecodeString(string(authorizationHeader[6:]))
+	auth, err := base64.URLEncoding.DecodeString(authorizationHeader[6:])
 	if err != nil {
 		return nil, salt, err
 	}
 
-	parts := bytes.Split(auth, []byte(":"))
+	parts := strings.Split(string(auth), ":")
 	if len(parts) != 4 {
 		return nil, salt, ErrInvalidKey
 	}
 
-	isSha512 := bytes.Equal(parts[0], []byte("sha512"))
-	if !isSha512 && !bytes.Equal(parts[0], []byte("sha256")) {
+	hashMethod := hashSha256
+	if parts[0] == "sha512" {
+		hashMethod = hashSha512
+	}
+	if hashMethod == hashSha256 && parts[0] != "sha256" {
 		return nil, salt, errors.New("only sha512 and sha256 are supported")
 	}
 
@@ -139,85 +159,57 @@ func (a *Auth) Authenticate(authorizationHeader []byte) (site *models.APIKey, sa
 	if len(key) == 0 {
 		return nil, salt, errors.New("key cannot be empty")
 	}
-	n, err := hex.Decode(key, key)
-	if err != nil {
-		return nil, salt, errors.New("invalid key hash")
-	}
-	key = key[:n]
 
 	knownKey, ok := a.keys[siteID]
 	if !ok {
 		return nil, salt, ErrInvalidKey
 	}
-	keyAndSalt := append(knownKey.keyBytes, salt...)
+	keyAndSalt := knownKey.key + salt
 
-	// FIXME: The sha512 code is almost equal to that of sha256
-	if isSha512 {
-		for idx, entry := range knownKey.sha512 {
-			if !bytes.Equal(entry.salt, salt) {
-				continue
-			}
+	itemsArr := knownKey.sha512
+	if hashMethod == hashSha256 {
+		itemsArr = knownKey.sha256
+	}
 
-			// Key + salt combo earlier created lets check if the credentials match
-			if !bytes.Equal(entry.value, key) {
-				return nil, salt, ErrInvalidKey
-			}
+	for idx, entry := range itemsArr {
+		if entry.salt != salt {
+			continue
+		}
 
-			hash := sha512.Sum512(append(append(entry.value, knownKey.keyBytes...), entry.salt...))
-			entry.value = hash[:]
+		// Key + salt combo earlier created lets check if the credentials match
+		if entry.value != key {
+			return nil, salt, ErrInvalidKey
+		}
+
+		entry.value = hashSha(hashMethod, entry.value+knownKey.key+entry.salt)
+		if hashMethod == hashSha512 {
 			knownKey.sha512[idx] = entry
-
-			return &knownKey.apiKey, salt, nil
-		}
-
-		// Create a new key + salt combo
-		hash := sha512.Sum512(append(a.baseSeed, keyAndSalt...))
-		hash = sha512.Sum512(append(hash[:], keyAndSalt...))
-
-		if !bytes.Equal(hash[:], key) {
-			return nil, salt, ErrInvalidKey
-		}
-
-		// Pre calculate next hash in the chain
-		hash = sha512.Sum512(append(hash[:], keyAndSalt...))
-
-		knownKey.sha512 = append(knownKey.sha512, rollingHash{
-			salt:  salt,
-			value: hash[:],
-		})
-	} else {
-		for idx, entry := range knownKey.sha256 {
-			if !bytes.Equal(entry.salt, salt) {
-				continue
-			}
-
-			// Key + salt combo earlier created lets check if the credentials match
-			if !bytes.Equal(entry.value, key) {
-				return nil, salt, ErrInvalidKey
-			}
-
-			hash := sha256.Sum256(append(entry.value, keyAndSalt...))
-			entry.value = hash[:]
+		} else {
 			knownKey.sha256[idx] = entry
-
-			return &knownKey.apiKey, salt, nil
 		}
 
-		// Create a new key + salt combo
-		hash := sha256.Sum256(append(a.baseSeed, keyAndSalt...))
-		hash = sha256.Sum256(append(hash[:], keyAndSalt...))
+		return &knownKey.apiKey, salt, nil
+	}
 
-		if !bytes.Equal(hash[:], key) {
-			return nil, salt, ErrInvalidKey
-		}
+	// Create a new key + salt combo
+	hash := hashSha(hashMethod, a.baseSeed+keyAndSalt)
+	hash = hashSha(hashMethod, hash+keyAndSalt)
 
-		// Pre calculate next hash in the chain
-		hash = sha256.Sum256(append(hash[:], keyAndSalt...))
+	if hash != key {
+		return nil, salt, ErrInvalidKey
+	}
 
-		knownKey.sha256 = append(knownKey.sha256, rollingHash{
-			salt:  salt,
-			value: hash[:],
-		})
+	// Pre calculate next hash in the chain
+	hash = hashSha(hashMethod, hash+keyAndSalt)
+
+	rollingKey := rollingHash{
+		salt:  salt,
+		value: hash,
+	}
+	if hashMethod == hashSha512 {
+		knownKey.sha512 = append(knownKey.sha512, rollingKey)
+	} else {
+		knownKey.sha256 = append(knownKey.sha256, rollingKey)
 	}
 
 	a.keys[siteID] = knownKey

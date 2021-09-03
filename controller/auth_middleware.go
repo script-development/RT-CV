@@ -62,7 +62,7 @@ func requiresAuth(requiredRoles models.APIKeyRole) routeBuilder.M {
 				return ErrorRes(c, fiber.StatusBadRequest, auth.ErrNoAuthheader)
 			}
 
-			key, salt, err := authService.Authenticate([]byte(authorizationHeader))
+			key, salt, err := authService.Authenticate(authorizationHeader)
 			if err != nil {
 				return ErrorRes(c, fiber.StatusUnauthorized, err)
 			}

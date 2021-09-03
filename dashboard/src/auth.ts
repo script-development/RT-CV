@@ -9,7 +9,7 @@ class AuthenticatedFetcher {
 
     private serverSeed = '';
 
-    private rollingKey = new Uint8Array;
+    private rollingKey = '';
 
     private awaitingFetches: Array<(value: any) => void> = [];
 
@@ -140,9 +140,7 @@ class AuthenticatedFetcher {
         this.apiKeyId = localStorage.getItem('rtcv_api_key_id') || ''
         this.salt = localStorage.getItem('rtcv_salt') || ''
         this.serverSeed = localStorage.getItem('rtcv_server_seed') || ''
-        const rollingKeyHex = localStorage.getItem('rtcv_rolling_key') || ''
-        if (rollingKeyHex != '')
-            this.rollingKey = new Uint8Array(Buffer.from(rollingKeyHex, 'hex'))
+        this.rollingKey = localStorage.getItem('rtcv_rolling_key') || ''
 
         return !!(this.apiKey && this.apiKeyId)
     }
@@ -156,13 +154,7 @@ class AuthenticatedFetcher {
     }
 
     private storeRollingKey() {
-        localStorage.setItem('rtcv_rolling_key', this.rollingKeyHex)
-    }
-
-    private get rollingKeyHex(): string {
-        return (this.rollingKey.length == 0)
-            ? ''
-            : Buffer.from(this.rollingKey).toString('hex')
+        localStorage.setItem('rtcv_rolling_key', this.rollingKey)
     }
 
     private get apiKeyAndSalt(): string {
@@ -175,13 +167,8 @@ class AuthenticatedFetcher {
         return seedRes.seed
     }
 
-    private async newRollingKey(): Promise<Uint8Array> {
-        return new Uint8Array(
-            await crypto.subtle.digest(
-                'SHA-512',
-                new TextEncoder().encode((this.serverSeed || '') + this.apiKeyAndSalt),
-            ),
-        )
+    private async newRollingKey(): Promise<string> {
+        return await this.hash((this.serverSeed || '') + this.apiKeyAndSalt)
     }
 
     private async refreshSeedAndRollingKey() {
@@ -194,18 +181,23 @@ class AuthenticatedFetcher {
         if (!this.serverSeed || this.rollingKey.length == 0)
             await this.refreshSeedAndRollingKey()
 
-        const genNextKeyAppendValue = new TextEncoder().encode(this.apiKeyAndSalt)
-        const inputForNextRollingKey = new Uint8Array(this.rollingKey.length + genNextKeyAppendValue.length)
-        inputForNextRollingKey.set(this.rollingKey)
-        inputForNextRollingKey.set(genNextKeyAppendValue, this.rollingKey.length)
-
-        const nextRollingKey = await crypto.subtle.digest('SHA-512', inputForNextRollingKey)
-        this.rollingKey = new Uint8Array(nextRollingKey)
+        this.rollingKey = await this.hash(this.rollingKey + this.apiKeyAndSalt)
         this.storeRollingKey()
 
         // FIXME btoa is deprecated for some reason
-        const basicKeyValue = btoa(`sha512:${this.apiKeyId}:${this.salt}:${this.rollingKeyHex}`)
+        const basicKeyValue = btoa(`sha512:${this.apiKeyId}:${this.salt}:${this.rollingKey}`)
         return "Basic " + basicKeyValue;
+    }
+
+    private async hash(data: string): Promise<string> {
+        return Buffer.from(
+            new Uint8Array(
+                await crypto.subtle.digest(
+                    'SHA-512',
+                    new TextEncoder().encode(data),
+                ),
+            ),
+        ).toString('hex')
     }
 }
 
