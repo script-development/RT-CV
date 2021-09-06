@@ -20,7 +20,7 @@ type RouteScraperScanCVBody struct {
 // TODO: maybe we should not return the actual profiles matched, this exposes information not meant for this api key user
 var routeScraperScanCV = routeBuilder.R{
 	Description: "Main route to scrape the CV",
-	Res:         []match.AMatch{},
+	Res:         []match.FoundMatch{},
 	Body:        RouteScraperScanCVBody{},
 	Fn: func(c *fiber.Ctx) error {
 		key := ctx.GetKey(c)

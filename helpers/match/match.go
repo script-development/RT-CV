@@ -12,18 +12,20 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// AMatch contains a match and why something is matched
-type AMatch struct {
+// FoundMatch contains a match and why something is matched
+type FoundMatch struct {
 	Matches models.Match   `json:"matches"`
 	Profile models.Profile `json:"profile"`
 }
 
 // Match tries to match a profile to a CV
 // FIXME: There are a lot of performance optimizations that could be done here
-func Match(domains []string, profiles []models.Profile, cv models.CV, keyID primitive.ObjectID) []AMatch {
-	res := []AMatch{}
+func Match(domains []string, profiles []models.Profile, cv models.CV, keyID primitive.ObjectID) []FoundMatch {
+	res := []FoundMatch{}
 
 	normalizeString := func(in string) string {
+		in = strings.ReplaceAll(in, "  ", " ")
+		in = strings.ReplaceAll(in, "  ", " ")
 		return strings.ToLower(strings.TrimSpace(in))
 	}
 
@@ -39,7 +41,7 @@ func Match(domains []string, profiles []models.Profile, cv models.CV, keyID prim
 			continue
 		}
 
-		match := AMatch{
+		match := FoundMatch{
 			Profile: profile,
 			Matches: models.Match{
 				M:         db.NewM(),
