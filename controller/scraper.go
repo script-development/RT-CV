@@ -32,8 +32,9 @@ var routeScraperScanCV = routeBuilder.R{
 		}
 
 		profiles := ctx.GetProfiles(c)
-		matchedProfiles := match.Match(key.Domains, *profiles, body.CV)
+		matchedProfiles := match.Match(key.Domains, *profiles, body.CV, key.ID)
 		if body.Debug {
+			// FIXME only dashboard roles should be-able to see this
 			return c.JSON(matchedProfiles)
 		}
 		if len(matchedProfiles) > 0 {

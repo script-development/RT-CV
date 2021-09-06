@@ -97,6 +97,20 @@ type ProfileDutchZipcode struct {
 	To   uint16 `json:"to"`
 }
 
+// IsWithinCithAndArea checks if the cityAndArea provided are in the range range of the zipcode
+func (p *ProfileDutchZipcode) IsWithinCithAndArea(cityAndArea uint16) bool {
+	if p.From > p.To {
+		// Swap from and to
+		p.From, p.To = p.To, p.From
+	}
+
+	if cityAndArea < 1_000 || cityAndArea >= 10_000 {
+		// Illegal postal code
+		return false
+	}
+	return p.From <= cityAndArea && p.To >= cityAndArea
+}
+
 // ProfileOnMatch defines what should happen when a profile is matched to a CV
 type ProfileOnMatch struct {
 	SendMail []ProfileSendEmailData `json:"sendMail"`

@@ -344,12 +344,15 @@ func parseType(
 	case reflect.Struct:
 		key := ""
 		if t.Name() != "" {
-			parts := append(strings.Split(t.PkgPath(), "/")[3:], t.Name())
-			for idx, part := range parts {
-				// convert every part first letter to an uppercase
-				parts[idx] = strings.ToUpper(part[0:1]) + part[1:]
+			pathParts := append(strings.Split(t.PkgPath(), "/"), t.Name())
+			if len(pathParts) > 4 {
+				pathParts = pathParts[3:]
 			}
-			key = strings.Join(parts, "")
+			for idx, part := range pathParts {
+				// convert every part first letter to an uppercase
+				pathParts[idx] = strings.ToUpper(part[0:1]) + part[1:]
+			}
+			key = strings.Join(pathParts, "")
 		}
 
 		if key == "" || !hasRef(key) {

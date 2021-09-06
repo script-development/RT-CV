@@ -7,13 +7,14 @@ import (
 	"github.com/script-development/RT-CV/helpers/jsonHelpers"
 	"github.com/script-development/RT-CV/models"
 	. "github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func MustMatchSingle(t *testing.T, p models.Profile, cv models.CV) {
 	p.Domains = []string{"werk.nl"}
 	p.Active = true
 
-	matches := Match([]string{"werk.nl"}, []models.Profile{p}, cv)
+	matches := Match([]string{"werk.nl"}, []models.Profile{p}, cv, primitive.NewObjectID())
 	Equal(t, 1, len(matches), matches)
 }
 
@@ -21,7 +22,7 @@ func MustNotMatchSingle(t *testing.T, p models.Profile, cv models.CV) {
 	p.Domains = []string{"werk.nl"}
 	p.Active = true
 
-	matches := Match([]string{"werk.nl"}, []models.Profile{p}, cv)
+	matches := Match([]string{"werk.nl"}, []models.Profile{p}, cv, primitive.NewObjectID())
 	Equal(t, 0, len(matches), matches)
 }
 
@@ -29,12 +30,12 @@ func TestMatchSiteMismatch(t *testing.T) {
 	matches := Match([]string{"werk.nl"}, []models.Profile{{
 		Domains: []string{"gangster_at_work.crib"},
 		Active:  true,
-	}}, models.CV{})
+	}}, models.CV{}, primitive.NewObjectID())
 	Equal(t, 0, len(matches), matches)
 }
 
 func TestMatchNonActive(t *testing.T) {
-	matches := Match([]string{"werk.nl"}, []models.Profile{{Active: false}}, models.CV{})
+	matches := Match([]string{"werk.nl"}, []models.Profile{{Active: false}}, models.CV{}, primitive.NewObjectID())
 	Equal(t, 0, len(matches), matches)
 }
 
@@ -312,13 +313,13 @@ func TestMatchDriversLicense(t *testing.T) {
 }
 
 func TestGetMatchSentence(t *testing.T) {
-	sentence := Matches{}.GetMatchSentence()
+	sentence := (&models.Match{}).GetMatchSentence()
 	Equal(t, "", sentence)
 
-	sentence = Matches{YearsSinceWork: true}.GetMatchSentence()
+	sentence = (&models.Match{YearsSinceWork: true}).GetMatchSentence()
 	Equal(t, "jaren sinds werk", sentence)
 
-	sentence = Matches{YearsSinceWork: true, YearsSinceEducation: true}.GetMatchSentence()
+	sentence = (&models.Match{YearsSinceWork: true, YearsSinceEducation: true}).GetMatchSentence()
 	Equal(t, "jaren sinds werk en jaren sinds laatste opleiding", sentence)
 
 	domain := "*.example.com"
@@ -326,7 +327,7 @@ func TestGetMatchSentence(t *testing.T) {
 		From: 2000,
 		To:   5000,
 	}
-	sentence = Matches{
+	sentence = (&models.Match{
 		Domain:                &domain,
 		YearsSinceWork:        true,
 		YearsSinceEducation:   true,
@@ -335,7 +336,7 @@ func TestGetMatchSentence(t *testing.T) {
 		ProfessionExperienced: true,
 		DriversLicense:        true,
 		ZipCode:               &zipCode,
-	}.GetMatchSentence()
+	}).GetMatchSentence()
 	expectedResult := "domain naam *.example.com" +
 		", jaren sinds werk" +
 		", jaren sinds laatste opleiding" +

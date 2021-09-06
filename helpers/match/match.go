@@ -1,74 +1,26 @@
 package match
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/script-development/RT-CV/db"
+	"github.com/script-development/RT-CV/helpers/jsonHelpers"
 	"github.com/script-development/RT-CV/helpers/wordvalidator"
 	"github.com/script-development/RT-CV/models"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // AMatch contains a match and why something is matched
 type AMatch struct {
-	Matches Matches        `json:"matches"`
+	Matches models.Match   `json:"matches"`
 	Profile models.Profile `json:"profile"`
-}
-
-// Matches contains the areas of the profile where the match was found
-type Matches struct {
-	Domain                *string                     `json:"domains"`
-	YearsSinceWork        bool                        `json:"yearsSinceWork"`
-	YearsSinceEducation   bool                        `json:"yearsSinceEducation"`
-	EducationOrCourse     bool                        `json:"educationOrCourse"`
-	DesiredProfession     bool                        `json:"desiredProfession"`
-	ProfessionExperienced bool                        `json:"professionExperienced"`
-	DriversLicense        bool                        `json:"driversLicense"`
-	ZipCode               *models.ProfileDutchZipcode `json:"zipCode"`
-}
-
-// GetMatchSentence returns a
-func (m Matches) GetMatchSentence() string {
-	sentences := []string{}
-	if m.Domain != nil {
-		sentences = append(sentences, "domain naam "+*m.Domain)
-	}
-	if m.YearsSinceWork {
-		sentences = append(sentences, "jaren sinds werk")
-	}
-	if m.YearsSinceEducation {
-		sentences = append(sentences, "jaren sinds laatste opleiding")
-	}
-	if m.EducationOrCourse {
-		sentences = append(sentences, "opleiding of cursus")
-	}
-	if m.DesiredProfession {
-		sentences = append(sentences, "gewenste werkveld")
-	}
-	if m.ProfessionExperienced {
-		sentences = append(sentences, "wil profession")
-	}
-	if m.DriversLicense {
-		sentences = append(sentences, "rijbewijs")
-	}
-	if m.ZipCode != nil {
-		sentences = append(sentences, fmt.Sprintf("postcode in range %d - %d", m.ZipCode.From, m.ZipCode.To))
-	}
-
-	switch len(sentences) {
-	case 0:
-		return ""
-	case 1:
-		return sentences[0]
-	default:
-		return fmt.Sprintf("%s en %s", strings.Join(sentences[:len(sentences)-1], ", "), sentences[len(sentences)-1])
-	}
 }
 
 // Match tries to match a profile to a CV
 // FIXME: There are a lot of performance optimizations that could be done here
-func Match(domains []string, profiles []models.Profile, cv models.CV) []AMatch {
+func Match(domains []string, profiles []models.Profile, cv models.CV, keyID primitive.ObjectID) []AMatch {
 	res := []AMatch{}
 
 	normalizeString := func(in string) string {
@@ -89,6 +41,12 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []AMatch {
 
 		match := AMatch{
 			Profile: profile,
+			Matches: models.Match{
+				M:         db.NewM(),
+				ProfileID: profile.ID,
+				KeyID:     keyID,
+				When:      jsonHelpers.RFC3339Nano(time.Now()),
+			},
 		}
 
 		// Check domain
@@ -383,20 +341,7 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []AMatch {
 
 			cvZipInRange := false
 			for idx, zipcode := range profile.Zipcodes {
-				checkFrom := zipcode.From
-				checkTo := zipcode.To
-				if checkFrom == 0 && checkTo == 0 {
-					continue
-				}
-
-				if checkFrom > checkTo {
-					// Swap from and to
-					originalFrom := checkFrom
-					checkFrom = checkTo
-					checkTo = originalFrom
-				}
-
-				if cvZipNrUint16 >= checkFrom && cvZipNrUint16 <= checkTo {
+				if zipcode.IsWithinCithAndArea(cvZipNrUint16) {
 					match.Matches.ZipCode = &profile.Zipcodes[idx]
 					cvZipInRange = true
 					break

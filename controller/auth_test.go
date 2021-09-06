@@ -36,8 +36,7 @@ func TestRouteGetKeyInfo(t *testing.T) {
 	err := json.Unmarshal(body, &bodyValues)
 	NoError(t, err)
 
-	for key, value := range bodyValues {
-		fmt.Println(key, value)
-		NotEqual(t, strings.ToLower(key), "key", "the key should re-appear in the result data")
+	for key := range bodyValues {
+		NotEqual(t, strings.ToLower(key), "key", "the key property should re-appear in the result data")
 	}
 }
