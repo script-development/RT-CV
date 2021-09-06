@@ -19,7 +19,7 @@ type Connection interface {
 	RegisterEntries(entries ...Entry)
 	FindOne(result Entry, filters bson.M, opts ...FindOptions) error
 	Find(entry Entry, results interface{}, filters bson.M, opts ...FindOptions) error
-	Insert(data Entry) error
+	Insert(data ...Entry) error
 	UpdateByID(data Entry) error
 	DeleteByID(data Entry) error
 }

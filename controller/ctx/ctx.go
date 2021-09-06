@@ -8,7 +8,13 @@ import (
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/auth"
 	"github.com/script-development/RT-CV/models"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+//
+// Maybe we should should replace the below for only one value as in 1 struct with all the items below
+// It might give a performance improvement and also make the code more safe as then we can do nil checks
+//
 
 type profilesCtx uint8
 type profileCtx uint8
@@ -17,6 +23,7 @@ type keyCtx uint8
 type keyFromParamCtx uint8
 type loggerCtx uint8
 type dbConnCtx uint8
+type requestIDCtx uint8
 
 const (
 	profilesCtxKey     = profilesCtx(0)
@@ -26,10 +33,22 @@ const (
 	keyFromParamCtxKey = keyFromParamCtx(0)
 	loggerCtxKey       = loggerCtx(0)
 	dbConnCtxKey       = dbConnCtx(0)
+	requestIDCtxKey    = requestIDCtx(0)
 )
 
 func getCtxValue(c *fiber.Ctx, key interface{}) interface{} {
 	return c.UserContext().Value(key)
+}
+
+// GetRequestID returns the request id
+// We bind this to every request so we can debug things more easily in the case of many requests
+func GetRequestID(c *fiber.Ctx) primitive.ObjectID {
+	return getCtxValue(c, requestIDCtxKey).(primitive.ObjectID)
+}
+
+// SetRequestID sets the request id
+func SetRequestID(ctx context.Context, value primitive.ObjectID) context.Context {
+	return context.WithValue(ctx, requestIDCtxKey, value)
 }
 
 // GetProfiles returns the search profiles

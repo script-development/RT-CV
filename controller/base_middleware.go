@@ -10,6 +10,7 @@ import (
 	"github.com/script-development/RT-CV/helpers/auth"
 	"github.com/script-development/RT-CV/helpers/routeBuilder"
 	"github.com/script-development/RT-CV/models"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // InsertData adds the profiles to every route
@@ -32,21 +33,24 @@ func InsertData(dbConn db.Connection, serverSeed string) routeBuilder.M {
 	requestContext = ctx.SetKey(requestContext, nil)
 
 	// Pre define loggerEntity so we only take once memory
-	loggerEntity := log.Entry{
+	loggerEntity := &log.Entry{
 		Logger: log.Log.(*log.Logger),
 	}
 
 	return routeBuilder.M{
 		Fn: func(c *fiber.Ctx) error {
-			// reset loggerEntity
-			loggerEntity = log.Entry{
-				Logger: loggerEntity.Logger,
-			}
+			requestID := primitive.NewObjectID()
+			c.Response().Header.Add("X-Request-ID", requestID.Hex())
+
+			loggerEntity = log.WithField("request_id", requestID)
 
 			c.SetUserContext(
-				ctx.SetLogger(
-					requestContext,
-					&loggerEntity,
+				ctx.SetRequestID(
+					ctx.SetLogger(
+						requestContext,
+						loggerEntity,
+					),
+					requestID,
 				),
 			)
 			return c.Next()

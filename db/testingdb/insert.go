@@ -7,10 +7,11 @@ import (
 
 // Insert inserts an item into the database
 // Implements db.Connection
-func (c *TestConnection) Insert(data db.Entry) error {
+func (c *TestConnection) Insert(data ...db.Entry) error {
 	c.m.Lock()
 	defer c.m.Unlock()
-	return c.UnsafeInsert(data)
+
+	return c.UnsafeInsert(data...)
 }
 
 // UnsafeInsert inserts data directly into the database

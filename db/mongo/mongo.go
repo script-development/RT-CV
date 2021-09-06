@@ -98,13 +98,23 @@ func (c *Connection) Find(e db.Entry, results interface{}, filter bson.M, option
 }
 
 // Insert inserts an entry into the database
-func (c *Connection) Insert(e db.Entry) error {
-	if e.GetID().IsZero() {
-		e.SetID(primitive.NewObjectID())
+func (c *Connection) Insert(e ...db.Entry) error {
+	for idx, entry := range e {
+		if entry.GetID().IsZero() {
+			e[idx].SetID(primitive.NewObjectID())
+		}
 	}
 
-	_, err := c.collection(e).InsertOne(dbHelpers.Ctx(), e)
-	return err
+	switch len(e) {
+	case 0:
+		return nil
+	case 1:
+		_, err := c.collection(e[0]).InsertOne(dbHelpers.Ctx(), e)
+		return err
+	default:
+		_, err := c.collection(e[0]).InsertMany(dbHelpers.Ctx(), interface{}(e).([]interface{}))
+		return err
+	}
 }
 
 // UpdateByID updates an entry by its id

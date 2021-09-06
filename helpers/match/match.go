@@ -9,7 +9,6 @@ import (
 	"github.com/script-development/RT-CV/helpers/jsonHelpers"
 	"github.com/script-development/RT-CV/helpers/wordvalidator"
 	"github.com/script-development/RT-CV/models"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // FoundMatch contains a match and why something is matched
@@ -20,12 +19,18 @@ type FoundMatch struct {
 
 // Match tries to match a profile to a CV
 // FIXME: There are a lot of performance optimizations that could be done here
-func Match(domains []string, profiles []models.Profile, cv models.CV, keyID primitive.ObjectID) []FoundMatch {
+func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMatch {
 	res := []FoundMatch{}
 
 	normalizeString := func(in string) string {
+		in = strings.ReplaceAll(in, "\t", " ")
+		in = strings.ReplaceAll(in, "\n", " ")
+
+		// Replace double all spaces with normal spaces
+		// note that when you have a string with a non even amount of spaces we need to run the replace twice
 		in = strings.ReplaceAll(in, "  ", " ")
 		in = strings.ReplaceAll(in, "  ", " ")
+
 		return strings.ToLower(strings.TrimSpace(in))
 	}
 
@@ -46,7 +51,6 @@ func Match(domains []string, profiles []models.Profile, cv models.CV, keyID prim
 			Matches: models.Match{
 				M:         db.NewM(),
 				ProfileID: profile.ID,
-				KeyID:     keyID,
 				When:      jsonHelpers.RFC3339Nano(time.Now()),
 			},
 		}

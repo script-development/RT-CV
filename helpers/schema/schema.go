@@ -198,6 +198,7 @@ func parseStruct(
 	requiredFields = []string{}
 	properties = map[string]Property{}
 
+fieldsLoop:
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
 		jsonTag := field.Tag.Get("json")
@@ -226,6 +227,8 @@ func parseStruct(
 				argDeprecated = true
 			case "uniqueItems":
 				argUniqueItems = true
+			case "hidden":
+				continue fieldsLoop
 			}
 		}
 

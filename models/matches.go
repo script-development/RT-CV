@@ -10,11 +10,15 @@ import (
 )
 
 // Match contains information about a match
+// We add omitempty to a lot of fields as it saves a lot of space in the database
 type Match struct {
 	db.M      `bson:",inline"`
+	RequestID primitive.ObjectID      `json:"requestId"`
 	ProfileID primitive.ObjectID      `json:"profileId"`
 	KeyID     primitive.ObjectID      `json:"keyId"`
 	When      jsonHelpers.RFC3339Nano `json:"when"`
+
+	Debug bool `bson:",omitempty" json:"debug"`
 
 	// The profile domain match that was found
 	Domain                *string              `bson:",omitempty" json:"domains"`

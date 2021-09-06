@@ -7,14 +7,13 @@ import (
 	"github.com/script-development/RT-CV/helpers/jsonHelpers"
 	"github.com/script-development/RT-CV/models"
 	. "github.com/stretchr/testify/assert"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func MustMatchSingle(t *testing.T, p models.Profile, cv models.CV) {
 	p.Domains = []string{"werk.nl"}
 	p.Active = true
 
-	matches := Match([]string{"werk.nl"}, []models.Profile{p}, cv, primitive.NewObjectID())
+	matches := Match([]string{"werk.nl"}, []models.Profile{p}, cv)
 	Equal(t, 1, len(matches), matches)
 }
 
@@ -22,7 +21,7 @@ func MustNotMatchSingle(t *testing.T, p models.Profile, cv models.CV) {
 	p.Domains = []string{"werk.nl"}
 	p.Active = true
 
-	matches := Match([]string{"werk.nl"}, []models.Profile{p}, cv, primitive.NewObjectID())
+	matches := Match([]string{"werk.nl"}, []models.Profile{p}, cv)
 	Equal(t, 0, len(matches), matches)
 }
 
@@ -30,12 +29,12 @@ func TestMatchSiteMismatch(t *testing.T) {
 	matches := Match([]string{"werk.nl"}, []models.Profile{{
 		Domains: []string{"gangster_at_work.crib"},
 		Active:  true,
-	}}, models.CV{}, primitive.NewObjectID())
+	}}, models.CV{})
 	Equal(t, 0, len(matches), matches)
 }
 
 func TestMatchNonActive(t *testing.T) {
-	matches := Match([]string{"werk.nl"}, []models.Profile{{Active: false}}, models.CV{}, primitive.NewObjectID())
+	matches := Match([]string{"werk.nl"}, []models.Profile{{Active: false}}, models.CV{})
 	Equal(t, 0, len(matches), matches)
 }
 
