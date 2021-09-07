@@ -44,6 +44,8 @@ export default function Header({ children }: HeaderProps) {
                     text-decoration: none;
                     margin: 0;
                     padding: 5px 20px;
+                    font-size: 22px;
+                    font-weight: bold;
                 }
                 .header .title .arrowBack {
                     position: relative;
