@@ -20,6 +20,7 @@ export default function Docs() {
 			setCurrentSize(newSize)
 		}
 
+		onResize()
 		window.addEventListener('resize', onResize)
 		return () => window.removeEventListener('resize', onResize)
 	}, [])
