@@ -46,6 +46,8 @@ Extra requirements:
 
 - Mongodb _(mongodb compass is a great db viewer)_
 
+Make sure to also create a new mongodb database, the collections are created automatically by this program
+
 ```bash
 cp .env.example .env
 vim .env
