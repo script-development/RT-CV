@@ -55,7 +55,7 @@ func (m *Match) GetMatchSentence() string {
 		sentences = append(sentences, "gewenste werkveld")
 	}
 	if m.ProfessionExperienced {
-		sentences = append(sentences, "wil profession")
+		sentences = append(sentences, "gewenst beroep")
 	}
 	if m.DriversLicense {
 		sentences = append(sentences, "rijbewijs")
