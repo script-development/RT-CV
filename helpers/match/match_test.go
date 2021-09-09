@@ -341,7 +341,7 @@ func TestGetMatchSentence(t *testing.T) {
 		", jaren sinds laatste opleiding" +
 		", opleiding of cursus" +
 		", gewenste werkveld" +
-		", wil profession" +
+		", gewenst beroep" +
 		", rijbewijs" +
 		" en postcode in range 2000 - 5000"
 	Equal(t, expectedResult, sentence)
