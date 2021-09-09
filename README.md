@@ -38,7 +38,7 @@ USE_TESTING_DB=true go run .
 
 Copy the printed out dashboard token en head over to [localhost:4000](http://localhost:4000)
 
-_note that this uses an in memory database that resets every time the app restarts, the default contents is defined in mock/mock.go_
+_note that this uses an in memory database that resets every time the app restarts, the default contents is defined in [mock/mock.go](./mock/mock.go)_
 
 ## Full Setup
 
