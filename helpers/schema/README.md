@@ -2,6 +2,12 @@
 
 This package can generate a json schema for a struct that is compatible with https://json-schema.org/
 
+The schemas generated are mainly used to generate OpenAPI v3 documentation at /api/v1/schema/openAPI
+
+Default applied rules:
+
+- A struct field is labeled as required when the data cannot be nil so `strings`,`bool`,`int`,`float`,`struct`, etc.. are required and types like `[]string`, `[8]int`, `*int`, `map[string]string` are not required. You can overwrite this behavior by using `jsonSchema` struct tag
+
 Supported struct tags:
 
 - `json:`
