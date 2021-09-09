@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/script-development/RT-CV/helpers/schema"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/bsontype"
 )
 
 // RFC3339Nano is a time.Time that json (Un)Marshals from & to RFC3339 nano
@@ -46,6 +48,24 @@ func (t *RFC3339Nano) UnmarshalJSON(b []byte) error {
 func (t RFC3339Nano) MarshalJSON() ([]byte, error) {
 	timeString := t.Time().Format(time.RFC3339Nano)
 	return json.Marshal(timeString)
+}
+
+// UnmarshalBSONValue implements bson.ValueUnmarshaler
+// by default RFC3339Nano is transformed to a empty map so here we fix that
+func (t *RFC3339Nano) UnmarshalBSONValue(_ bsontype.Type, data []byte) error {
+	var timeValue time.Time
+	err := bson.Unmarshal(data, timeValue)
+	if err != nil {
+		return err
+	}
+	*t = RFC3339Nano(timeValue)
+	return nil
+}
+
+// MarshalBSONValue implements bson.ValueMarshaler
+// by default RFC3339Nano is transformed to a empty map so here we fix that
+func (t RFC3339Nano) MarshalBSONValue() (bsontype.Type, []byte, error) {
+	return bson.MarshalValue(t.Time())
 }
 
 // Time returns the underlaying time object

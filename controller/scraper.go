@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/apex/log"
 	"github.com/gofiber/fiber/v2"
 	"github.com/script-development/RT-CV/controller/ctx"
 	"github.com/script-development/RT-CV/db"
@@ -36,6 +37,7 @@ var routeScraperScanCV = routeBuilder.R{
 		key := ctx.GetKey(c)
 		requestID := ctx.GetRequestID(c)
 		dbConn := ctx.GetDbConn(c)
+		logger := ctx.GetLogger(c)
 
 		body := RouteScraperScanCVBody{}
 		err := c.BodyParser(&body)
@@ -63,7 +65,13 @@ var routeScraperScanCV = routeBuilder.R{
 
 			analyticsData[idx] = &matchedProfiles[idx].Matches
 		}
-		go dbConn.Insert(analyticsData...)
+
+		go func(logger *log.Entry, analyticsData []db.Entry) {
+			err := dbConn.Insert(analyticsData...)
+			if err != nil {
+				logger.WithError(err).Error("analytics data insertion failed")
+			}
+		}(logger.WithField("analytics_entries_count", len(analyticsData)), analyticsData)
 
 		if body.Debug {
 			return c.JSON(RouteScraperScanCVRes{Success: true, Matches: matchedProfiles})

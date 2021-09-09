@@ -109,7 +109,7 @@ func (c *Connection) Insert(e ...db.Entry) error {
 	case 0:
 		return nil
 	case 1:
-		_, err := c.collection(e[0]).InsertOne(dbHelpers.Ctx(), e)
+		_, err := c.collection(e[0]).InsertOne(dbHelpers.Ctx(), e[0])
 		return err
 	default:
 		_, err := c.collection(e[0]).InsertMany(dbHelpers.Ctx(), interface{}(e).([]interface{}))
