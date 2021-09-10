@@ -1,8 +1,15 @@
 package mock
 
+// Mock provides mock a testing db with mock data
+//
+// The mock data should be predictable
+
 import (
+	"time"
+
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/db/testingdb"
+	"github.com/script-development/RT-CV/helpers/jsonHelpers"
 	"github.com/script-development/RT-CV/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -10,7 +17,6 @@ import (
 var (
 	// Key1 is a mock api key
 	Key1 = &models.APIKey{
-		M:       db.NewM(),
 		Enabled: true,
 		Domains: []string{"werk.nl"},
 		Key:     "aaa",
@@ -18,7 +24,6 @@ var (
 	}
 	// Key2 is a mock api key
 	Key2 = &models.APIKey{
-		M:       db.NewM(),
 		Enabled: true,
 		Domains: []string{"werk.nl"},
 		Key:     "bbb",
@@ -26,7 +31,6 @@ var (
 	}
 	// Key3 is a mock api key
 	Key3 = &models.APIKey{
-		M:       db.NewM(),
 		Enabled: true,
 		Domains: []string{"werk.nl"},
 		Key:     "ccc",
@@ -99,6 +103,30 @@ var (
 		DriversLicenses:       nil,
 		Educations:            nil,
 		Zipcodes:              nil,
+	}
+)
+
+var werkDotNL = "werk.nl"
+
+var (
+	// mockMatch1 contains a example match between profile 1 and a cv
+	mockMatch1 = &models.Match{
+		RequestID:             primitive.NewObjectID(),
+		ProfileID:             Profile1.ID,
+		KeyID:                 Key1.ID,
+		When:                  jsonHelpers.RFC3339Nano(time.Now().Add(-(time.Minute * 15))),
+		ProfessionExperienced: true,
+		YearsSinceEducation:   true,
+		EducationOrCourse:     true,
+		DriversLicense:        true,
+		Domain:                &werkDotNL,
+	}
+	mockMatch2 = &models.Match{
+		RequestID: primitive.NewObjectID(),
+		ProfileID: Profile2.ID,
+		KeyID:     Key2.ID,
+		When:      jsonHelpers.RFC3339Nano(time.Now().Add(-(time.Minute * 7))),
+		Domain:    &werkDotNL,
 	}
 )
 

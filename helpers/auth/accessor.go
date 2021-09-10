@@ -8,6 +8,7 @@ import (
 )
 
 // TestAccessor can be used in tests to generate auth headers
+// This is meant to be used only in tests
 type TestAccessor struct {
 	rollingKey string
 	key        string

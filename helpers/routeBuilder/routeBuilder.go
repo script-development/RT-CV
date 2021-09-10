@@ -16,6 +16,7 @@ type Tag struct {
 // From the fiber handler (fn(c *fiber.Ctx) error) we cannot know the expected input and output data
 type R struct {
 	// Required
+	// You can also use markdown in this field :^)
 	Description string
 	// Res gives the routes
 	Res interface{}
