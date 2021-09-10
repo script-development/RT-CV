@@ -81,7 +81,7 @@ export default function Home() {
 						<Button style={{ marginRight: 5, marginBottom: 5 }} color="primary" variant="outlined" startIcon={<Icon>construction</Icon>}>Try the CV matcher</Button>
 					</Link>
 					<Link href="/docs">
-						<Button style={{ marginRight: 5, marginBottom: 5 }} color="primary" variant="outlined" startIcon={<MenuBook />}>API docs</Button>
+						<Button style={{ marginRight: 5, marginBottom: 5 }} color="primary" variant="outlined" startIcon={<Icon>menu_book</Icon>}>API docs</Button>
 					</Link>
 				</div>
 
@@ -234,6 +234,8 @@ export default function Home() {
 					width: 700px;
 					box-sizing: border-box;
 					max-width: calc(100vw - 20px);
+					display: flex;
+					flex-wrap: wrap;
 				}
 				.cardContainer {
 					padding: 10px;
