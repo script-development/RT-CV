@@ -77,18 +77,42 @@ func TestFilter(t *testing.T) {
 				Foo exampleNestedField `bson:",inline"`
 			}{exampleNestedField{"abc"}},
 		},
-		// {
-		// 	"$gt with int",
-		// 	bson.M{"foo": bson.M{"$gt": 5}},
-		// 	bson.M{"foo": bson.M{"$gt": 10}},
-		// 	struct{ Foo int }{Foo: 7},
-		// },
-		// {
-		// 	"$lt with int",
-		// 	bson.M{"foo": bson.M{"$lt": 10}},
-		// 	bson.M{"foo": bson.M{"$lt": 5}},
-		// 	struct{ Foo int }{Foo: 7},
-		// },
+		{
+			"$gt with int",
+			bson.M{"foo": bson.M{"$gt": 5}},
+			bson.M{"foo": bson.M{"$gt": 10}},
+			struct{ Foo int }{Foo: 7},
+		},
+		{
+			"$lt with int",
+			bson.M{"foo": bson.M{"$lt": 10}},
+			bson.M{"foo": bson.M{"$lt": 5}},
+			struct{ Foo int }{Foo: 7},
+		},
+		{
+			"$gt with uint",
+			bson.M{"foo": bson.M{"$gt": 5}},
+			bson.M{"foo": bson.M{"$gt": 10}},
+			struct{ Foo uint }{Foo: 7},
+		},
+		{
+			"$lt with uint",
+			bson.M{"foo": bson.M{"$lt": 10}},
+			bson.M{"foo": bson.M{"$lt": 5}},
+			struct{ Foo uint }{Foo: 7},
+		},
+		{
+			"$gte",
+			bson.M{"foo": bson.M{"$gte": 7}},
+			bson.M{"foo": bson.M{"$gte": 10}},
+			struct{ Foo int }{Foo: 7},
+		},
+		{
+			"$lte",
+			bson.M{"foo": bson.M{"$lte": 7}},
+			bson.M{"foo": bson.M{"$lte": 5}},
+			struct{ Foo int }{Foo: 7},
+		},
 	}
 
 	for _, s := range scenarios {

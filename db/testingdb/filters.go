@@ -53,7 +53,34 @@ filtersLoop:
 		}
 
 		if strings.HasPrefix(key, "$") {
-			panic("FIXME implement custom filter MongoDB filter properties")
+			switch key {
+			case "$gt":
+				if !compareNumbers(numComparisonGreater, value, filter) {
+					return false
+				}
+			case "$gte":
+				if !compareNumbers(numComparisonGreaterOrEqual, value, filter) {
+					return false
+				}
+			case "$lt":
+				if !compareNumbers(numComparisonLess, value, filter) {
+					return false
+				}
+			case "$lte":
+				if !compareNumbers(numComparisonLessOrEqual, value, filter) {
+					return false
+				}
+			// case "$eq":
+			// 	// FIXME eq also works for other data types
+			// 	if !compareNumbers(numComparisonEqual, filter, value) {
+			// 		return false
+			// 	}
+			default:
+				// For docs see:
+				// https://docs.mongodb.com/manual/reference/operator/query/
+				panic("FIXME unimplemented custom MongoDB filter " + key)
+			}
+			continue
 		}
 
 		if !valueIsStruct {
@@ -102,18 +129,16 @@ filtersLoop:
 				return false
 			}
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			if !compareInt64ToReflect(filter.Int(), valueField) {
-				return false
-			}
+			fallthrough
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			if !compareUint64ToReflect(filter.Uint(), valueField) {
+			if !compareNumbers(numComparisonEqual, filter, valueField) {
 				return false
 			}
 		case reflect.Map:
 			if filter.Type().Key().Kind() != reflect.String {
 				panic("TODO support filter type map with non string key")
 			}
-			filterMatchesValue(filter, valueField)
+			return filterMatchesValue(filter, valueField)
 		default:
 			filterValue := filter.Interface()
 			if filterObjectID, ok := filterValue.(primitive.ObjectID); ok {
@@ -126,11 +151,10 @@ filtersLoop:
 				}
 			} else {
 				panic(fmt.Sprintf(
-					"Unimplemented value filter type: %T, key: %v, value: %#v, reflectionKind: %s",
+					"Unimplemented value filter type: %T, key: %v, value: %#v",
 					filterValue,
 					key,
 					filterValue,
-					filter.Kind(),
 				))
 			}
 		}
@@ -203,33 +227,77 @@ func convertGoToDbName(fieldname string) string {
 	return string(unicode.ToLower(rune(fieldname[0]))) + fieldname[1:]
 }
 
-func compareInt64ToReflect(value int64, reflectionValue reflect.Value) bool {
-	switch reflectionValue.Kind() {
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return reflectionValue.Int() == value
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		reflectionIntValue := int64(reflectionValue.Uint())
-		if reflectionIntValue < 0 {
-			// The uint64 value of the reflect value was more than the highest int64 value and thus resetted itself and now it's below zero
-			return false
-		}
-		return reflectionIntValue == value
-	default:
-		return false
-	}
-}
+type numComparison uint8
 
-func compareUint64ToReflect(value uint64, reflectionValue reflect.Value) bool {
-	switch reflectionValue.Kind() {
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		intValue := reflectionValue.Int()
-		if intValue < 0 {
-			return false
+const (
+	numComparisonEqual numComparison = iota
+	numComparisonGreater
+	numComparisonGreaterOrEqual
+	numComparisonLess
+	numComparisonLessOrEqual
+)
+
+func compareNumbers(kind numComparison, a, b reflect.Value) bool {
+	compareUInts := func(a, b uint64) bool {
+		switch kind {
+		case numComparisonEqual:
+			return a == b
+		case numComparisonGreater:
+			return a > b
+		case numComparisonGreaterOrEqual:
+			return a >= b
+		case numComparisonLess:
+			return a < b
+		case numComparisonLessOrEqual:
+			return a <= b
 		}
-		return uint64(intValue) == value
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return reflectionValue.Uint() == value
-	default:
 		return false
 	}
+
+	switch a.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		switch b.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			aInt := a.Int()
+			bInt := b.Int()
+
+			switch kind {
+			case numComparisonEqual:
+				return aInt == bInt
+			case numComparisonGreater:
+				return aInt > bInt
+			case numComparisonGreaterOrEqual:
+				return aInt >= bInt
+			case numComparisonLess:
+				return aInt < bInt
+			case numComparisonLessOrEqual:
+				return aInt <= bInt
+			}
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			aInt := a.Int()
+			if aInt < 0 {
+				if kind == numComparisonLess {
+					return true
+				}
+				return false
+			}
+			return compareUInts(uint64(aInt), b.Uint())
+		}
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		switch b.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			bInt := b.Int()
+			if bInt < 0 {
+				if kind == numComparisonGreater {
+					return true
+				}
+				return false
+			}
+			return compareUInts(a.Uint(), uint64(bInt))
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			return compareUInts(a.Uint(), b.Uint())
+		}
+	}
+
+	return false
 }
