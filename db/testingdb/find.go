@@ -62,7 +62,12 @@ func (c *TestConnection) Find(base db.Entry, results interface{}, filters bson.M
 	c.m.Lock()
 	defer c.m.Unlock()
 
-	resultRefl := reflect.ValueOf(results).Elem()
+	resultRefl := reflect.ValueOf(results)
+	if resultRefl.Kind() != reflect.Ptr {
+		return errors.New("requires pointer to slice as results argument")
+	}
+
+	resultRefl = resultRefl.Elem()
 	if resultRefl.Kind() != reflect.Slice {
 		return errors.New("requires pointer to slice as results argument")
 	}

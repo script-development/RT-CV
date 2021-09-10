@@ -2,6 +2,7 @@ package testingdb
 
 import (
 	"testing"
+	"time"
 
 	. "github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson"
@@ -112,6 +113,18 @@ func TestFilter(t *testing.T) {
 			bson.M{"foo": bson.M{"$lte": 7}},
 			bson.M{"foo": bson.M{"$lte": 5}},
 			struct{ Foo int }{Foo: 7},
+		},
+		{
+			"$gt with time",
+			bson.M{"foo": bson.M{"$gt": time.Now()}},
+			bson.M{"foo": bson.M{"$gt": time.Now().Add(time.Hour)}},
+			struct{ Foo time.Time }{Foo: time.Now().Add(time.Minute * 30)},
+		},
+		{
+			"$lt with time",
+			bson.M{"foo": bson.M{"$lt": time.Now().Add(time.Hour)}},
+			bson.M{"foo": bson.M{"$lt": time.Now()}},
+			struct{ Foo time.Time }{Foo: time.Now().Add(time.Minute * 30)},
 		},
 	}
 

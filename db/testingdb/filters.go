@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 	"unicode"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -16,13 +17,10 @@ type filter struct {
 }
 
 func newFilter(filters bson.M) *filter {
-	res := &filter{
+	return &filter{
 		filters: reflect.ValueOf(filters),
+		empty:   len(filters) == 0,
 	}
-	if len(filters) == 0 {
-		res.empty = true
-	}
-	return res
 }
 
 func (f *filter) matches(value interface{}) bool {
@@ -31,12 +29,17 @@ func (f *filter) matches(value interface{}) bool {
 	}
 
 	valueReflection := reflect.ValueOf(value)
-	if valueReflection.Kind() == reflect.Ptr {
+	for {
+		if valueReflection.Kind() != reflect.Ptr {
+			break
+		}
 		valueReflection = valueReflection.Elem()
 	}
 
 	return filterMatchesValue(f.filters, valueReflection)
 }
+
+var timeType = reflect.TypeOf(time.Time{})
 
 func filterMatchesValue(filterMap reflect.Value, value reflect.Value) bool {
 	valueFieldsMap, valueIsStruct := mapStruct(value.Type())
@@ -52,22 +55,58 @@ filtersLoop:
 			filter = filter.Elem()
 		}
 
+		for {
+			if filter.Kind() != reflect.Ptr || filter.IsNil() {
+				break
+			}
+			filter = filter.Elem()
+		}
+
 		if strings.HasPrefix(key, "$") {
 			switch key {
 			case "$gt":
-				if !compareNumbers(numComparisonGreater, value, filter) {
+				if filter.Type().ConvertibleTo(timeType) {
+					if !value.Type().ConvertibleTo(timeType) {
+						return false
+					}
+					if value.Convert(timeType).Interface().(time.Time).Before(filter.Convert(timeType).Interface().(time.Time)) {
+						return false
+					}
+				} else if !compareNumbers(numComparisonGreater, value, filter) {
 					return false
 				}
 			case "$gte":
-				if !compareNumbers(numComparisonGreaterOrEqual, value, filter) {
+				if filter.Type().ConvertibleTo(timeType) {
+					if !value.Type().ConvertibleTo(timeType) {
+						return false
+					}
+					fmt.Println(value, filter)
+					if value.Convert(timeType).Interface().(time.Time).Before(filter.Convert(timeType).Interface().(time.Time)) {
+						return false
+					}
+				} else if !compareNumbers(numComparisonGreaterOrEqual, value, filter) {
 					return false
 				}
 			case "$lt":
-				if !compareNumbers(numComparisonLess, value, filter) {
+				if filter.Type().ConvertibleTo(timeType) {
+					if !value.Type().ConvertibleTo(timeType) {
+						return false
+					}
+					if value.Convert(timeType).Interface().(time.Time).After(filter.Convert(timeType).Interface().(time.Time)) {
+						return false
+					}
+				} else if !compareNumbers(numComparisonLess, value, filter) {
 					return false
 				}
 			case "$lte":
-				if !compareNumbers(numComparisonLessOrEqual, value, filter) {
+				if filter.Type().ConvertibleTo(timeType) {
+					if !value.Type().ConvertibleTo(timeType) {
+						return false
+					}
+					if value.Convert(timeType).Interface().(time.Time).After(filter.Convert(timeType).Interface().(time.Time)) {
+						return false
+					}
+				} else if !compareNumbers(numComparisonLessOrEqual, value, filter) {
 					return false
 				}
 			// case "$eq":
