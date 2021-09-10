@@ -14,7 +14,7 @@ import FormatIndentIncrease from '@material-ui/icons/FormatIndentIncrease'
 import RefreshIcon from '@material-ui/icons/Refresh'
 import dynamic from 'next/dynamic'
 import React, { useState, useEffect } from 'react'
-import { fetcher } from '../src/auth'
+import { fetcher, getKeys } from '../src/auth'
 import { Secret, ApiKey } from '../src/types'
 import { randomString } from '../src/random'
 import { Modal, ModalKind } from './modal'
@@ -28,12 +28,16 @@ interface SecretModalProps {
     kind: ModalKind
     onClose: () => void
     secret?: Secret
-    apiKeys?: Array<ApiKey>
 }
 
 let syntaxHighlighterStyle: any = undefined
 
-export function SecretModal({ kind, onClose: onCloseArg, secret, apiKeys }: SecretModalProps) {
+interface keysAndSecrets {
+    keys: Array<ApiKey>
+    selectedId: string
+}
+
+export function SecretModal({ kind, onClose: onCloseArg, secret }: SecretModalProps) {
     const [decryptionKey, setDecryptionKey] = useState('')
     const [decryptionKeyError, setDecryptionKeyError] = useState('encryption key value must have a minimal length of 16 chars')
     const [apiError, setApiError] = useState('')
@@ -42,9 +46,9 @@ export function SecretModal({ kind, onClose: onCloseArg, secret, apiKeys }: Secr
     // If kind == 'create' this might contains a string value. If kind == 'view' this might contains the decrypted value as json so probably an array or object
     const [secretValue, setSecretValue] = useState(undefined as any)
     const [secretValueError, setSecretValueError] = useState('')
-    const [keyId, setKeyId] = useState(undefined as undefined | string)
+    const [apiKeysAndSelected, setApiKeysAndSelected] = useState<undefined | keysAndSecrets>(undefined)
 
-    const canSubmit = kind == ModalKind.Create ? !secretValueError && !decryptionKeyError && keyId && key && decryptionKey : true
+    const canSubmit = kind == ModalKind.Create ? !secretValueError && !decryptionKeyError && apiKeysAndSelected && key && decryptionKey : true
 
     const onClose = () => {
         setDecryptionKey('')
@@ -65,18 +69,26 @@ export function SecretModal({ kind, onClose: onCloseArg, secret, apiKeys }: Secr
                 import('react-syntax-highlighter/dist/esm/styles/hljs'),
             ])
             syntaxHighlighterStyle = styles.monokaiSublime
-        } catch (e) {
+        } catch (e: any) {
             console.log(e)
         }
+    }
+
+    const fetchGetKeys = async () => {
+        const keys = await getKeys()
+        setApiKeysAndSelected({
+            keys,
+            selectedId: keys.filter(key => key.enabled)[0].id,
+        })
     }
 
     useEffect(() => {
         if (kind == ModalKind.Create && typeof secretValue != 'string')
             setSecretValue('{}')
-        if (kind == ModalKind.Create && keyId === undefined && apiKeys)
-            setKeyId(apiKeys.filter(key => key.enabled)[0].id)
+        if (kind == ModalKind.Create && apiKeysAndSelected === undefined)
+            fetchGetKeys()
         if (kind != ModalKind.Closed && syntaxHighlighterStyle === undefined)
-            // When the modal is opend start pre-loading the highlighter
+            // When the modal is opened start pre-loading the highlighter
             loadReactSyntaxHighlighter()
     }, [kind])
 
@@ -92,7 +104,7 @@ export function SecretModal({ kind, onClose: onCloseArg, secret, apiKeys }: Secr
                     break
                 case ModalKind.Create:
                     await fetcher.post(
-                        `/api/v1/secrets/otherKey/${keyId}/${key}/${decryptionKey}`,
+                        `/api/v1/secrets/otherKey/${apiKeysAndSelected?.selectedId}/${key}/${decryptionKey}`,
                         {
                             value: JSON.parse(secretValue),
                             description,
@@ -111,7 +123,7 @@ export function SecretModal({ kind, onClose: onCloseArg, secret, apiKeys }: Secr
                     onClose()
                     break
             }
-        } catch (e) {
+        } catch (e: any) {
             setApiError(e?.message || e)
         }
     }
@@ -165,7 +177,7 @@ export function SecretModal({ kind, onClose: onCloseArg, secret, apiKeys }: Secr
                 else
                     return (<div>
                         <DialogContentText>
-                            Fillin the decryption key to continue
+                            Fill in the decryption key to continue
                         </DialogContentText>
                         <TextField
                             id="secret"
@@ -252,7 +264,7 @@ export function SecretModal({ kind, onClose: onCloseArg, secret, apiKeys }: Secr
                                     setSecretValue(value)
                                     JSON.parse(value)
                                     setSecretValueError('')
-                                } catch (e) {
+                                } catch (e: any) {
                                     setSecretValueError(e.message)
                                 }
                             }}
@@ -274,19 +286,32 @@ export function SecretModal({ kind, onClose: onCloseArg, secret, apiKeys }: Secr
                     <div className="marginTop">
                         <FormControl fullWidth variant="filled">
                             <InputLabel htmlFor="secret-key-id">Api key</InputLabel>
-                            <Select
-                                value={keyId}
-                                onChange={(id: any) => setKeyId(id.target.value)}
-                                id="secret-key-id"
-                            >
-                                {apiKeys?.filter(key => key.enabled).reduce((acc: Array<any>, key: ApiKey) => {
-                                    return [
-                                        ...acc,
-                                        <ListSubheader key={key.id + '-header'}>{key.domains.join(', ')}</ListSubheader>,
-                                        <MenuItem key={key.id + '-selectable'} value={key.id}>{key.id}</MenuItem>,
-                                    ]
-                                }, [])}
-                            </Select>
+
+                            {/* Show placeholder select while we're still loading the keys */}
+                            {!apiKeysAndSelected
+                                ? <Select
+                                    id="secret-key-id"
+                                    disabled
+                                    value=""
+                                >
+                                    <MenuItem value="">
+                                        <em>None</em>
+                                    </MenuItem>
+                                </Select>
+                                : <Select
+                                    value={apiKeysAndSelected?.selectedId}
+                                    onChange={(id: any) => setApiKeysAndSelected((v: any) => ({ ...v, selectedId: id.target.value }))}
+                                    id="secret-key-id"
+                                >
+                                    {apiKeysAndSelected?.keys?.filter(key => key.enabled).reduce((acc: Array<any>, key: ApiKey) => {
+                                        return [
+                                            ...acc,
+                                            <ListSubheader key={key.id + '-header'}>{key.domains.join(', ')}</ListSubheader>,
+                                            <MenuItem key={key.id + '-selectable'} value={key.id}>{key.id}</MenuItem>,
+                                        ]
+                                    }, [])}
+                                </Select>
+                            }
                             <FormHelperText>The API key selected will be able to access the secret</FormHelperText>
                         </FormControl>
                     </div>

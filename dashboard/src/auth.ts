@@ -1,5 +1,6 @@
 import { Roles } from './roles'
 import { randomString } from './random'
+import { ApiKey } from './types';
 
 class AuthenticatedFetcher {
     private triedToRestoreCredentials = false;
@@ -202,3 +203,5 @@ class AuthenticatedFetcher {
 }
 
 export const fetcher = new AuthenticatedFetcher()
+
+export const getKeys = (): Promise<Array<ApiKey>> => fetcher.get('/api/v1/keys')
