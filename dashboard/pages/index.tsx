@@ -24,7 +24,7 @@ import { ApiKey, Secret } from '../src/types'
 import { KeyModal } from '../components/keyModal'
 import { ModalKind } from '../components/modal'
 import { SecretModal } from '../components/secretModal'
-import { subDays, formatRFC3339 } from 'date-fns'
+import { formatRFC3339, subWeeks } from 'date-fns'
 
 export default function Home() {
 	const [keys, setKeys] = useState(undefined as Array<ApiKey> | undefined)
@@ -32,15 +32,15 @@ export default function Home() {
 	const [loading, setLoading] = useState(true)
 	const [keyModal, setKeyModal] = useState({ kind: ModalKind.Closed, key: undefined as (undefined | ApiKey) })
 	const [secretModal, setSecretModal] = useState({ kind: ModalKind.Closed, secret: undefined as (undefined | Secret) })
+	const [analyticsPeriod, setAnalyticsPeriod] = useState<'week' | 'day' | 'hour'>('week')
 
 	const fetchAnalytics = async () => {
-		const from = formatRFC3339(subDays(new Date(), 1));
+		const from = formatRFC3339(subWeeks(new Date(), 1));
 		const to = formatRFC3339(new Date());
-		await fetcher.fetch(`/api/v1/analytics/matches/period/${from}/${to}`)
+		return await fetcher.fetch(`/api/v1/analytics/matches/period/${from}/${to}`)
 	}
 
 	const fetchData = async () => {
-
 		try {
 			setLoading(true)
 			const [keys, secrets] = await Promise.all([
