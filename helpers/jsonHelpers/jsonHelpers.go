@@ -2,11 +2,14 @@ package jsonHelpers
 
 import (
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/script-development/RT-CV/helpers/schema"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsontype"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/x/bsonx/bsoncore"
 )
 
 // RFC3339Nano is a time.Time that json (Un)Marshals from & to RFC3339 nano
@@ -52,13 +55,22 @@ func (t RFC3339Nano) MarshalJSON() ([]byte, error) {
 
 // UnmarshalBSONValue implements bson.ValueUnmarshaler
 // by default RFC3339Nano is transformed to a empty map so here we fix that
-func (t *RFC3339Nano) UnmarshalBSONValue(_ bsontype.Type, data []byte) error {
-	var timeValue time.Time
-	err := bson.Unmarshal(data, timeValue)
-	if err != nil {
-		return err
+func (t *RFC3339Nano) UnmarshalBSONValue(valueType bsontype.Type, data []byte) error {
+	switch valueType {
+	case bsontype.Null, bsontype.Undefined:
+		// Do not set the value
+		return nil
+	case bsontype.DateTime:
+		// Just continue
+	default:
+		return errors.New("expected bson datetime but got " + valueType.String())
 	}
-	*t = RFC3339Nano(timeValue)
+
+	timeInt, _, ok := bsoncore.ReadDateTime(data)
+	if !ok {
+		return errors.New("unable to parse bson datetime")
+	}
+	*t = RFC3339Nano(primitive.DateTime(timeInt).Time())
 	return nil
 }
 

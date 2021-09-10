@@ -6,6 +6,7 @@ import (
 	"time"
 
 	. "github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func TestRFC3339Nano(t *testing.T) {
@@ -30,4 +31,13 @@ func TestRFC3339Nano(t *testing.T) {
 	Equal(t, baseTime.Hour(), parsedTimeAsTime.Hour())
 	Equal(t, baseTime.Minute(), parsedTimeAsTime.Minute())
 	Equal(t, baseTime.Second(), parsedTimeAsTime.Second())
+
+	type TestStruct struct {
+		foo RFC3339Nano
+	}
+	bytes, err := bson.Marshal(TestStruct{RFC3339Nano(time.Now())})
+	NoError(t, err)
+	parsedTestStruct := TestStruct{}
+	err = bson.Unmarshal(bytes, &parsedTestStruct)
+	NoError(t, err)
 }
