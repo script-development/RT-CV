@@ -6,91 +6,132 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/script-development/RT-CV/db"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type filter struct {
-	filters bson.M
+	filters reflect.Value
 	empty   bool
 }
 
 func newFilter(filters bson.M) *filter {
 	res := &filter{
-		filters: filters,
+		filters: reflect.ValueOf(filters),
 	}
-	if len(res.filters) == 0 {
+	if len(filters) == 0 {
 		res.empty = true
-
-		// if filters is nil
-		res.filters = bson.M{}
 	}
-
 	return res
 }
 
-func (f *filter) matches(e db.Entry) bool {
+func (f *filter) matches(value interface{}) bool {
 	if f.empty {
 		return true
 	}
 
-	eRefl := reflect.ValueOf(e).Elem()
-	eFieldsMap := mapStruct(eRefl.Type())
+	valueReflection := reflect.ValueOf(value)
+	if valueReflection.Kind() == reflect.Ptr {
+		valueReflection = valueReflection.Elem()
+	}
 
-	for key, value := range f.filters {
-		if strings.HasPrefix("$", key) {
+	return filterMatchesValue(f.filters, valueReflection)
+}
+
+func filterMatchesValue(filterMap reflect.Value, value reflect.Value) bool {
+	valueFieldsMap, valueIsStruct := mapStruct(value.Type())
+
+	iter := filterMap.MapRange()
+
+filtersLoop:
+	for iter.Next() {
+		// FIXME we assume the key is a string, maybe we should support also other values
+		key := iter.Key().String()
+		filter := iter.Value()
+		if filter.Kind() == reflect.Interface {
+			filter = filter.Elem()
+		}
+
+		if strings.HasPrefix(key, "$") {
 			panic("FIXME implement custom filter MongoDB filter properties")
 		}
 
-		field, fieldFound := eFieldsMap[key]
+		if !valueIsStruct {
+			return false
+		}
+
+		field, fieldFound := valueFieldsMap[key]
 		if !fieldFound {
 			return false
 		}
 
-		eReflPath := eRefl
-		for _, pathPart := range field.GoPathToField {
-			eReflPath = eReflPath.FieldByName(pathPart)
+		tempValueCopy := value
+		for _, goPathPart := range field.GoPathToField {
+			tempValueCopy = tempValueCopy.FieldByName(goPathPart)
 		}
-		entryField := eRefl.FieldByName(field.GoFieldName)
+		valueField := tempValueCopy.FieldByName(field.GoFieldName)
 
-		if entryField.Kind() == reflect.Ptr {
-			if entryField.IsNil() {
+		if valueField.Kind() == reflect.Ptr {
+			if valueField.IsNil() {
 				return false
 			}
-			entryField = entryField.Elem()
+			valueField = valueField.Elem()
 		}
 
-		reflectionValue := reflect.ValueOf(value)
-		switch reflectionValue.Kind() {
+		if !filter.IsValid() {
+			// filter is probably a nil interface{}
+			// note that isNil panics if the value is a nil interface without a type
+			// so we check here for: interface{}(nil)
+			// and not: interface{}([]string(nil))
+			switch valueField.Kind() {
+			case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice:
+				if valueField.IsNil() {
+					continue filtersLoop
+				}
+			}
+			return false
+		}
+
+		switch filter.Kind() {
 		case reflect.String:
-			if entryField.Kind() != reflect.String || entryField.String() != reflectionValue.String() {
+			if valueField.Kind() != reflect.String || valueField.String() != filter.String() {
 				return false
 			}
 		case reflect.Bool:
-			if entryField.Kind() != reflect.Bool || entryField.Bool() != reflectionValue.Bool() {
+			if valueField.Kind() != reflect.Bool || valueField.Bool() != filter.Bool() {
 				return false
 			}
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			if !compareInt64ToReflect(reflectionValue.Int(), entryField) {
+			if !compareInt64ToReflect(filter.Int(), valueField) {
 				return false
 			}
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			if !compareUint64ToReflect(reflectionValue.Uint(), entryField) {
+			if !compareUint64ToReflect(filter.Uint(), valueField) {
 				return false
 			}
+		case reflect.Map:
+			if filter.Type().Key().Kind() != reflect.String {
+				panic("TODO support filter type map with non string key")
+			}
+			filterMatchesValue(filter, valueField)
 		default:
-			valueObjectID, ok := value.(primitive.ObjectID)
-			if ok {
-				goFieldValue, ok := entryField.Interface().(primitive.ObjectID)
+			filterValue := filter.Interface()
+			if filterObjectID, ok := filterValue.(primitive.ObjectID); ok {
+				goFieldValue, ok := valueField.Interface().(primitive.ObjectID)
 				if !ok {
 					return false
 				}
-				if goFieldValue != valueObjectID {
+				if goFieldValue != filterObjectID {
 					return false
 				}
 			} else {
-				panic(fmt.Sprintf("Unimplemented value filter type: %T, key: %v, value: %#v", value, key, value))
+				panic(fmt.Sprintf(
+					"Unimplemented value filter type: %T, key: %v, value: %#v, reflectionKind: %s",
+					filterValue,
+					key,
+					filterValue,
+					filter.Kind(),
+				))
 			}
 		}
 	}
@@ -106,9 +147,9 @@ type structField struct {
 	DbFieldName string
 }
 
-func mapStruct(entry reflect.Type) map[string]structField {
+func mapStruct(entry reflect.Type) (structEntries map[string]structField, isStruct bool) {
 	if entry.Kind() != reflect.Struct {
-		panic("expected struct but got " + entry.Kind().String())
+		return nil, false
 	}
 
 	res := map[string]structField{}
@@ -117,7 +158,7 @@ func mapStruct(entry reflect.Type) map[string]structField {
 			res[field.DbFieldName] = field
 		})
 	}
-	return res
+	return res, true
 }
 
 func mapStructField(field reflect.StructField, add func(structField)) {
