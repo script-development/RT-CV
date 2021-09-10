@@ -47,9 +47,21 @@ func Routes(app *fiber.App, dbConn db.Connection, serverSeed string, testing boo
 		}
 		b.Group(`/secrets/myKey`, secretsRoutes, requiresAuth(models.APIKeyRoleAll), middlewareBindMyKey())
 		b.Group(`/secrets/otherKey`, func(b *routeBuilder.Router) {
-			b.Get(``, routeGetAllSecretsFromAllKeys)
-			b.Group(`/:keyID`, secretsRoutes, middlewareBindKey())
-		}, requiresAuth(models.APIKeyRoleDashboard))
+			// This route exposes a lot of user information that's why only the dashboard role can access it
+			b.Get(``, routeGetAllSecretsFromAllKeys, requiresAuth(models.APIKeyRoleDashboard))
+			b.Group(
+				`/:keyID`,
+				secretsRoutes,
+				middlewareBindKey(),
+				requiresAuth(models.APIKeyRoleInformationObtainer|models.APIKeyRoleDashboard),
+			)
+		})
+
+		b.Group(`/analytics`, func(b *routeBuilder.Router) {
+			b.Group(`/matches`, func(b *routeBuilder.Router) {
+				b.Get(`/period/:from/:to`, routeGetMatchesPeriod)
+			})
+		}, requiresAuth(models.APIKeyRoleInformationObtainer|models.APIKeyRoleDashboard))
 
 		b.Group(`/control`, func(b *routeBuilder.Router) {
 			b.Group(`/profiles`, func(b *routeBuilder.Router) {

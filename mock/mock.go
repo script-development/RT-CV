@@ -166,5 +166,11 @@ func NewMockDB() *testingdb.TestConnection {
 		Profile2,
 	)
 
+	// Insert matches
+	conn.UnsafeInsert(
+		mockMatch1,
+		mockMatch2,
+	)
+
 	return conn
 }
