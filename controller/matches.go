@@ -2,6 +2,7 @@ package controller
 
 import (
 	"errors"
+	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -27,6 +28,18 @@ _RFC 3339 is basically an extension to iso 8601_`,
 		to, err := time.Parse(time.RFC3339, toParam)
 		if err != nil {
 			return errors.New("unable \"to\" parse from param as RFC 3339")
+		}
+
+		now := time.Now()
+		if to.Before(now) {
+			// We cannot do things in the past, we're fine with caching
+
+			// 1 second * 60 = minute * 60 = hour * 24 = day * 14 = 2 weeks
+			maxAge := 1 * 60 * 60 * 24 * 14
+			c.Response().Header.Set("Cache-Control", "private")
+			c.Response().Header.Add("Cache-Control", "max-age="+strconv.Itoa(maxAge))
+
+			c.Response().Header.SetLastModified(to)
 		}
 
 		query := bson.M{
