@@ -1,22 +1,12 @@
 import { Button, Icon } from '@material-ui/core'
 import Head from 'next/head'
 import Link from 'next/link'
-import React, { useState } from 'react'
-// import { fetcher } from '../src/auth'
-// import { formatRFC3339, subWeeks } from 'date-fns'
+import React from 'react'
 import KeysCard from '../components/keysCard'
 import SecretsCard from '../components/secretsCard'
+import Statistics from '../components/statistics'
 
 export default function Home() {
-	const [loading, setLoading] = useState(true)
-	// const [analyticsPeriod, setAnalyticsPeriod] = useState<'week' | 'day' | 'hour'>('week')
-
-	// const fetchAnalytics = async () => {
-	// 	const from = formatRFC3339(subWeeks(new Date(), 1));
-	// 	const to = formatRFC3339(new Date());
-	// 	return await fetcher.fetch(`/api/v1/analytics/matches/period/${from}/${to}`)
-	// }
-
 	return (
 		<div>
 			<Head><title>RT-CV home</title></Head>
@@ -36,6 +26,8 @@ export default function Home() {
 				<KeysCard />
 
 				<SecretsCard />
+
+				<Statistics />
 			</main>
 
 			<style jsx>{`
