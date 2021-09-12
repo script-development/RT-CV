@@ -32,8 +32,9 @@ cd dashboard
 npm install
 npm run build
 cd ..
+echo USE_TESTING_DB=true > .env
 
-USE_TESTING_DB=true go run .
+go run .
 ```
 
 Copy the printed out dashboard token en head over to [localhost:4000](http://localhost:4000)
