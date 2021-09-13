@@ -4,10 +4,14 @@ import { formatRFC3339, subDays, startOfDay } from 'date-fns'
 import React, { useEffect, useMemo, useState } from 'react'
 import { Match } from '../src/types'
 import { BarChartProps } from './chartProps'
+import { CircularProgress } from '@material-ui/core'
 
 const BarChart = dynamic<BarChartProps>(() =>
     import('./chart').then(m => m.BarChart),
-    { ssr: false },
+    {
+        ssr: false,
+        loading: () => <ChartLoader />,
+    },
 )
 
 export default function Statistics() {
@@ -62,11 +66,14 @@ export default function Statistics() {
             <div className="chartContainer">
                 <h3>Matches per day</h3>
                 <div className="chart">
-                    <BarChart
-                        data={matchesPerDayOfPrev7Days}
-                        singleTooltip="match"
-                        multipleTooltip="matches"
-                    />
+                    {loading
+                        ? <ChartLoader />
+                        : <BarChart
+                            data={matchesPerDayOfPrev7Days}
+                            singleTooltip="match"
+                            multipleTooltip="matches"
+                        />
+                    }
                 </div>
             </div>
             <style jsx>{`
@@ -82,6 +89,24 @@ export default function Statistics() {
                     overflow: hidden;
                     border-radius: 4px;
                     background-color: #424242;
+                    min-width: 300px;
+                }
+            `}</style>
+        </div>
+    )
+}
+
+function ChartLoader() {
+    return (
+        <div className="loader">
+            <CircularProgress />
+            <style jsx>{`
+                .loader {
+                    width: 285px;
+                    height: 200px;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
                 }
             `}</style>
         </div>
