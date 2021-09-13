@@ -81,25 +81,29 @@ var routeScraperScanCV = routeBuilder.R{
 			var wg sync.WaitGroup
 
 			for _, aMatch := range matchedProfiles {
-				_, err := body.CV.GetPDF(aMatch.Profile, aMatch.Matches.GetMatchSentence())
-				if err != nil {
-					return fmt.Errorf("unable to generate PDF from CV, err: %s", err.Error())
-				}
+				emailsLen := len(aMatch.Profile.OnMatch.SendMail)
 
-				wg.Add(len(aMatch.Profile.OnMatch.HTTPCall) + len(aMatch.Profile.OnMatch.SendMail))
+				wg.Add(len(aMatch.Profile.OnMatch.HTTPCall) + emailsLen)
 
 				for _, http := range aMatch.Profile.OnMatch.HTTPCall {
 					go func(http models.ProfileHTTPCallData) {
-						http.MakeRequest()
+						http.MakeRequest(aMatch.Profile, aMatch.Matches)
 						wg.Done()
 					}(http)
 				}
 
-				for _, email := range aMatch.Profile.OnMatch.SendMail {
-					go func(email models.ProfileSendEmailData) {
-						email.SendEmail()
-						wg.Done()
-					}(email)
+				if emailsLen > 0 {
+					pdf, err := body.CV.GetPDF(aMatch.Profile, aMatch.Matches.GetMatchSentence())
+					if err != nil {
+						return fmt.Errorf("unable to generate PDF from CV, err: %s", err.Error())
+					}
+
+					for _, email := range aMatch.Profile.OnMatch.SendMail {
+						go func(email models.ProfileSendEmailData) {
+							email.SendEmail(aMatch.Profile, aMatch.Matches, pdf)
+							wg.Done()
+						}(email)
+					}
 				}
 			}
 

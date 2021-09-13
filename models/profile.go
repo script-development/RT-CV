@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -123,8 +124,9 @@ type ProfileSendEmailData struct {
 }
 
 // SendEmail sends an email
-func (*ProfileSendEmailData) SendEmail() {
-	// FIXME implment this
+func (*ProfileSendEmailData) SendEmail(_ Profile, _ Match, pdfBytes []byte) {
+	// FIXME
+	fmt.Println("TODO send email:", len(pdfBytes))
 }
 
 // ProfileHTTPCallData defines a http address that should be called when a match was made
@@ -134,14 +136,22 @@ type ProfileHTTPCallData struct {
 }
 
 // MakeRequest creates a http request
-func (d *ProfileHTTPCallData) MakeRequest() {
+func (d *ProfileHTTPCallData) MakeRequest(profile Profile, match Match) {
 	req := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(req)
 	req.SetRequestURI(d.URI)
 	req.Header.SetMethod(d.Method)
 
 	// FIXME set request timeout
-	// FIXME set body data or url data
+	// FIXME url data in case of get request
+	value, err := json.Marshal(map[string]interface{}{
+		"profileId": profile.ID.Hex(),
+		"match":     match,
+	})
+	if err != nil {
+		req.ResetBody()
+		req.AppendBody(value)
+	}
 
 	resp := fasthttp.AcquireResponse()
 	defer fasthttp.ReleaseResponse(resp)
