@@ -1,18 +1,19 @@
 import { Link, ButtonBase } from "@material-ui/core"
 import ArrowBack from "@material-ui/icons/ArrowBack"
-import React from "react"
+import React, { CSSProperties } from "react"
 
 interface HeaderProps {
     children?: React.ReactNode
+    arrowBackStyle?: CSSProperties
 }
 
-export default function Header({ children }: HeaderProps) {
+export default function Header({ children, arrowBackStyle }: HeaderProps) {
     return (
         <div className="header">
             <div>
                 <Link href="/">
                     <ButtonBase focusRipple style={{ borderRadius: 4 }}>
-                        <h1 className="title"><span className="arrowBack"><ArrowBack fontSize="small" /></span> RT-CV</h1>
+                        <h1 className="title"><span className="arrowBack" style={arrowBackStyle}><ArrowBack fontSize="small" /></span> RT-CV</h1>
                     </ButtonBase>
                 </Link>
             </div>

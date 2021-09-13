@@ -26,18 +26,21 @@ export default function Docs() {
 	}, [])
 
 	return (
-		<div className="root" suppressHydrationWarning={true}>
-			<Header />
+		<div className="rtcvDocs" suppressHydrationWarning={true}>
+			<Header
+				arrowBackStyle={{ top: 0 }}
+			/>
 			{process.browser && <API
 				apiDescriptionUrl="/api/v1/schema/openAPI"
 				router="hash"
 				hideTryIt={true}
 				layout={mobile ? "stacked" : "sidebar"}
 			/>}
-			<style jsx>{`
-				.root {
+			<style global jsx>{`
+				.rtcvDocs {
 					background-color: white;
 					min-height: 100vh;
+					color: black;
 				}
 			`}</style>
 		</div>
