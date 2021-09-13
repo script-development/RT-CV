@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/script-development/RT-CV/db"
@@ -18,14 +19,24 @@ type Match struct {
 	KeyID     primitive.ObjectID      `json:"keyId" bson:"keyId"`
 	When      jsonHelpers.RFC3339Nano `json:"when"`
 
+	// Is this a debug match
+	// This is currently only true if the match was made using the /tryMatcher dashboard page
 	Debug bool `bson:",omitempty" json:"debug"`
 
+	// The values below are non nil if a match was found
+	// The result of the match is stored in the value of the field
+
 	// The profile domain match that was found
-	Domain                *string              `bson:",omitempty" json:"domains"`
-	YearsSinceWork        bool                 `bson:",omitempty" json:"yearsSinceWork"`
-	YearsSinceEducation   bool                 `bson:",omitempty" json:"yearsSinceEducation"`
-	EducationOrCourse     bool                 `bson:",omitempty" json:"educationOrCourse"`
-	DesiredProfession     bool                 `bson:",omitempty" json:"desiredProfession"`
+	Domain              *string `bson:",omitempty" json:"domains"`
+	YearsSinceWork      *int    `bson:",omitempty" json:"yearsSinceWork"`
+	YearsSinceEducation *int    `bson:",omitempty" json:"yearsSinceEducation"`
+	// the education name of the profile that was matched
+	Education *string `bson:",omitempty" json:"education"`
+	// the course name of the profile that was matched
+	// note that the profile does not really have a course we rather use the education name that matched a cv course
+	Course *string `bson:",omitempty" json:"course"`
+	// The profile desired profession match that was found
+	DesiredProfession     *string              `bson:",omitempty" json:"desiredProfession"`
 	ProfessionExperienced bool                 `bson:",omitempty" json:"professionExperienced"`
 	DriversLicense        bool                 `bson:",omitempty" json:"driversLicense"`
 	ZipCode               *ProfileDutchZipcode `bson:",omitempty" json:"zipCode"`
@@ -42,16 +53,33 @@ func (m *Match) GetMatchSentence() string {
 	if m.Domain != nil {
 		sentences = append(sentences, "domain naam "+*m.Domain)
 	}
-	if m.YearsSinceWork {
-		sentences = append(sentences, "jaren sinds werk")
+	if m.YearsSinceWork != nil {
+		switch *m.YearsSinceWork {
+		case 0:
+			sentences = append(sentences, "minder dan 1 jaar geleden sinds laatste werk ervaaring")
+		case 1:
+			sentences = append(sentences, "1 jaar sinds laatste werk ervaaring")
+		default:
+			sentences = append(sentences, strconv.Itoa(*m.YearsSinceWork)+" jaren sinds laatste werk ervaaring")
+		}
 	}
-	if m.YearsSinceEducation {
-		sentences = append(sentences, "jaren sinds laatste opleiding")
+	if m.YearsSinceEducation != nil {
+		switch *m.YearsSinceEducation {
+		case 0:
+			sentences = append(sentences, "minder dan 1 jaar sinds laatste opleiding")
+		case 1:
+			sentences = append(sentences, "1 jaar sinds laatste opleiding")
+		default:
+			sentences = append(sentences, strconv.Itoa(*m.YearsSinceEducation)+" jaren sinds laatste opleiding")
+		}
 	}
-	if m.EducationOrCourse {
-		sentences = append(sentences, "opleiding of cursus")
+	if m.Education != nil {
+		sentences = append(sentences, "opleiding")
 	}
-	if m.DesiredProfession {
+	if m.Course != nil {
+		sentences = append(sentences, "cursus")
+	}
+	if m.DesiredProfession != nil {
 		sentences = append(sentences, "gewenste werkveld")
 	}
 	if m.ProfessionExperienced {

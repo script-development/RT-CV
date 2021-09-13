@@ -15,20 +15,23 @@ export interface Secret {
 }
 
 export interface Match {
-    debug: boolean
-    desiredProfession: boolean
-    domains?: string
-    driversLicense: boolean
-    educationOrCourse: boolean
     id: string
     keyId: string
-    professionExperienced: boolean
     profileId: string
     requestId: string
     when: Date
-    yearsSinceEducation: boolean
-    yearsSinceWork: boolean
-    zipCode: null | DutchZipCode
+
+    debug?: boolean
+
+    domains?: string
+    yearsSinceWork?: number
+    yearsSinceEducation?: number
+    education?: string
+    course?: string
+    desiredProfession?: string
+    professionExperienced?: boolean
+    driversLicense?: boolean
+    zipCode?: null | DutchZipCode
 }
 
 export interface DutchZipCode {

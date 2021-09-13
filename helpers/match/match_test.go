@@ -315,31 +315,38 @@ func TestGetMatchSentence(t *testing.T) {
 	sentence := (&models.Match{}).GetMatchSentence()
 	Equal(t, "", sentence)
 
-	sentence = (&models.Match{YearsSinceWork: true}).GetMatchSentence()
-	Equal(t, "jaren sinds werk", sentence)
+	yearsSinceWork := 3
+	sentence = (&models.Match{YearsSinceWork: &yearsSinceWork}).GetMatchSentence()
+	Equal(t, "3 jaren sinds laatste werk ervaaring", sentence)
 
-	sentence = (&models.Match{YearsSinceWork: true, YearsSinceEducation: true}).GetMatchSentence()
-	Equal(t, "jaren sinds werk en jaren sinds laatste opleiding", sentence)
+	sentence = (&models.Match{YearsSinceWork: &yearsSinceWork, YearsSinceEducation: &yearsSinceWork}).GetMatchSentence()
+	Equal(t, "3 jaren sinds laatste werk ervaaring en 3 jaren sinds laatste opleiding", sentence)
 
 	domain := "*.example.com"
 	zipCode := models.ProfileDutchZipcode{
 		From: 2000,
 		To:   5000,
 	}
+	course := "gangsters for dummies"
+	education := "beeing smart"
+	profession := "gangster"
+
 	sentence = (&models.Match{
 		Domain:                &domain,
-		YearsSinceWork:        true,
-		YearsSinceEducation:   true,
-		EducationOrCourse:     true,
-		DesiredProfession:     true,
+		YearsSinceWork:        &yearsSinceWork,
+		YearsSinceEducation:   &yearsSinceWork,
+		Education:             &education,
+		Course:                &course,
+		DesiredProfession:     &profession,
 		ProfessionExperienced: true,
 		DriversLicense:        true,
 		ZipCode:               &zipCode,
 	}).GetMatchSentence()
 	expectedResult := "domain naam *.example.com" +
-		", jaren sinds werk" +
-		", jaren sinds laatste opleiding" +
-		", opleiding of cursus" +
+		", 3 jaren sinds laatste werk ervaaring" +
+		", 3 jaren sinds laatste opleiding" +
+		", opleiding" +
+		", cursus" +
 		", gewenste werkveld" +
 		", gewenst beroep" +
 		", rijbewijs" +

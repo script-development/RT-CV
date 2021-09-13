@@ -111,14 +111,17 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 		if profile.YearsSinceEducation > 0 {
 			foundMatch := false
 
+			mustBeAfter := now.AddDate(-profile.YearsSinceEducation, 0, 0)
+			lastEducativeYear := time.Date(1980, time.January, 1, 0, 0, 0, 0, time.Local)
+
 			for _, cvEducation := range cv.Educations {
 				if len(cvEducation.Name) == 0 || cvEducation.EndDate == nil {
 					continue
 				}
 
-				if cvEducation.EndDate.Time().AddDate(profile.YearsSinceEducation, 0, 0).After(now) {
-					foundMatch = true
-					break
+				t := cvEducation.EndDate.Time()
+				if t.After(lastEducativeYear) {
+					lastEducativeYear = t
 				}
 			}
 
@@ -128,18 +131,19 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 						continue
 					}
 
-					if cvCourse.EndDate.Time().AddDate(profile.YearsSinceEducation, 0, 0).After(now) {
-						foundMatch = true
-						break
+					t := cvCourse.EndDate.Time()
+					if t.After(mustBeAfter) {
+						lastEducativeYear = t
 					}
 				}
 			}
 
-			if !foundMatch {
+			if lastEducativeYear.Before(mustBeAfter) {
 				continue
 			}
 
-			match.Matches.YearsSinceEducation = true
+			yearsSinceEducation := time.Now().Year() - lastEducativeYear.Year()
+			match.Matches.YearsSinceEducation = &yearsSinceEducation
 		}
 
 		// Check education and courses
@@ -148,7 +152,7 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 		if checkedForEducationOrCourse {
 			if len(cv.Educations) > 0 {
 			educationLoop:
-				for _, profileEducation := range profile.Educations {
+				for profileEducationIdx, profileEducation := range profile.Educations {
 					if len(profileEducation.Name) == 0 {
 						// We don't want those yee yee ass fake educations!
 						continue
@@ -168,15 +172,16 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 							continue
 						}
 
+						match.Matches.Education = &profile.Educations[profileEducationIdx].Name
 						matchedAnEducationOrCourse = true
 						break educationLoop
 					}
 				}
 			}
 
-			if !matchedAnEducationOrCourse && len(cv.Courses) > 0 {
+			if len(cv.Courses) > 0 {
 			coursesLoop:
-				for _, profileCourse := range profile.Educations {
+				for profileCourseIdx, profileCourse := range profile.Educations {
 					if len(profileCourse.Name) == 0 {
 						continue
 					}
@@ -191,15 +196,14 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 							continue
 						}
 
+						match.Matches.Course = &profile.Educations[profileCourseIdx].Name
 						matchedAnEducationOrCourse = true
 						break coursesLoop
 					}
 				}
 			}
 
-			if matchedAnEducationOrCourse {
-				match.Matches.EducationOrCourse = true
-			} else if profile.MustEducation {
+			if !matchedAnEducationOrCourse && profile.MustEducation {
 				// CV doesn't have any matched education
 				continue
 			}
@@ -210,7 +214,7 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 		checkedForDesiredProfession := len(profile.DesiredProfessions) > 0
 		if checkedForDesiredProfession {
 		professionLoop:
-			for _, profileProfession := range profile.DesiredProfessions {
+			for profileProfessionIdx, profileProfession := range profile.DesiredProfessions {
 				profileName := normalizeString(profileProfession.Name)
 				if len(profileName) == 0 {
 					continue
@@ -223,15 +227,14 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 					}
 
 					if cvName == profileName {
+						match.Matches.DesiredProfession = &profile.DesiredProfessions[profileProfessionIdx].Name
 						matchedADesiredProfession = true
 						break professionLoop
 					}
 				}
 			}
 
-			if matchedADesiredProfession {
-				match.Matches.DesiredProfession = true
-			} else if profile.MustDesiredProfession {
+			if !matchedADesiredProfession && profile.MustDesiredProfession {
 				// CV doesn't have any matching professions
 				continue
 			}
@@ -289,7 +292,8 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 				continue
 			}
 
-			match.Matches.YearsSinceWork = true
+			yearsSinceLastWork := now.Year() - lastWorkYear
+			match.Matches.YearsSinceWork = &yearsSinceLastWork
 		}
 
 		// Check drivers license
