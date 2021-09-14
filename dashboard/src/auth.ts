@@ -125,7 +125,7 @@ class AuthenticatedFetcher {
                 this.awaitingFetches[0](undefined)
 
             return resJsonData
-        } catch (e) {
+        } catch (e: any) {
             this.awaitingFetches.shift()
             if (this.awaitingFetches.length > 0)
                 this.awaitingFetches[0](undefined)

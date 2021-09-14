@@ -20,7 +20,7 @@ export default function Home() {
 			setError('')
 			await fetcher.login(apiKey, apiKeyId)
 			router.push('/')
-		} catch (e) {
+		} catch (e: any) {
 			setError(e?.message || e)
 		} finally {
 			setLoading(false)

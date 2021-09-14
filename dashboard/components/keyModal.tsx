@@ -58,7 +58,7 @@ export function KeyModal({ kind, onClose, apiKey = undefined }: KeyModalProps) {
                 await fetcher.delete(`/api/v1/keys/${state.id}`)
 
             onClose()
-        } catch (e) {
+        } catch (e: any) {
             setApiError(e?.message || e)
         }
     }
