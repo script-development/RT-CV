@@ -44,6 +44,9 @@ function MyApp({ Component, pageProps }: AppProps) {
       h3 {
         margin-bottom: 4px;
       }
+      a {
+        color: white;
+      }
     `}</style>
   </>)
 }

@@ -1,8 +1,15 @@
-import { API } from "@stoplight/elements"
 import Header from '../components/header'
 import { useEffect, useState } from "react"
+import Dynamic from 'next/dynamic'
+import { LinearProgress } from '@material-ui/core'
 
 import '@stoplight/elements/styles.min.css'
+const API = Dynamic<any>(
+	() => import('@stoplight/elements').then(d => d.API),
+	{
+		ssr: false,
+		loading: loader
+	})
 
 export default function Docs() {
 	const [currentSize, setCurrentSize] = useState(0)
@@ -30,17 +37,36 @@ export default function Docs() {
 			<Header
 				arrowBackStyle={{ top: 0 }}
 			/>
-			{process.browser && <API
+			<API
 				apiDescriptionUrl="/api/v1/schema/openAPI"
 				router="hash"
 				hideTryIt={true}
 				layout={mobile ? "stacked" : "sidebar"}
-			/>}
+			/>
 			<style global jsx>{`
 				.rtcvDocs {
 					background-color: white;
 					min-height: 100vh;
 					color: black;
+				}
+				.rtcvDocs a {
+					color: black;
+				}
+			`}</style>
+		</div>
+	)
+}
+
+function loader() {
+	return (
+		<div>
+			<LinearProgress />
+			<p className="loading">Loading...</p>
+			<style jsx>{`
+				.loading {
+					margin: 20px;
+					text-align: center;
+					font-size: 20px;
 				}
 			`}</style>
 		</div>
