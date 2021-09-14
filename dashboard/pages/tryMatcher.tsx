@@ -1,5 +1,6 @@
 import Head from "next/head";
 import Dynamic from "next/dynamic"
+import Link from 'next/link'
 import React, { useEffect, useState } from "react"
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@material-ui/core"
 import Info from '@material-ui/icons/Info'
@@ -65,13 +66,14 @@ export default function TryMatcher() {
                     <DialogContentText>
                         Note that this is made to be used by developers for debugging and testing purposes.
                     </DialogContentText>
+                    <DialogContentText>
+                        For API information about this see <Link href="/docs#/paths/api-v1-scraper-scanCV/post">POST /scraper/scanCV docs</Link>
+                    </DialogContentText>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={confirmInfoModal} color="primary" autoFocus>Oke</Button>
                 </DialogActions>
             </Dialog>
-
-
         </div>
     )
 }
