@@ -41,7 +41,7 @@ export function SecretModal({ kind, onClose: onCloseArg, secret }: SecretModalPr
         valueError: '',
         selectedKeyId: '',
         decryptionKey: '',
-        decryptionKeyError: '',
+        decryptionKeyError: 'encryption key value must have a minimal length of 16 chars',
     })
     const [viewState, setViewState] = useState({
         value: undefined as any,

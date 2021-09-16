@@ -1,4 +1,4 @@
-import { Button, DialogContentText, TextField, Tooltip } from "@material-ui/core"
+import { Button, DialogContentText, TextField, Tooltip, FormHelperText } from "@material-ui/core"
 import FormatIndentIncrease from "@material-ui/icons/FormatIndentIncrease"
 import Code from '@material-ui/icons/Code'
 import People from '@material-ui/icons/People'
@@ -55,7 +55,7 @@ function StrictUserValueKind({ value, setValue }: ModifyValueProps) {
 
     return (
         <div className="root">
-            <DialogContentText>Value:</DialogContentText>
+            <DialogContentText>User:</DialogContentText>
             <div className="inputs">
                 <div>
                     <TextField
@@ -114,7 +114,7 @@ function StrictUsersValueKind({ value, setValue }: ModifyValueProps) {
 
     return (
         <div className="root">
-            <DialogContentText>Value:</DialogContentText>
+            <DialogContentText>Users:</DialogContentText>
             <div className="inputs">
                 {users.map((user, idx) =>
                     <div className="row" key={idx}>
@@ -268,6 +268,7 @@ function ChoseValueKind({ setValueKind }: ModifyValueProps) {
     return (
         <div className="root">
             <DialogContentText>Chose value type</DialogContentText>
+            <FormHelperText error>The secret needs a value type to be created</FormHelperText>
             <div className="options">
                 <div>
                     <h3>Strict</h3>

@@ -47,14 +47,52 @@ export default function Create({
                 This also means <b>you should store the encryption key used here</b> somewhere safe
             </DialogContentText>
 
-            <TextField
-                id='key'
-                label='Key'
-                value={state.key}
-                onChange={(e) => setState(s => ({ ...s, key: e.target.value }))}
-                variant="filled"
-                fullWidth
-            />
+            <div className="apiKeyAndKey">
+
+                <FormControl fullWidth variant="filled">
+                    <InputLabel htmlFor="secret-key-id">Api key</InputLabel>
+
+                    {/* Show placeholder select while we're still loading the keys */}
+                    {!apiKeys || !state.selectedKeyId
+                        ? <Select
+                            id="secret-key-id"
+                            disabled
+                            value=""
+                        >
+                            <MenuItem value="">
+                                <em>None</em>
+                            </MenuItem>
+                        </Select>
+                        : <Select
+                            value={state.selectedKeyId}
+                            onChange={(id: any) => setState(s => ({ ...s, selectedId: id.target.value }))}
+                            id="secret-key-id"
+                        >
+                            {apiKeys?.reduce((acc: Array<any>, key: ApiKey) => {
+                                return [
+                                    ...acc,
+                                    <ListSubheader key={key.id + '-header'}>{key.domains.join(', ')}</ListSubheader>,
+                                    <MenuItem key={key.id + '-selectable'} value={key.id}>{key.id}</MenuItem>,
+                                ]
+                            }, [])}
+                        </Select>
+                    }
+                    <FormHelperText>The API key selected will be able to access the secret</FormHelperText>
+                </FormControl>
+
+                <div className="divider">/</div>
+
+                <TextField
+                    id='key'
+                    label='Key'
+                    error={!state.key}
+                    value={state.key}
+                    onChange={(e) => setState(s => ({ ...s, key: e.target.value }))}
+                    variant="filled"
+                    helperText="the secret identifier used to access the key"
+                    fullWidth
+                />
+            </div>
 
             <div className="marginTop">
                 <TextField
@@ -63,6 +101,7 @@ export default function Create({
                     value={state.description}
                     onChange={(e) => setState(s => ({ ...s, description: e.target.value }))}
                     variant="filled"
+                    helperText="Aditional information that describes the value"
                     multiline
                     fullWidth
                 />
@@ -128,39 +167,16 @@ export default function Create({
                 valueError={state.valueError}
             />
 
-            <div className="marginTop">
-                <FormControl fullWidth variant="filled">
-                    <InputLabel htmlFor="secret-key-id">Api key</InputLabel>
-
-                    {/* Show placeholder select while we're still loading the keys */}
-                    {!apiKeys || !state.selectedKeyId
-                        ? <Select
-                            id="secret-key-id"
-                            disabled
-                            value=""
-                        >
-                            <MenuItem value="">
-                                <em>None</em>
-                            </MenuItem>
-                        </Select>
-                        : <Select
-                            value={state.selectedKeyId}
-                            onChange={(id: any) => setState(s => ({ ...s, selectedId: id.target.value }))}
-                            id="secret-key-id"
-                        >
-                            {apiKeys?.reduce((acc: Array<any>, key: ApiKey) => {
-                                return [
-                                    ...acc,
-                                    <ListSubheader key={key.id + '-header'}>{key.domains.join(', ')}</ListSubheader>,
-                                    <MenuItem key={key.id + '-selectable'} value={key.id}>{key.id}</MenuItem>,
-                                ]
-                            }, [])}
-                        </Select>
-                    }
-                    <FormHelperText>The API key selected will be able to access the secret</FormHelperText>
-                </FormControl>
-            </div>
             <style jsx>{`
+                .apiKeyAndKey {
+                    display: flex;
+                }
+                .apiKeyAndKey .divider {
+                    margin: 0 10px;
+                    font-size: 20px;
+                    font-weight: bold;
+                    margin-top: 15px;
+                }
                 .inputWithButton {
                     display: flex;
                     justify-content: space-between;
