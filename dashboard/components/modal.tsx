@@ -29,6 +29,7 @@ interface ModalProps {
     apiError?: string
     setApiError?: (error: string) => void
     fullWidth?: boolean
+    maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | false
     showConfirm?: boolean
 }
 
@@ -44,6 +45,7 @@ export function Modal({
     setApiError = () => { },
     submitDisabled = false,
     fullWidth = false,
+    maxWidth = 'sm',
     showConfirm = true,
 }: ModalProps) {
     // Inner kinds reflects the value of kind only if the kind != KeyModalKind.Closed
@@ -59,7 +61,12 @@ export function Modal({
         typeof value == 'string' ? value : (value as { [key: string]: string })[innerKind]
 
     return (
-        <Dialog open={kind != ModalKind.Closed} onClose={onClose} fullWidth={fullWidth}>
+        <Dialog
+            open={kind != ModalKind.Closed}
+            onClose={onClose}
+            fullWidth={fullWidth}
+            maxWidth={maxWidth}
+        >
             <Snackbar
                 anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                 open={!!apiError}

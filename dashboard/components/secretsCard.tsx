@@ -7,7 +7,10 @@ import { fetcher } from '../src/auth'
 import { Secret } from '../src/types'
 import Card from './card'
 import { ModalKind } from './modal'
-import { SecretModal } from './secretModal'
+import Dynamic from 'next/dynamic'
+import { SecretModalProps } from './secretModal/secretModalProps'
+
+const SecretModal = Dynamic<SecretModalProps>(() => import('./secretModal/secretModal').then(m => m.SecretModal))
 
 interface SecretsCardArgs { }
 
