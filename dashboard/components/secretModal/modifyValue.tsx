@@ -167,7 +167,10 @@ function StrictUsersValueKind({ value, setValue }: ModifyValueProps) {
                         </div>
                         <div className="removeRow">
                             <Button
-                                onClick={() => setUsers(users => [...users.slice(0, idx), ...users.slice(idx + 1)])}
+                                onClick={() => {
+                                    setUsers(users => [...users.slice(0, idx), ...users.slice(idx + 1)])
+                                    setModified(true)
+                                }}
                                 variant="outlined"
                             ><Delete fontSize="small" /></Button>
                         </div>
@@ -175,7 +178,10 @@ function StrictUsersValueKind({ value, setValue }: ModifyValueProps) {
                 )}
                 <div className="addRow">
                     <Button
-                        onClick={() => setUsers(users => [...users, { username: '', password: '' }])}
+                        onClick={() => {
+                            setUsers(users => [...users, { username: '', password: '' }])
+                            setModified(true)
+                        }}
                         variant="outlined"
                         fullWidth
                     ><PersonAdd fontSize="small" /></Button>
