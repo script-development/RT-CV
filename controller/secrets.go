@@ -47,13 +47,6 @@ var routeUpdateOrCreateSecret = routeBuilder.R{
 			return err
 		}
 
-		if len(body.EncryptionKey) < 16 {
-			return errors.New("encryptionKey param must have a minimal length of 16 chars")
-		}
-		if !body.ValueStructure.Valid() {
-			return errors.New("valueStructure does not contain a valid structure")
-		}
-
 		dbConn := ctx.GetDbConn(c)
 		secret, err := models.GetSecretByKey(dbConn, apiKey.ID, keyParam)
 		if err == mongo.ErrNoDocuments {
@@ -125,10 +118,6 @@ var routeGetSecret = routeBuilder.R{
 		dbConn := ctx.GetDbConn(c)
 		apiKey := ctx.GetAPIKeyFromParam(c)
 		keyParam, encryptionKeyParam := c.Params("key"), c.Params("encryptionKey")
-
-		if len(encryptionKeyParam) < 16 {
-			return errors.New("encryptionKey param must have a minimal length of 16 chars")
-		}
 
 		secret, err := models.GetSecretByKey(dbConn, apiKey.ID, keyParam)
 		if err != nil {

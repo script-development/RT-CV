@@ -140,6 +140,10 @@ func DeleteSecretByKey(conn db.Connection, keyID primitive.ObjectID, key string)
 
 // Decrypt decrypts the value of a secret
 func (secret Secret) Decrypt(key string) (json.RawMessage, error) {
+	if len(key) < 16 {
+		return nil, errors.New("decryptionKey must have a minimal length of 16 chars")
+	}
+
 	bytes, err := base64.URLEncoding.DecodeString(secret.Value)
 	if err != nil {
 		return nil, err
@@ -152,8 +156,14 @@ func (secret *Secret) UpdateValue(value []byte, encryptionKey string, valueStruc
 	if !json.Valid(value) {
 		return errors.New("expected json value")
 	}
+	if !valueStructure.Valid() {
+		return errors.New("valueStructure does not contain a valid structure")
+	}
 	if !valueStructure.ValidateValue(value) {
 		return errors.New("value doesn't match valueStructure")
+	}
+	if len(encryptionKey) < 16 {
+		return errors.New("encryptionKey must have a minimal length of 16 chars")
 	}
 
 	data, err := crypto.Encrypt(value, []byte(encryptionKey))
