@@ -23,21 +23,12 @@ func validKeyMiddleware() routeBuilder.M {
 	}
 }
 
-func validEncryptionKeyMiddleware() routeBuilder.M {
-	return routeBuilder.M{
-		Fn: func(c *fiber.Ctx) error {
-			if len(c.Params("encryptionKey")) < 16 {
-				return errors.New("encryptionKey param must have a minimal length of 16 chars")
-			}
-			return c.Next()
-		},
-	}
-}
-
 // RouteUpdateOrCreateSecret is the post data for the route below
 type RouteUpdateOrCreateSecret struct {
-	Value       json.RawMessage
-	Description string
+	Value          json.RawMessage             `json:"value"`
+	ValueStructure models.SecretValueStructure `json:"valueStructure"`
+	Description    string                      `json:"description"`
+	EncryptionKey  string                      `json:"encryptionKey"`
 }
 
 var routeUpdateOrCreateSecret = routeBuilder.R{
@@ -48,7 +39,7 @@ var routeUpdateOrCreateSecret = routeBuilder.R{
 	Body: RouteUpdateOrCreateSecret{},
 	Fn: func(c *fiber.Ctx) error {
 		apiKey := ctx.GetAPIKeyFromParam(c)
-		keyParam, encryptionKeyParam := c.Params("key"), c.Params("encryptionKey")
+		keyParam := c.Params("key")
 
 		body := RouteUpdateOrCreateSecret{}
 		err := c.BodyParser(&body)
@@ -56,10 +47,28 @@ var routeUpdateOrCreateSecret = routeBuilder.R{
 			return err
 		}
 
+		if len(body.EncryptionKey) < 16 {
+			return errors.New("encryptionKey param must have a minimal length of 16 chars")
+		}
+		if !body.ValueStructure.Valid() {
+			return errors.New("valueStructure does not contain a valid structure")
+		}
+		if !body.ValueStructure.ValidateValue(body.Value) {
+			return errors.New("value doesn't match valueStructure")
+		}
+
 		dbConn := ctx.GetDbConn(c)
 		secret, err := models.GetSecretByKey(dbConn, apiKey.ID, keyParam)
 		if err == mongo.ErrNoDocuments {
-			secret, err := models.CreateSecret(apiKey.ID, keyParam, encryptionKeyParam, body.Value, body.Description)
+			// Secret does not yet exists, create it
+			secret, err := models.CreateSecret(
+				apiKey.ID,
+				keyParam,
+				body.EncryptionKey,
+				body.Value,
+				body.Description,
+				body.ValueStructure,
+			)
 			if err != nil {
 				return err
 			}
@@ -69,7 +78,7 @@ var routeUpdateOrCreateSecret = routeBuilder.R{
 				return err
 			}
 
-			secretValue, err := secret.Decrypt(encryptionKeyParam)
+			secretValue, err := secret.Decrypt(body.EncryptionKey)
 			if err != nil {
 				return err
 			}
@@ -78,20 +87,29 @@ var routeUpdateOrCreateSecret = routeBuilder.R{
 		} else if err != nil {
 			return err
 		} else {
+			// Secret exists
+
 			// check if the key provided is equal to the previous key
-			_, err = secret.Decrypt(encryptionKeyParam)
+			_, err = secret.Decrypt(body.EncryptionKey)
 			if err != nil {
 				return err
 			}
 
-			newSecret, err := models.CreateSecret(apiKey.ID, keyParam, encryptionKeyParam, body.Value, body.Description)
+			newSecret, err := models.CreateSecret(
+				apiKey.ID,
+				keyParam,
+				body.EncryptionKey,
+				body.Value,
+				body.Description,
+				body.ValueStructure,
+			)
 			if err != nil {
 				return err
 			}
 			secret.Value = newSecret.Value
 
 			// just making sure the decryption key still works
-			secretValue, err := secret.Decrypt(encryptionKeyParam)
+			secretValue, err := secret.Decrypt(body.EncryptionKey)
 			if err != nil {
 				return err
 			}
@@ -108,11 +126,19 @@ var routeUpdateOrCreateSecret = routeBuilder.R{
 
 var routeGetSecret = routeBuilder.R{
 	Description: "Get a secret stored for this API Key and key pair",
-	Res:         IMap{},
+	ResMap: map[string]interface{}{
+		"free":  IMap{},
+		"user":  models.SecretValueStructureUserT{},
+		"users": []models.SecretValueStructureUserT{},
+	},
 	Fn: func(c *fiber.Ctx) error {
 		dbConn := ctx.GetDbConn(c)
 		apiKey := ctx.GetAPIKeyFromParam(c)
 		keyParam, encryptionKeyParam := c.Params("key"), c.Params("encryptionKey")
+
+		if len(encryptionKeyParam) < 16 {
+			return errors.New("encryptionKey param must have a minimal length of 16 chars")
+		}
 
 		secret, err := models.GetSecretByKey(dbConn, apiKey.ID, keyParam)
 		if err != nil {
@@ -160,9 +186,14 @@ var routeGetAllSecretsFromAllKeys = routeBuilder.R{
 	},
 }
 
+// RouteDeleteSecretOkRes is the response for the route below
+type RouteDeleteSecretOkRes struct {
+	Status string `json:"status"`
+}
+
 var routeDeleteSecret = routeBuilder.R{
 	Description: "Delete a secret stored in the database",
-	Res:         IMap{},
+	Res:         RouteDeleteSecretOkRes{},
 	Fn: func(c *fiber.Ctx) error {
 		apiKey := ctx.GetAPIKeyFromParam(c)
 		keyParam := c.Params("key")
@@ -171,6 +202,6 @@ var routeDeleteSecret = routeBuilder.R{
 		if err != nil {
 			return err
 		}
-		return c.JSON(IMap{"status": "ok"})
+		return c.JSON(RouteDeleteSecretOkRes{"ok"})
 	},
 }

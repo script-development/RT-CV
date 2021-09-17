@@ -6,12 +6,11 @@ import Person from '@material-ui/icons/Person'
 import Delete from '@material-ui/icons/Delete'
 import PersonAdd from '@material-ui/icons/PersonAdd'
 import React, { useEffect, useMemo, useState } from "react"
-
-export type ValueKind = undefined | 'json' | 'strict-user' | 'strict-users'
+import { SecretValueStructure } from '../../src/types'
 
 interface ModifyValueProps {
-    valueKind: ValueKind
-    setValueKind: (kind: ValueKind) => void
+    valueStructure: SecretValueStructure | undefined
+    setValueStructure: (kind: SecretValueStructure) => void
     value: string
     valueError: string
     setValue: (setter: (prev: string) => string) => void
@@ -19,11 +18,11 @@ interface ModifyValueProps {
 
 export default function ModifyValue(props: ModifyValueProps) {
     const optionsToShow: { [key: string]: any } = {
-        'json': JsonValueKind,
-        'strict-user': StrictUserValueKind,
-        'strict-users': StrictUsersValueKind,
+        [SecretValueStructure.Free]: JsonValueKind,
+        [SecretValueStructure.StrictUser]: StrictUserValueKind,
+        [SecretValueStructure.StrictUsers]: StrictUsersValueKind,
     }
-    const Show = optionsToShow[props.valueKind as string] || ChoseValueKind
+    const Show = optionsToShow[props.valueStructure as string] || ChoseValueStructure
 
     return (
         <div style={{ margin: '10px 0' }}>
@@ -111,6 +110,22 @@ function StrictUsersValueKind({ value, setValue }: ModifyValueProps) {
         if (modified)
             setValue(() => JSON.stringify(users))
     }, [users, modified])
+
+    useEffect(() => {
+        try {
+            const usersFromValue = JSON.parse(value).map((u: any) => {
+                const { username, password } = u
+
+                if (typeof username != 'string' || typeof password != 'string')
+                    throw 'Invalid JSON'
+
+                return { username, password }
+            })
+            setUsers(usersFromValue)
+        } catch (e) {
+            setValue(() => JSON.stringify(users))
+        }
+    }, [])
 
     return (
         <div className="root">
@@ -264,58 +279,66 @@ function JsonValueKind({ value, setValue, valueError }: ModifyValueProps) {
     )
 }
 
-function ChoseValueKind({ setValueKind }: ModifyValueProps) {
+function ChoseValueStructure({ setValueStructure }: ModifyValueProps) {
+    const sides = [
+        {
+            title: 'Strict',
+            info: 'Chose from a set of pre defined layouts so the programs using RT-CV have predictable json responses.',
+            actions: [
+                {
+                    label: 'User',
+                    tooltip: 'Set the value type to be a single user',
+                    icon: <Person />,
+                    structure: SecretValueStructure.StrictUser,
+                },
+                {
+                    label: 'Users',
+                    tooltip: 'Set the value type to be a list of users',
+                    icon: <People />,
+                    structure: SecretValueStructure.StrictUsers,
+                },
+            ],
+        },
+        {
+            title: 'Free input',
+            info: `Free json inputs without any requirements, as long as it's valid json it's ok. This will mean tough that programs using RT-CV also needs to understand the value you put in.`,
+            actions: [
+                {
+                    label: 'Use free input',
+                    tooltip: 'Set the value type to be free json input',
+                    icon: <Code />,
+                    structure: SecretValueStructure.Free,
+                },
+            ],
+        },
+    ]
+
     return (
         <div className="root">
             <DialogContentText>Chose value type</DialogContentText>
             <FormHelperText error>The secret needs a value type to be created</FormHelperText>
             <div className="options">
-                <div>
-                    <h3>Strict</h3>
-                    <div className="info">
-                        <DialogContentText>
-                            Chose from a set of pre defined layouts so the programs using RT-CV have predictable json responses.
-                        </DialogContentText>
+                {sides.map((side, idx) =>
+                    <div key={idx}>
+                        <h3>{side.title}</h3>
+                        <div className="info">
+                            <DialogContentText>{side.info}</DialogContentText>
+                        </div>
+                        <div className="actions">
+                            {side.actions.map((action, actionIdx) =>
+                                <span key={actionIdx}>
+                                    <Tooltip title={action.tooltip}>
+                                        <Button
+                                            variant="outlined"
+                                            startIcon={action.icon}
+                                            onClick={() => setValueStructure(action.structure)}
+                                        >{action.label}</Button>
+                                    </Tooltip>
+                                </span>
+                            )}
+                        </div>
                     </div>
-                    <div className="actions">
-                        <span>
-                            <Tooltip title="Set the value type to be a single user">
-                                <Button
-                                    variant="outlined"
-                                    startIcon={<Person />}
-                                    onClick={() => setValueKind('strict-user')}
-                                >User</Button>
-                            </Tooltip>
-                        </span>
-                        <span>
-                            <Tooltip title="Set the value type to be a list of users">
-                                <Button
-                                    variant="outlined"
-                                    startIcon={<People />}
-                                    onClick={() => setValueKind('strict-users')}
-                                >Users</Button>
-                            </Tooltip>
-                        </span>
-                    </div>
-                </div>
-                <div>
-                    <h3>Free input</h3>
-                    <div className="info">
-                        <DialogContentText>
-                            Free json inputs without any requirements, as long as it's valid json it's ok.<br />
-                            This will mean tough that programs using RT-CV also needs to understand the value you put in.
-                        </DialogContentText>
-                    </div>
-                    <div className="actions">
-                        <span>
-                            <Button
-                                variant="outlined"
-                                startIcon={<Code />}
-                                onClick={() => setValueKind('json')}
-                            >Use free input</Button>
-                        </span>
-                    </div>
-                </div>
+                )}
             </div>
             <style jsx>{`
                 .options {

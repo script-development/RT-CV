@@ -154,13 +154,15 @@ func NewMockDB() *testingdb.TestConnection {
 			"very-secret-key-of-more-than-16-chars",
 			[]byte(`{"foo": 1}`),
 			"test secret 1 from mock data",
+			models.SecretValueStructureFree,
 		),
 		models.UnsafeMustCreateSecret(
 			Key2.ID,
 			"bar",
 			"very-secret-key-of-more-than-16-chars",
-			[]byte(`{"bar": 2}`),
+			[]byte(`{"username": "foo", "password": "bar"}`),
 			"test secret 2 from mock data",
+			models.SecretValueStructureUser,
 		),
 	)
 

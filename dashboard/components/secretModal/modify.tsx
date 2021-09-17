@@ -18,15 +18,17 @@ import { ApiKey } from '../../src/types'
 import { getKeys } from '../../src/auth'
 import ModifyValue from './modifyValue'
 
-interface CreateProps {
+interface ModifyProps {
     state: ModifyState
     setState: Dispatch<SetStateAction<ModifyState>>
+    create?: boolean
 }
 
-export default function Create({
+export default function Modify({
     state,
     setState,
-}: CreateProps) {
+    create,
+}: ModifyProps) {
     const [apiKeys, setApiKeys] = useState<undefined | Array<ApiKey>>(undefined)
 
     useEffect(() => {
@@ -34,7 +36,12 @@ export default function Create({
             const enabledKeys = keys.filter(key => key.enabled)
             const selectedKeyId = enabledKeys[0].id
 
-            setState(s => ({ ...s, selectedKeyId }))
+            setState(s => {
+                if (s.selectedKeyId)
+                    return s
+                else
+                    return ({ ...s, selectedKeyId })
+            })
             setApiKeys(enabledKeys)
         })
     }, [])
@@ -48,7 +55,6 @@ export default function Create({
             </DialogContentText>
 
             <div className="apiKeyAndKey">
-
                 <FormControl fullWidth variant="filled">
                     <InputLabel htmlFor="secret-key-id">Api key</InputLabel>
 
@@ -64,6 +70,7 @@ export default function Create({
                             </MenuItem>
                         </Select>
                         : <Select
+                            disabled={!create}
                             value={state.selectedKeyId}
                             onChange={(id: any) => setState(s => ({ ...s, selectedId: id.target.value }))}
                             id="secret-key-id"
@@ -91,6 +98,7 @@ export default function Create({
                     variant="filled"
                     helperText="the secret identifier used to access the key"
                     fullWidth
+                    disabled={!create}
                 />
             </div>
 
@@ -145,8 +153,8 @@ export default function Create({
             </div>
 
             <ModifyValue
-                valueKind={state.valueKind}
-                setValueKind={newValueKind => setState(s => ({ ...s, valueKind: newValueKind }))}
+                valueStructure={state.valueStructure}
+                setValueStructure={ValueStructure => setState(s => ({ ...s, valueStructure: ValueStructure }))}
                 value={state.value}
                 setValue={(setter) => setState(currentState => {
                     const value = setter(currentState.value)

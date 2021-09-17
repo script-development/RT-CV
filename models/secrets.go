@@ -11,14 +11,57 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+// SecretValueStructure tells what the structure of the encrypted data is
+type SecretValueStructure string
+
+const (
+	// SecretValueStructureFree contains no value structure requirement it's up to the user
+	SecretValueStructureFree = SecretValueStructure("free")
+	// SecretValueStructureUser contains a username & password combo
+	SecretValueStructureUser = SecretValueStructure("strict-user")
+	// SecretValueStructureUsers contains a list of usernames and passwords
+	SecretValueStructureUsers = SecretValueStructure("strict-users")
+)
+
+// Valid returns weather s is a valid structure
+func (s SecretValueStructure) Valid() bool {
+	switch s {
+	case SecretValueStructureFree, SecretValueStructureUser, SecretValueStructureUsers:
+		return true
+	default:
+		return false
+	}
+}
+
+// SecretValueStructureUserT is the data structure for SecretValueStructureUser
+type SecretValueStructureUserT struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+// ValidateValue validates value agains the s it's structure
+func (s SecretValueStructure) ValidateValue(value []byte) bool {
+	switch s {
+	case SecretValueStructureFree:
+		return true
+	case SecretValueStructureUser:
+		return json.Unmarshal(value, &SecretValueStructureUserT{}) == nil
+	case SecretValueStructureUsers:
+		return json.Unmarshal(value, &[]SecretValueStructureUserT{}) == nil
+	default:
+		return false
+	}
+}
+
 // Secret contains a secret value that can be stored in the database by a api user
 // The secret value is encrypted with a key that is not stored on our side and is controlled by the api user
 type Secret struct {
-	db.M        `bson:",inline"`
-	KeyID       primitive.ObjectID `bson:"keyId" json:"keyId"`
-	Key         string             `json:"key"`
-	Value       string             `json:"-"`
-	Description string             `json:"description"`
+	db.M           `bson:",inline"`
+	KeyID          primitive.ObjectID   `bson:"keyId" json:"keyId"`
+	Key            string               `json:"key"`
+	Value          string               `json:"-"`
+	Description    string               `json:"description"`
+	ValueStructure SecretValueStructure `json:"valueStructure"`
 }
 
 // CollectionName returns the collection name of a secret
@@ -27,7 +70,14 @@ func (*Secret) CollectionName() string {
 }
 
 // CreateSecret creates a secret
-func CreateSecret(keyID primitive.ObjectID, key string, encryptionKey string, value []byte, description string) (*Secret, error) {
+func CreateSecret(
+	keyID primitive.ObjectID,
+	key string,
+	encryptionKey string,
+	value []byte,
+	description string,
+	valueStructure SecretValueStructure,
+) (*Secret, error) {
 	data, err := crypto.Encrypt(value, []byte(encryptionKey))
 	if err != nil {
 		return nil, err
@@ -36,17 +86,25 @@ func CreateSecret(keyID primitive.ObjectID, key string, encryptionKey string, va
 		return nil, errors.New("expected json value")
 	}
 	return &Secret{
-		M:           db.NewM(),
-		KeyID:       keyID,
-		Key:         key,
-		Value:       base64.URLEncoding.EncodeToString(data),
-		Description: description,
+		M:              db.NewM(),
+		KeyID:          keyID,
+		Key:            key,
+		Value:          base64.URLEncoding.EncodeToString(data),
+		Description:    description,
+		ValueStructure: valueStructure,
 	}, nil
 }
 
 // UnsafeMustCreateSecret Creates a secret and panics if an error is returned
-func UnsafeMustCreateSecret(keyID primitive.ObjectID, key string, encryptionKey string, value []byte, description string) *Secret {
-	s, err := CreateSecret(keyID, key, encryptionKey, value, description)
+func UnsafeMustCreateSecret(
+	keyID primitive.ObjectID,
+	key string,
+	encryptionKey string,
+	value []byte,
+	description string,
+	valueStructure SecretValueStructure,
+) *Secret {
+	s, err := CreateSecret(keyID, key, encryptionKey, value, description, valueStructure)
 	if err != nil {
 		panic(err)
 	}

@@ -1,28 +1,29 @@
 import {
     DialogContentText,
     TextField,
+    Button,
 } from '@material-ui/core'
+import Edit from '@material-ui/icons/Edit'
 import dynamic from 'next/dynamic'
 import React, { useState, useEffect } from 'react'
 import { fetcher } from '../../src/auth'
 import { Modal, ModalKind } from '../modal'
-import Create from './create'
-import { ValueKind } from './modifyValue'
+import Create from './modify'
+import { SecretValueStructure } from '../../src/types'
 import { SecretModalProps } from './secretModalProps'
 
 const SyntaxHighlighter = dynamic(
     () => import('react-syntax-highlighter'),
-    {
-        ssr: false,
-    },
+    { ssr: false },
 )
 
-let syntaxHighlighterStyle: any = undefined
+let syntaxHighlighterStyleCache: any = undefined
 
 export interface ModifyState {
+    id: string
     key: string
     description: string
-    valueKind: ValueKind
+    valueStructure: SecretValueStructure | undefined
     value: string
     valueError: string
     selectedKeyId: string
@@ -30,34 +31,43 @@ export interface ModifyState {
     decryptionKeyError: string
 }
 
-export function SecretModal({ kind, onClose: onCloseArg, secret }: SecretModalProps) {
+export function SecretModal({ kind, setKind, onClose: onCloseArg, secret }: SecretModalProps) {
     const [apiError, setApiError] = useState('')
 
+    const [syntaxHighlighterStyle, setSyntaxHighlighterStyle] = useState<any>(syntaxHighlighterStyleCache)
     const [modifyState, setModifyState] = useState<ModifyState>({
+        id: '',
         key: '',
         description: '',
-        valueKind: undefined,
+        valueStructure: undefined,
         value: '',
         valueError: '',
         selectedKeyId: '',
         decryptionKey: '',
         decryptionKeyError: 'encryption key value must have a minimal length of 16 chars',
     })
+
     const [viewState, setViewState] = useState({
         value: undefined as any,
         decryptionKey: '',
     })
 
     const canSubmit = kind == ModalKind.Create ?
-        !modifyState.valueError && !modifyState.decryptionKeyError && modifyState.selectedKeyId && modifyState.key && modifyState.decryptionKey
+        !modifyState.valueError
+        && !modifyState.decryptionKeyError
+        && modifyState.selectedKeyId
+        && modifyState.key
+        && modifyState.decryptionKey
+        && modifyState.valueStructure !== undefined
         : true
 
     const onClose = () => {
         setApiError('')
         setModifyState({
+            id: '',
             key: '',
             description: '',
-            valueKind: undefined,
+            valueStructure: undefined,
             value: '',
             valueError: '',
             selectedKeyId: '',
@@ -76,17 +86,32 @@ export function SecretModal({ kind, onClose: onCloseArg, secret }: SecretModalPr
                 // Load the styles
                 import('react-syntax-highlighter/dist/esm/styles/hljs'),
             ])
-            syntaxHighlighterStyle = styles.monokaiSublime
+
+            syntaxHighlighterStyleCache = styles.monokaiSublime
+            setSyntaxHighlighterStyle(styles.monokaiSublime)
         } catch (e: any) {
             console.log(e)
         }
     }
 
     useEffect(() => {
-        if (kind != ModalKind.Closed && syntaxHighlighterStyle === undefined)
+        if (kind == ModalKind.View && syntaxHighlighterStyle === undefined)
             // When the modal is opened start pre-loading the highlighter
             loadReactSyntaxHighlighter()
-    }, [kind])
+
+        if (kind == ModalKind.Edit && secret?.id != modifyState.id)
+            setModifyState(s => ({
+                ...s,
+                id: secret?.id || '',
+                key: secret?.key || '',
+                selectedKeyId: secret?.keyId || '',
+                description: secret?.description || '',
+                valueStructure: secret?.valueStructure,
+                value: JSON.stringify(viewState.value),
+                decryptionKey: viewState.decryptionKey,
+                decryptionKeyError: '',
+            }))
+    }, [kind, secret])
 
     const submit = async () => {
         try {
@@ -97,12 +122,15 @@ export function SecretModal({ kind, onClose: onCloseArg, secret }: SecretModalPr
                     )
                     setViewState(s => ({ ...s, value }))
                     break
+                case ModalKind.Edit:
                 case ModalKind.Create:
-                    await fetcher.post(
-                        `/api/v1/secrets/otherKey/${modifyState.selectedKeyId}/${modifyState.key}/${modifyState.decryptionKey}`,
+                    await fetcher.put(
+                        `/api/v1/secrets/otherKey/${modifyState.selectedKeyId}/${modifyState.key}`,
                         {
                             value: JSON.parse(modifyState.value),
+                            valueStructure: modifyState.valueStructure,
                             description: modifyState.description,
+                            encryptionKey: modifyState.decryptionKey,
                         },
                     )
                     onClose()
@@ -111,10 +139,6 @@ export function SecretModal({ kind, onClose: onCloseArg, secret }: SecretModalPr
                     await fetcher.delete(
                         `/api/v1/secrets/otherKey/${secret?.keyId}/${secret?.key}`,
                     )
-                    onClose()
-                    break
-                case ModalKind.Edit:
-                    // TODO
                     onClose()
                     break
             }
@@ -155,23 +179,32 @@ export function SecretModal({ kind, onClose: onCloseArg, secret }: SecretModalPr
                 )
             else if (kind == ModalKind.View)
                 if (viewState.value)
-                    if (syntaxHighlighterStyle)
-                        return (<div className="code">
-                            <SyntaxHighlighter
-                                wrapLongLines={true}
-                                language="json"
-                                style={syntaxHighlighterStyle}
-                            >{JSON.stringify(viewState.value, null, 4)}</SyntaxHighlighter>
-
+                    return (
+                        <div>
+                            <Button
+                                variant="outlined"
+                                startIcon={<Edit />}
+                                onClick={() => setKind(ModalKind.Edit)}
+                            >Edit</Button>
+                            <div className="code">
+                                {syntaxHighlighterStyle
+                                    ? <SyntaxHighlighter
+                                        wrapLongLines={true}
+                                        language="json"
+                                        style={syntaxHighlighterStyle}
+                                    >{JSON.stringify(viewState.value, null, 4)}</SyntaxHighlighter>
+                                    : 'Loading...'
+                                }
+                            </div>
                             <style jsx>{`
                                 .code {
+                                    margin-top: 10px;
                                     overflow: hidden;
                                     border-radius: 4px;
                                 }
                             `}</style>
-                        </div>)
-                    else
-                        return (<>Loading...</>)
+                        </div>
+                    )
                 else
                     return (<div>
                         <DialogContentText>
@@ -186,11 +219,12 @@ export function SecretModal({ kind, onClose: onCloseArg, secret }: SecretModalPr
                             fullWidth
                         />
                     </div>)
-            else if (kind == ModalKind.Create)
+            else if (kind == ModalKind.Create || kind == ModalKind.Edit)
                 return (
                     <Create
                         state={modifyState}
                         setState={setModifyState}
+                        create={kind == ModalKind.Create}
                     />
                 )
             else

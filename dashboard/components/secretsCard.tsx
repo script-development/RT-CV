@@ -59,6 +59,7 @@ export default function SecretsCard({ }: SecretsCardArgs) {
         >
             <SecretModal
                 kind={modal.kind}
+                setKind={kind => setModal(s => ({ ...s, kind }))}
                 secret={modal.secret}
                 onClose={() => {
                     setModal({ kind: ModalKind.Closed, secret: undefined })

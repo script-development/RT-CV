@@ -122,8 +122,11 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 			allTags := []routeBuilder.Tag{}
 
 			for _, route := range r.Routes() {
+				responsesMap := IMap{
+					"error": errResponse,
+				}
+
 				// Create the response value
-				responseContent := IMap{}
 				if route.Info.Res != nil {
 					schemaValue, err := schema.From(
 						route.Info.Res,
@@ -140,22 +143,56 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 					if err != nil {
 						return err
 					}
-					responseContent["schema"] = schemaValue
-				}
-				okResponse := IMap{
-					"description": "response",
-					"content": IMap{
-						route.ResponseContentType.String(): responseContent,
-					},
+
+					responsesMap["200"] = IMap{
+						"description": "response",
+						"content": IMap{
+							route.ResponseContentType.String(): IMap{
+								"schema": schemaValue,
+							},
+						},
+					}
+				} else if route.Info.ResMap != nil {
+					for key, value := range route.Info.ResMap {
+						content := IMap{}
+						if value != nil {
+							schemaValue, err := schema.From(
+								value,
+								"#/components/schemas/",
+								func(key string, value schema.Property) {
+									componentsSchema[key] = value
+								},
+								func(key string) bool {
+									_, ok := componentsSchema[key]
+									return ok
+								},
+								nil,
+							)
+							if err != nil {
+								return err
+							}
+							content["schema"] = schemaValue
+						}
+						responsesMap[key] = IMap{
+							"description": "response",
+							"content": IMap{
+								route.ResponseContentType.String(): content,
+							},
+						}
+					}
+				} else {
+					responsesMap["200"] = IMap{
+						"description": "response",
+						"content": IMap{
+							route.ResponseContentType.String(): IMap{},
+						},
+					}
 				}
 
 				// Create the actual information about this route's method
 				routeInfo := IMap{
-					"summary": strings.TrimPrefix(route.OpenAPIPath, "/api/v1"),
-					"responses": IMap{
-						"200":     okResponse,
-						"default": errResponse,
-					},
+					"summary":   strings.TrimPrefix(route.OpenAPIPath, "/api/v1"),
+					"responses": responsesMap,
 				}
 				if route.Info.Description != "" {
 					routeInfo["description"] = route.Info.Description

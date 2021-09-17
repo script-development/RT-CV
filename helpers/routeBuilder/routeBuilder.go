@@ -20,7 +20,10 @@ type R struct {
 	Description string
 	// Res gives the routes
 	Res interface{}
-	Fn  func(c *fiber.Ctx) error
+	// OR use res map if there are multiple possible responses
+	ResMap map[string]interface{}
+
+	Fn func(c *fiber.Ctx) error
 
 	// Optional
 	// Body can be set to hint the route builder what kind of body this request expects
@@ -38,8 +41,8 @@ func (r R) check() {
 	if r.Description == "" {
 		panic("routeBuilder.R description cannot be empty")
 	}
-	if r.Res == nil {
-		panic("routeBuilder.Res must be defined")
+	if r.Res == nil && r.ResMap == nil {
+		panic("routeBuilder.Res or routeBuilder.ResMap must be defined")
 	}
 	if r.Fn == nil {
 		panic("routeBuilder.Fn must be defined")

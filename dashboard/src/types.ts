@@ -12,6 +12,13 @@ export interface Secret {
     keyId: string
     key: string
     description: string
+    valueStructure: SecretValueStructure
+}
+
+export enum SecretValueStructure {
+    Free = 'free',
+    StrictUser = 'strict-user',
+    StrictUsers = 'strict-users',
 }
 
 export interface Match {
