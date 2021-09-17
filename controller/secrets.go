@@ -53,9 +53,6 @@ var routeUpdateOrCreateSecret = routeBuilder.R{
 		if !body.ValueStructure.Valid() {
 			return errors.New("valueStructure does not contain a valid structure")
 		}
-		if !body.ValueStructure.ValidateValue(body.Value) {
-			return errors.New("value doesn't match valueStructure")
-		}
 
 		dbConn := ctx.GetDbConn(c)
 		secret, err := models.GetSecretByKey(dbConn, apiKey.ID, keyParam)
@@ -95,21 +92,10 @@ var routeUpdateOrCreateSecret = routeBuilder.R{
 				return err
 			}
 
-			// TODO we create a full new secret only to copy it's value into the already existing one
-			// Might be better to have a method on the secret to update it's value
-			newSecret, err := models.CreateSecret(
-				apiKey.ID,
-				keyParam,
-				body.EncryptionKey,
-				body.Value,
-				body.Description,
-				body.ValueStructure,
-			)
+			err := secret.UpdateValue(body.Value, body.EncryptionKey, body.ValueStructure)
 			if err != nil {
 				return err
 			}
-			secret.Value = newSecret.Value
-			secret.ValueStructure = body.ValueStructure
 			secret.Description = body.Description
 
 			// just making sure the decryption key still works

@@ -78,21 +78,14 @@ func CreateSecret(
 	description string,
 	valueStructure SecretValueStructure,
 ) (*Secret, error) {
-	data, err := crypto.Encrypt(value, []byte(encryptionKey))
-	if err != nil {
-		return nil, err
+	secret := &Secret{
+		M:           db.NewM(),
+		KeyID:       keyID,
+		Key:         key,
+		Description: description,
 	}
-	if !json.Valid(value) {
-		return nil, errors.New("expected json value")
-	}
-	return &Secret{
-		M:              db.NewM(),
-		KeyID:          keyID,
-		Key:            key,
-		Value:          base64.URLEncoding.EncodeToString(data),
-		Description:    description,
-		ValueStructure: valueStructure,
-	}, nil
+	err := secret.UpdateValue(value, encryptionKey, valueStructure)
+	return secret, err
 }
 
 // UnsafeMustCreateSecret Creates a secret and panics if an error is returned
@@ -109,15 +102,6 @@ func UnsafeMustCreateSecret(
 		panic(err)
 	}
 	return s
-}
-
-// Decrypt decrypts the value of a secret
-func (secret Secret) Decrypt(key string) (json.RawMessage, error) {
-	bytes, err := base64.URLEncoding.DecodeString(secret.Value)
-	if err != nil {
-		return nil, err
-	}
-	return crypto.Decrypt(bytes, []byte(key))
 }
 
 // GetSecretByKey gets a secret
@@ -152,4 +136,31 @@ func DeleteSecretByKey(conn db.Connection, keyID primitive.ObjectID, key string)
 	}
 
 	return conn.DeleteByID(secret)
+}
+
+// Decrypt decrypts the value of a secret
+func (secret Secret) Decrypt(key string) (json.RawMessage, error) {
+	bytes, err := base64.URLEncoding.DecodeString(secret.Value)
+	if err != nil {
+		return nil, err
+	}
+	return crypto.Decrypt(bytes, []byte(key))
+}
+
+// UpdateValue updates the value field to a new json value
+func (secret *Secret) UpdateValue(value []byte, encryptionKey string, valueStructure SecretValueStructure) error {
+	if !json.Valid(value) {
+		return errors.New("expected json value")
+	}
+	if !valueStructure.ValidateValue(value) {
+		return errors.New("value doesn't match valueStructure")
+	}
+
+	data, err := crypto.Encrypt(value, []byte(encryptionKey))
+	if err != nil {
+		return err
+	}
+	secret.Value = base64.URLEncoding.EncodeToString(data)
+	secret.ValueStructure = valueStructure
+	return nil
 }
