@@ -72,7 +72,7 @@ export default function Modify({
                         : <Select
                             disabled={!create}
                             value={state.selectedKeyId}
-                            onChange={(id: any) => setState(s => ({ ...s, selectedId: id.target.value }))}
+                            onChange={(id: any) => setState(s => ({ ...s, selectedKeyId: id.target.value }))}
                             id="secret-key-id"
                         >
                             {apiKeys?.reduce((acc: Array<any>, key: ApiKey) => {
