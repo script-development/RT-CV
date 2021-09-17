@@ -95,6 +95,8 @@ var routeUpdateOrCreateSecret = routeBuilder.R{
 				return err
 			}
 
+			// TODO we create a full new secret only to copy it's value into the already existing one
+			// Might be better to have a method on the secret to update it's value
 			newSecret, err := models.CreateSecret(
 				apiKey.ID,
 				keyParam,
@@ -107,6 +109,8 @@ var routeUpdateOrCreateSecret = routeBuilder.R{
 				return err
 			}
 			secret.Value = newSecret.Value
+			secret.ValueStructure = body.ValueStructure
+			secret.Description = body.Description
 
 			// just making sure the decryption key still works
 			secretValue, err := secret.Decrypt(body.EncryptionKey)
