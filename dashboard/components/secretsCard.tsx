@@ -2,9 +2,12 @@ import { Breadcrumbs, Button, ButtonGroup, Tooltip } from '@material-ui/core'
 import Add from '@material-ui/icons/Add'
 import Delete from '@material-ui/icons/Delete'
 import Visibility from '@material-ui/icons/Visibility'
+import Person from '@material-ui/icons/Person'
+import People from '@material-ui/icons/People'
+import Code from '@material-ui/icons/Code'
 import React, { useState, useEffect } from 'react'
 import { fetcher } from '../src/auth'
-import { Secret } from '../src/types'
+import { SecretValueStructure, Secret } from '../src/types'
 import Card from './card'
 import { ModalKind } from './modal'
 import Dynamic from 'next/dynamic'
@@ -69,14 +72,25 @@ export default function SecretsCard({ }: SecretsCardArgs) {
 
             {secrets?.map((secret, idx) =>
                 <div key={secret.id} className={"simpleRow" + (secrets.length == (idx + 1) ? ' last' : '')}>
-                    <div className="secretIdentifier">
-                        <Breadcrumbs>
-                            <p>{secret.keyId}</p>
-                            <b style={{ color: "white" }}>{secret.key}</b>
-                        </Breadcrumbs>
-                        {secret.description ? <p className="description">{secret.description}</p> : undefined}
+                    <div className="side">
+                        <div>
+                            {
+                                secret.valueStructure == SecretValueStructure.StrictUser
+                                    ? <Tooltip title="Contains a single user"><Person fontSize='small' /></Tooltip>
+                                    : secret.valueStructure == SecretValueStructure.StrictUsers
+                                        ? <Tooltip title="Contains multiple user"><People fontSize='small' /></Tooltip>
+                                        : <Tooltip title="Contains unknown json value"><Code fontSize='small' /></Tooltip>
+                            }
+                        </div>
+                        <div className="secretIdentifier">
+                            <Breadcrumbs>
+                                <p>{secret.keyId}</p>
+                                <b style={{ color: "white" }}>{secret.key}</b>
+                            </Breadcrumbs>
+                            {secret.description ? <p className="description">{secret.description}</p> : undefined}
+                        </div>
                     </div>
-                    <div>
+                    <div className="side">
                         <Tooltip title="View secret contents">
                             <Button onClick={() => setModal({ kind: ModalKind.View, secret: secret })}>
                                 <Visibility fontSize="small" />
@@ -96,14 +110,21 @@ export default function SecretsCard({ }: SecretsCardArgs) {
 					border-top: 1px solid rgba(255, 255, 255, 0.12);
 					background-color: #424242;
 					padding: 10px;
-					display: flex;
+                    display: flex;
 					justify-content: space-between;
 					align-items: center;
+                }
+                .simpleRow .side:first-child {
+					display: flex;
+                    align-items: center;
 				}
 				.simpleRow.last {
 					border-bottom-left-radius: 4px;
 					border-bottom-right-radius: 4px;
 				}
+                .secretIdentifier {
+                    padding-left: 15px;
+                }
 				.secretIdentifier .description {
 					color: rgba(255, 255, 255, .8);
 				}
