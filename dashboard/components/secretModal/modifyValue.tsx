@@ -1,11 +1,11 @@
-import { Button, DialogContentText, TextField, Tooltip, FormHelperText } from "@material-ui/core"
+import { Button, DialogContentText, TextField, Tooltip, FormHelperText, FormControlLabel, Switch } from "@material-ui/core"
 import FormatIndentIncrease from "@material-ui/icons/FormatIndentIncrease"
 import Code from '@material-ui/icons/Code'
 import People from '@material-ui/icons/People'
 import Person from '@material-ui/icons/Person'
 import Delete from '@material-ui/icons/Delete'
 import PersonAdd from '@material-ui/icons/PersonAdd'
-import React, { useEffect, useMemo, useState } from "react"
+import React, { ReactNode, useEffect, useMemo, useState } from "react"
 import { SecretValueStructure } from '../../src/types'
 
 interface ModifyValueProps {
@@ -31,30 +31,109 @@ export default function ModifyValue(props: ModifyValueProps) {
     )
 }
 
-function StrictUserValueKind({ value, setValue }: ModifyValueProps) {
-    const [user, setUser] = useState({ username: '', password: '', edited: true })
+interface PrettyValueEditorContainerProps {
+    children: ReactNode
+    label: string
+    value: string
+    valueError: string
+    setValue: (setter: (prev: string) => string) => void
+    onJsonSwitched?: (newJsonValue: boolean) => void
+}
+
+function PrettyValueEditorContainer({ children, label, value, setValue, valueError, onJsonSwitched }: PrettyValueEditorContainerProps) {
+    const [useJson, setUseJson] = useState(false)
 
     useEffect(() => {
-        if (value && !user.username && !user.password) {
-            try {
-                const { username, password } = JSON.parse(value)
+        onJsonSwitched?.(useJson)
+    }, [useJson])
 
-                if (typeof username != 'string' || typeof password != 'string')
-                    throw new Error('Invalid JSON')
+    return (
+        <div className="root">
+            <div className="labelAndJsonSwitch">
+                <DialogContentText>{label}</DialogContentText>
 
-                setUser(u => ({ username, password, edited: u.edited }))
-            } catch (e) { }
-        }
+                <FormControlLabel
+                    disabled={!!valueError}
+                    control={<Switch checked={useJson} onChange={() => setUseJson(v => !v)} />}
+                    label="JSON"
+                    labelPlacement="start"
+                />
+            </div>
+
+            {useJson
+                ? <JsonValueKind value={value} setValue={setValue} valueError={valueError} />
+                : <>
+                    {children}
+
+                    <div className="valueToBeStored">
+                        <DialogContentText>Data that will be stored:</DialogContentText>
+                        <pre className="value">{value}</pre>
+                    </div>
+                </>
+            }
+            <style jsx>{`
+                .labelAndJsonSwitch {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding-bottom: 10px;
+                    padding-right: 15px;
+                }
+                .root {
+                    border: 2px solid rgba(255, 255, 255, 0.15);
+                    padding: 10px;
+                    border-radius: 6px;
+                }
+                .valueToBeStored {
+                    margin-top: 10px;
+                }
+                .value {
+                    background-color: rgba(255, 255, 255, 0.09);
+                    color: rgba(255,255,255,0.6);
+                    padding: 10px;
+                    border-radius: 4px;
+                    font-size: 16px;
+                    font-family:Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;
+                }
+            `}</style>
+        </div>
+    )
+}
+
+function StrictUserValueKind({ value, valueError, setValue }: ModifyValueProps) {
+    const [user, setUser] = useState({ username: '', password: '', edited: true })
+
+    const setUserFromValue = (value: string) => {
+        try {
+            const { username, password } = JSON.parse(value)
+
+            if (typeof username != 'string' || typeof password != 'string')
+                throw new Error('Invalid JSON')
+
+            setUser(u => ({ username, password, edited: u.edited }))
+        } catch (e) { }
+    }
+
+    useEffect(() => {
+        if (value && !user.username && !user.password) setUserFromValue(value)
     }, [value])
 
     useEffect(() => {
         if (user.edited)
-            setValue(() => JSON.stringify({ username: user.username, password: user.password }))
+            setValue(() => JSON.stringify({ username: user.username, password: user.password }, null, 2))
     }, [user])
 
     return (
-        <div className="root">
-            <DialogContentText>User:</DialogContentText>
+        <PrettyValueEditorContainer
+            label="User:"
+            value={value}
+            setValue={setValue}
+            valueError={valueError}
+            onJsonSwitched={jsonView => {
+                // Update the user object once we switch back from the raw json input
+                if (!jsonView) setUserFromValue(value)
+            }}
+        >
             <div className="inputs">
                 <div>
                     <TextField
@@ -81,13 +160,7 @@ function StrictUserValueKind({ value, setValue }: ModifyValueProps) {
                     />
                 </div>
             </div>
-            <ValueToBeStored value={value} />
             <style jsx>{`
-                .root {
-                    border: 2px solid rgba(255, 255, 255, 0.15);
-                    padding: 10px;
-                    border-radius: 6px;
-                }
                 .inputs {
                     display: flex;
                 }
@@ -98,20 +171,20 @@ function StrictUserValueKind({ value, setValue }: ModifyValueProps) {
                     margin-right: 10px;
                 }
             `}</style>
-        </div>
+        </PrettyValueEditorContainer>
     )
 }
 
-function StrictUsersValueKind({ value, setValue }: ModifyValueProps) {
+function StrictUsersValueKind({ value, valueError, setValue }: ModifyValueProps) {
     const [users, setUsers] = useState([{ username: '', password: '' }])
     const [modified, setModified] = useState(false)
 
     useEffect(() => {
         if (modified)
-            setValue(() => JSON.stringify(users))
+            setValue(() => JSON.stringify(users, null, 2))
     }, [users, modified])
 
-    useEffect(() => {
+    const setUsersFromValue = (value: string) => {
         try {
             const usersFromValue = JSON.parse(value).map((u: any) => {
                 const { username, password } = u
@@ -123,13 +196,25 @@ function StrictUsersValueKind({ value, setValue }: ModifyValueProps) {
             })
             setUsers(usersFromValue)
         } catch (e) {
-            setValue(() => JSON.stringify(users))
+            setValue(() => JSON.stringify(users, null, 2))
         }
+    }
+
+    useEffect(() => {
+        setUsersFromValue(value)
     }, [])
 
     return (
-        <div className="root">
-            <DialogContentText>Users:</DialogContentText>
+        <PrettyValueEditorContainer
+            label="Users:"
+            value={value}
+            setValue={setValue}
+            valueError={valueError}
+            onJsonSwitched={jsonView => {
+                // Update the users array once we switch back from the raw json input
+                if (!jsonView) setUsersFromValue(value)
+            }}
+        >
             <div className="inputs">
                 {users.map((user, idx) =>
                     <div className="row" key={idx}>
@@ -187,13 +272,7 @@ function StrictUsersValueKind({ value, setValue }: ModifyValueProps) {
                     ><PersonAdd fontSize="small" /></Button>
                 </div>
             </div>
-            <ValueToBeStored value={value} />
             <style jsx>{`
-                .root {
-                    border: 2px solid rgba(255, 255, 255, 0.15);
-                    padding: 10px;
-                    border-radius: 6px;
-                }
                 .inputs .row {
                     display: flex;
                     align-items: center;
@@ -211,35 +290,17 @@ function StrictUsersValueKind({ value, setValue }: ModifyValueProps) {
                     justify-content: flex-end;
                 }
             `}</style>
-        </div>
+        </PrettyValueEditorContainer>
     )
 }
 
-function ValueToBeStored({ value }: { value: string }) {
-    const formattedValue = useMemo(() => JSON.stringify(JSON.parse(value || 'null'), null, 2), [value])
-
-    return (
-        <div className="root">
-            <DialogContentText>Data that will be stored:</DialogContentText>
-            <pre className="value">{formattedValue}</pre>
-            <style jsx>{`
-                .root {
-                    margin-top: 10px;
-                }
-                .root .value {
-                    background-color: rgba(255, 255, 255, 0.09);
-                    color: rgba(255,255,255,0.6);
-                    padding: 10px;
-                    border-radius: 4px;
-                    font-size: 16px;
-                    font-family:Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;
-                }
-            `}</style>
-        </div>
-    )
+interface JsonValueKindProps {
+    value: string
+    valueError: string
+    setValue: (setter: (prev: string) => string) => void
 }
 
-function JsonValueKind({ value, setValue, valueError }: ModifyValueProps) {
+function JsonValueKind({ value, setValue, valueError }: JsonValueKindProps) {
     return (
         <div className="root">
             <TextField

@@ -52,7 +52,7 @@ export function SecretModal({ kind, setKind, onClose: onCloseArg, secret }: Secr
         decryptionKey: '',
     })
 
-    const canSubmit = kind == ModalKind.Create ?
+    const canSubmit = (kind == ModalKind.Create || kind == ModalKind.Edit) ?
         !modifyState.valueError
         && !modifyState.decryptionKeyError
         && modifyState.selectedKeyId
