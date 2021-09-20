@@ -2,6 +2,7 @@ import {
     DialogContentText,
     TextField,
     Button,
+    Breadcrumbs,
 } from '@material-ui/core'
 import Edit from '@material-ui/icons/Edit'
 import dynamic from 'next/dynamic'
@@ -181,6 +182,14 @@ export function SecretModal({ kind, setKind, onClose: onCloseArg, secret }: Secr
                 if (viewState.value)
                     return (
                         <div>
+                            <div className="info">
+                                <Breadcrumbs>
+                                    <p>{secret?.keyId}</p>
+                                    <b style={{ color: "white" }}>{secret?.key}</b>
+                                </Breadcrumbs>
+                                {secret?.description ? <DialogContentText>{secret?.description}</DialogContentText> : undefined}
+                            </div>
+
                             <Button
                                 variant="outlined"
                                 startIcon={<Edit />}
@@ -197,6 +206,9 @@ export function SecretModal({ kind, setKind, onClose: onCloseArg, secret }: Secr
                                 }
                             </div>
                             <style jsx>{`
+                                .info {
+                                    margin-bottom: 10px;
+                                }
                                 .code {
                                     margin-top: 10px;
                                     overflow: hidden;
