@@ -35,6 +35,7 @@ export default function MatcherEditor({ expose, height, top }: MatcherEditorProp
     const handleInputEditorWillMount = (monaco: any) => {
         monaco.editor.defineTheme('monokai', Monokai)
         monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+            allowComments: true,
             validate: true,
             schemas: [{
                 // For info about how this works see:
