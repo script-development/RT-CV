@@ -10,13 +10,6 @@ import (
 	"github.com/script-development/RT-CV/helpers/jsonHelpers"
 )
 
-// Period is a period of time from a date to another date
-type Period struct {
-	Start   jsonHelpers.RFC3339Nano `json:"start"`
-	End     jsonHelpers.RFC3339Nano `json:"end"`
-	Present bool                    `json:"present"`
-}
-
 // CV contains all information that belongs to a curriculum vitae
 // TODO check the json removed fields if we actually should use them
 type CV struct {
@@ -44,7 +37,6 @@ type Education struct {
 	// TODO find difference between isCompleted and hasdiploma
 	IsCompleted bool                     `json:"isCompleted"`
 	HasDiploma  bool                     `json:"hasDiploma"`
-	Period      Period                   `json:"period"`
 	StartDate   *jsonHelpers.RFC3339Nano `json:"startDate"`
 	EndDate     *jsonHelpers.RFC3339Nano `json:"endDate"`
 	Institute   string                   `json:"institute"`
@@ -66,7 +58,6 @@ type Course struct {
 type WorkExperience struct {
 	Description       string                   `json:"description"`
 	Profession        string                   `json:"profession"`
-	Period            Period                   `json:"period"`
 	StartDate         *jsonHelpers.RFC3339Nano `json:"startDate"`
 	EndDate           *jsonHelpers.RFC3339Nano `json:"endDate"`
 	StillEmployed     bool                     `json:"stillEmployed"`
@@ -74,15 +65,22 @@ type WorkExperience struct {
 	WeeklyHoursWorked int                      `json:"weeklyHoursWorked"`
 }
 
-// LanguageProficiency is something that i'm not sure what it is
-// FIXME
-type LanguageProficiency int
+// LanguageLevel is something that i'm not sure what it is
+type LanguageLevel uint
+
+// The lanague levels available
+const (
+	LanguageLevelUnknown LanguageLevel = iota
+	LanguageLevelReasonable
+	LanguageLevelGood
+	LanguageLevelExcellent
+)
 
 // Language is a language a user can speak
 type Language struct {
-	Name         string              `json:"name"`
-	LevelSpoken  LanguageProficiency `json:"levelSpoken"`
-	LevelWritten LanguageProficiency `json:"levelWritten"`
+	Name         string        `json:"name"`
+	LevelSpoken  LanguageLevel `json:"levelSpoken" jsonSchema:"max=3"`
+	LevelWritten LanguageLevel `json:"levelWritten" jsonSchema:"max=3"`
 }
 
 // Competence is an activity a user is "good" at

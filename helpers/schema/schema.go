@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -216,9 +217,12 @@ fieldsLoop:
 		argNotRequired := false
 		argDeprecated := false
 		argUniqueItems := false
+		var min *int
+		var max *int
 		args := strings.Split(field.Tag.Get("jsonSchema"), ",")
 		for _, arg := range args {
-			switch arg {
+			splittedArgs := strings.Split(arg, "=")
+			switch splittedArgs[0] {
 			case "notRequired":
 				argNotRequired = true
 			case "required":
@@ -229,6 +233,20 @@ fieldsLoop:
 				argUniqueItems = true
 			case "hidden":
 				continue fieldsLoop
+			case "min":
+				if len(splittedArgs) >= 2 {
+					val, err := strconv.Atoi(splittedArgs[1])
+					if err == nil {
+						min = &val
+					}
+				}
+			case "max":
+				if len(splittedArgs) >= 2 {
+					val, err := strconv.Atoi(splittedArgs[1])
+					if err == nil {
+						max = &val
+					}
+				}
 			}
 		}
 
@@ -261,6 +279,24 @@ fieldsLoop:
 		}
 		if argUniqueItems && property.Type == PropertyTypeArray {
 			property.UniqueItems = true
+		}
+		switch property.Type {
+		case PropertyTypeInteger, PropertyTypeNumber:
+			if min != nil {
+				property.Minimum = min
+			}
+			if max != nil {
+				property.Maximum = max
+			}
+		case PropertyTypeArray:
+			if min != nil && *min >= 0 {
+				minItems := uint(*min)
+				property.MinItems = &minItems
+			}
+			if max != nil && *max >= 0 {
+				maxItems := uint(*max)
+				property.MaxItems = &maxItems
+			}
 		}
 
 		properties[name] = property

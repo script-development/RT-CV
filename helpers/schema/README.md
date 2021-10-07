@@ -19,5 +19,7 @@ Supported struct tags:
   - `"deprecated"` Mark the field as deprecated
   - `"uniqueItems"` Every array entry must be unique _(Only for arrays)_
   - `"hidden"` Do not expose field in the schema
+  - `"min=123"` Set the minimum value or array length for the field
+  - `"max=123"` Set the maximum value or array length for the field
 
 You can also chain jsonSchema tags using `,`, for example: `jsonSchema:"notRequired,deprecated"`
