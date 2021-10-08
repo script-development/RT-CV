@@ -28,7 +28,6 @@ type RouteScraperScanCVRes struct {
 	Matches []match.FoundMatch `json:"matches" jsonSchema:"hidden"`
 }
 
-// TODO: maybe we should not return the actual profiles matched, this exposes information not meant for this api key user
 var routeScraperScanCV = routeBuilder.R{
 	Description: "Main route to scrape the CV",
 	Res:         RouteScraperScanCVRes{},
@@ -50,6 +49,15 @@ var routeScraperScanCV = routeBuilder.R{
 				c,
 				fiber.StatusForbidden,
 				errors.New("you are not allowed to set the debug field, only api keys with the Dashboard role can set it"),
+			)
+		}
+
+		err = body.CV.Validate()
+		if err != nil {
+			return ErrorRes(
+				c,
+				fiber.StatusBadRequest,
+				err,
 			)
 		}
 

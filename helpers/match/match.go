@@ -18,7 +18,6 @@ type FoundMatch struct {
 }
 
 // Match tries to match a profile to a CV
-// FIXME: There are a lot of performance optimizations that could be done here
 func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMatch {
 	res := []FoundMatch{}
 

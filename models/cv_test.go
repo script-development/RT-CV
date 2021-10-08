@@ -22,7 +22,7 @@ func TestGetHtml(t *testing.T) {
 			FirstName:         "D.R. Pietter",
 			SurNamePrefix:     "Ven ther",
 			SurName:           "Steen",
-			DateOfBirth:       jsonHelpers.RFC3339Nano(time.Now()),
+			DateOfBirth:       jsonHelpers.RFC3339Nano(time.Now()).ToPtr(),
 			Gender:            "Apache helicopter",
 			StreetName:        "Streetname abc",
 			HouseNumber:       "33",

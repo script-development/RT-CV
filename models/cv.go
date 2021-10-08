@@ -2,9 +2,12 @@ package models
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"html/template"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/SebastiaanKlippert/go-wkhtmltopdf"
 	"github.com/script-development/RT-CV/helpers/jsonHelpers"
@@ -17,7 +20,7 @@ type CV struct {
 	Title                string                   `json:"-"`
 	ReferenceNumber      string                   `json:"-"`
 	CreatedAt            *jsonHelpers.RFC3339Nano `json:"-"`
-	LastChanged          jsonHelpers.RFC3339Nano  `json:"-"`
+	LastChanged          *jsonHelpers.RFC3339Nano `json:"-"`
 	Educations           []Education              `json:"educations"`
 	Courses              []Course                 `json:"courses"`
 	WorkExperiences      []WorkExperience         `json:"workExperiences"`
@@ -82,6 +85,11 @@ const langLevelDescription = `0. Unknown
 2. Good
 3. Excellent`
 
+// Valid returns weather the language level is valid
+func (l LanguageLevel) Valid() bool {
+	return l >= LanguageLevelUnknown && l <= LanguageLevelExcellent
+}
+
 // JSONSchemaDescribe implements schema.Describe
 func (LanguageLevel) JSONSchemaDescribe() schema.Property {
 	return schema.Property{
@@ -118,20 +126,20 @@ type Interest struct {
 
 // PersonalDetails contains personal info
 type PersonalDetails struct {
-	Initials          string                  `json:"initials" jsonSchema:"notRequired"`
-	FirstName         string                  `json:"firstName"`
-	SurNamePrefix     string                  `json:"surNamePrefix" jsonSchema:"notRequired"`
-	SurName           string                  `json:"surName" jsonSchema:"notRequired"`
-	DateOfBirth       jsonHelpers.RFC3339Nano `json:"dob" jsonSchema:"notRequired"`
-	Gender            string                  `json:"gender" jsonSchema:"notRequired"`
-	StreetName        string                  `json:"streetName" jsonSchema:"notRequired"`
-	HouseNumber       string                  `json:"houseNumber" jsonSchema:"notRequired"`
-	HouseNumberSuffix string                  `json:"houseNumberSuffix" jsonSchema:"notRequired"`
-	Zip               string                  `json:"zip" jsonSchema:"notRequired"`
-	City              string                  `json:"city" jsonSchema:"notRequired"`
-	Country           string                  `json:"country" jsonSchema:"notRequired"`
-	PhoneNumber       string                  `json:"phoneNumber" jsonSchema:"notRequired"`
-	Email             string                  `json:"email" jsonSchema:"notRequired"`
+	Initials          string                   `json:"initials" jsonSchema:"notRequired"`
+	FirstName         string                   `json:"firstName"`
+	SurNamePrefix     string                   `json:"surNamePrefix" jsonSchema:"notRequired"`
+	SurName           string                   `json:"surName" jsonSchema:"notRequired"`
+	DateOfBirth       *jsonHelpers.RFC3339Nano `json:"dob" jsonSchema:"notRequired"`
+	Gender            string                   `json:"gender" jsonSchema:"notRequired"`
+	StreetName        string                   `json:"streetName" jsonSchema:"notRequired"`
+	HouseNumber       string                   `json:"houseNumber" jsonSchema:"notRequired"`
+	HouseNumberSuffix string                   `json:"houseNumberSuffix" jsonSchema:"notRequired"`
+	Zip               string                   `json:"zip" jsonSchema:"notRequired"`
+	City              string                   `json:"city" jsonSchema:"notRequired"`
+	Country           string                   `json:"country" jsonSchema:"notRequired"`
+	PhoneNumber       string                   `json:"phoneNumber" jsonSchema:"notRequired"`
+	Email             string                   `json:"email" jsonSchema:"notRequired"`
 }
 
 // GetHTML generates a HTML document from the input cv
@@ -206,4 +214,29 @@ func (cv *CV) GetPDF(profile Profile, matchText string) ([]byte, error) {
 	}
 
 	return generator.Bytes(), nil
+}
+
+// Validate validates the cv and returns an error if it's not valid
+func (cv *CV) Validate() error {
+	now := time.Now()
+	if cv.CreatedAt != nil && cv.CreatedAt.Time().After(now) {
+		return errors.New("createdAt can't be in the future")
+	}
+	if cv.LastChanged != nil && cv.LastChanged.Time().After(now) {
+		return errors.New("lastChanged can't be in the future")
+	}
+	if cv.PersonalDetails.DateOfBirth != nil && cv.PersonalDetails.DateOfBirth.Time().After(now) {
+		return errors.New("dateOfBirth can't be in the future")
+	}
+
+	for idx, lang := range cv.Languages {
+		if !lang.LevelSpoken.Valid() {
+			return fmt.Errorf("languages.%d.levelSpoken is invalid", idx)
+		}
+		if !lang.LevelWritten.Valid() {
+			return fmt.Errorf("languages.%d.levelWritten is invalid", idx)
+		}
+	}
+
+	return nil
 }
