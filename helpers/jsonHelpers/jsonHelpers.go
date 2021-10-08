@@ -15,7 +15,7 @@ import (
 // RFC3339Nano is a time.Time that json (Un)Marshals from & to RFC3339 nano
 type RFC3339Nano time.Time
 
-// JSONSchemaDescribe implments schema.Describe
+// JSONSchemaDescribe implements schema.Describe
 func (RFC3339Nano) JSONSchemaDescribe() schema.Property {
 	minLen := uint(10)
 	return schema.Property{
