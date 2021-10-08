@@ -8,6 +8,7 @@ import (
 
 	"github.com/SebastiaanKlippert/go-wkhtmltopdf"
 	"github.com/script-development/RT-CV/helpers/jsonHelpers"
+	"github.com/script-development/RT-CV/helpers/schema"
 )
 
 // CV contains all information that belongs to a curriculum vitae
@@ -76,11 +77,31 @@ const (
 	LanguageLevelExcellent
 )
 
+const langLevelDescription = `0. Unknown
+1. Reasonable
+2. Good
+3. Excellent`
+
+// JSONSchemaDescribe implements schema.Describe
+func (LanguageLevel) JSONSchemaDescribe() schema.Property {
+	return schema.Property{
+		Title:       "Language level",
+		Description: langLevelDescription,
+		Type:        schema.PropertyTypeNumber,
+		Enum: []interface{}{
+			LanguageLevelUnknown,
+			LanguageLevelReasonable,
+			LanguageLevelGood,
+			LanguageLevelExcellent,
+		},
+	}
+}
+
 // Language is a language a user can speak
 type Language struct {
 	Name         string        `json:"name"`
-	LevelSpoken  LanguageLevel `json:"levelSpoken" jsonSchema:"max=3"`
-	LevelWritten LanguageLevel `json:"levelWritten" jsonSchema:"max=3"`
+	LevelSpoken  LanguageLevel `json:"levelSpoken"`
+	LevelWritten LanguageLevel `json:"levelWritten"`
 }
 
 // Competence is an activity a user is "good" at
