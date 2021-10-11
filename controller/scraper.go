@@ -108,7 +108,7 @@ var routeScraperScanCV = routeBuilder.R{
 
 					for _, email := range aMatch.Profile.OnMatch.SendMail {
 						go func(email models.ProfileSendEmailData) {
-							email.SendEmail(aMatch.Profile, aMatch.Matches, pdf)
+							email.SendEmail(aMatch.Profile, aMatch.Matches, email.Email, pdf)
 							wg.Done()
 						}(email)
 					}

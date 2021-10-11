@@ -176,7 +176,7 @@ func (cv *CV) GetHTML(profile Profile, matchText string) (*bytes.Buffer, error) 
 		ProfileIDHex: profile.ID.Hex(),
 		Cv:           cv,
 		MatchText:    matchText,
-		LogoURL:      os.Getenv("LOGO"),
+		LogoURL:      os.Getenv("EMAIL_LOGO_URL"),
 		Domains:      domains,
 	}
 

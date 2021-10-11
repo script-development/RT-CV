@@ -10,6 +10,7 @@ import (
 	"github.com/script-development/RT-CV/controller"
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/db/mongo"
+	"github.com/script-development/RT-CV/helpers/emailservice"
 	"github.com/script-development/RT-CV/helpers/random"
 	"github.com/script-development/RT-CV/mock"
 	"github.com/script-development/RT-CV/models"
@@ -33,6 +34,21 @@ func main() {
 		log.Warn("No .env file found")
 	}
 
+	// Initialize the mail service
+	err = emailservice.Setup(
+		os.Getenv("EMAIL_IDENTITY"),
+		os.Getenv("EMAIL_USER"),
+		os.Getenv("EMAIL_PASSWORD"),
+		os.Getenv("EMAIL_HOST"),
+		os.Getenv("EMAIL_PORT"),
+		os.Getenv("EMAIL_FROM"),
+	)
+	if err != nil {
+		log.WithError(err).Error("Error initializing email service")
+		return
+	}
+
+	// Initialize the database
 	var dbConn db.Connection
 	useTestingDB := os.Getenv("USE_TESTING_DB")
 	if useTestingDB == "true" || useTestingDB == "TRUE" {

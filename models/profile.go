@@ -1,13 +1,16 @@
 package models
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
 	"regexp"
 
+	"github.com/jordan-wright/email"
 	"github.com/script-development/RT-CV/db"
+	"github.com/script-development/RT-CV/helpers/emailservice"
 	"github.com/valyala/fasthttp"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -124,9 +127,16 @@ type ProfileSendEmailData struct {
 }
 
 // SendEmail sends an email
-func (*ProfileSendEmailData) SendEmail(_ Profile, _ Match, pdfBytes []byte) {
-	// FIXME
-	fmt.Println("TODO send email:", len(pdfBytes))
+func (*ProfileSendEmailData) SendEmail(_ Profile, _ Match, to string, pdfBytes []byte) error {
+	e := email.NewEmail()
+	e.To = []string{to}
+	_, err := e.Attach(bytes.NewBuffer(pdfBytes), "match.pdf", "application/pdf")
+	if err != nil {
+		return err
+	}
+
+	emailservice.SendMail(e)
+	return nil
 }
 
 // ProfileHTTPCallData defines a http address that should be called when a match was made
