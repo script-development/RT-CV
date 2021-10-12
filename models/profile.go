@@ -127,9 +127,13 @@ type ProfileSendEmailData struct {
 }
 
 // SendEmail sends an email
-func (*ProfileSendEmailData) SendEmail(_ Profile, _ Match, to string, pdfBytes []byte) error {
+func (*ProfileSendEmailData) SendEmail(profile Profile, to string, htmlBody, pdfBytes []byte) error {
 	e := email.NewEmail()
+
 	e.To = []string{to}
+	e.Subject = "Nieuwe match voor " + profile.Name
+	e.HTML = htmlBody
+
 	_, err := e.Attach(bytes.NewBuffer(pdfBytes), "match.pdf", "application/pdf")
 	if err != nil {
 		return err

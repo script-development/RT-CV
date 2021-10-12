@@ -90,3 +90,11 @@ func (t RFC3339Nano) Time() time.Time {
 func (t RFC3339Nano) ToPtr() *RFC3339Nano {
 	return &t
 }
+
+// Format formats the time according to the format string
+func (t *RFC3339Nano) Format(format string) string {
+	if t == nil {
+		return ""
+	}
+	return t.Time().Format(format)
+}

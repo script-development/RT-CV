@@ -35,27 +35,24 @@ type CV struct {
 
 // Education is something a user has followed
 type Education struct {
-	ID          int    `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	Institute   string `json:"institute"`
 	// TODO find difference between isCompleted and hasdiploma
 	IsCompleted bool                     `json:"isCompleted"`
 	HasDiploma  bool                     `json:"hasDiploma"`
 	StartDate   *jsonHelpers.RFC3339Nano `json:"startDate"`
 	EndDate     *jsonHelpers.RFC3339Nano `json:"endDate"`
-	Institute   string                   `json:"institute"`
-	SubsectorID int                      `json:"subsectorID"`
 }
 
 // Course is something a user has followed
 type Course struct {
-	Name           string                   `json:"name"`
-	NormalizedName string                   `json:"normalizedName"`
-	StartDate      *jsonHelpers.RFC3339Nano `json:"startDate"`
-	EndDate        *jsonHelpers.RFC3339Nano `json:"endDate"`
-	IsCompleted    bool                     `json:"isCompleted"`
-	Institute      string                   `json:"institute"`
-	Description    string                   `json:"description"`
+	Name        string                   `json:"name"`
+	Institute   string                   `json:"institute"`
+	StartDate   *jsonHelpers.RFC3339Nano `json:"startDate"`
+	EndDate     *jsonHelpers.RFC3339Nano `json:"endDate"`
+	IsCompleted bool                     `json:"isCompleted"`
+	Description string                   `json:"description"`
 }
 
 // WorkExperience is experience in work
@@ -80,14 +77,27 @@ const (
 	LanguageLevelExcellent
 )
 
+func (ll LanguageLevel) String() string {
+	switch ll {
+	case LanguageLevelReasonable:
+		return "Redelijk"
+	case LanguageLevelGood:
+		return "Goed"
+	case LanguageLevelExcellent:
+		return "Uitstekend"
+	default:
+		return "Onbekend"
+	}
+}
+
 const langLevelDescription = `0. Unknown
 1. Reasonable
 2. Good
 3. Excellent`
 
 // Valid returns weather the language level is valid
-func (l LanguageLevel) Valid() bool {
-	return l >= LanguageLevelUnknown && l <= LanguageLevelExcellent
+func (ll LanguageLevel) Valid() bool {
+	return ll >= LanguageLevelUnknown && ll <= LanguageLevelExcellent
 }
 
 // JSONSchemaDescribe implements schema.Describe
@@ -142,19 +152,88 @@ type PersonalDetails struct {
 	Email             string                   `json:"email" jsonSchema:"notRequired"`
 }
 
-// GetHTML generates a HTML document from the input cv
-func (cv *CV) GetHTML(profile Profile, matchText string) (*bytes.Buffer, error) {
-	tmpl, err := template.ParseFiles("./assets/email-template.html")
+func getTemplateFromFile(funcs template.FuncMap, filename string) (*template.Template, error) {
+	tmpl, err := template.New(filename).Funcs(funcs).ParseFiles("./assets/" + filename)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return nil, err
 		}
 
 		// For testing perposes
-		tmpl, err = template.ParseFiles("../assets/email-template.html")
+		tmpl, err = template.New(filename).Funcs(funcs).ParseFiles("../assets/" + filename)
 		if err != nil {
 			return nil, err
 		}
+	}
+	return tmpl, nil
+}
+
+// ToString is a wrapper for the .String() method
+type ToString interface {
+	String() string
+}
+
+// GetEmailAttachmentHTML returns the html for the email attachment
+func (cv *CV) GetEmailAttachmentHTML(profile Profile) (*bytes.Buffer, error) {
+	tmplFuncs := template.FuncMap{
+		"mod": func(i, j int) bool { return i%j == 0 },
+		"formatDate": func(value *jsonHelpers.RFC3339Nano) string {
+			if value == nil {
+				return ""
+			}
+			return value.Time().Format("2006-01-02")
+		},
+		"formatDateTime": func(value *jsonHelpers.RFC3339Nano) string {
+			if value == nil {
+				return ""
+			}
+			return value.Time().Format("2006-01-02 15:04:05")
+		},
+		"string": func(value ToString) string {
+			if value == nil {
+				return ""
+			}
+			return value.String()
+		},
+	}
+
+	tmpl, err := getTemplateFromFile(tmplFuncs, "email-attachment-template.html")
+	if err != nil {
+		return nil, err
+	}
+
+	input := struct {
+		Profile  Profile
+		Cv       *CV
+		FullName string
+
+		HeaderURL        string
+		JobIconURL       string
+		EducationIconURL string
+		CourseIconURL    string
+		LanguageIconURL  string
+	}{
+		Profile:  profile,
+		Cv:       cv,
+		FullName: cv.FullName(),
+
+		HeaderURL:        os.Getenv("EMAIL_PDF_HEADER_URL"),
+		JobIconURL:       os.Getenv("EMAIL_PDF_JOB_ICON_URL"),
+		EducationIconURL: os.Getenv("EMAIL_EDUCATION_ICON_URL"),
+		CourseIconURL:    os.Getenv("EMAIL_COURSE_ICON_URL"),
+		LanguageIconURL:  os.Getenv("EMAIL_LANGUAGE_ICON_URL"),
+	}
+
+	buff := bytes.NewBuffer(nil)
+	err = tmpl.Execute(buff, input)
+	return buff, err
+}
+
+// GetEmailHTML generates a HTML document that is used as email body
+func (cv *CV) GetEmailHTML(profile Profile, matchText string) (*bytes.Buffer, error) {
+	tmpl, err := getTemplateFromFile(template.FuncMap{}, "email-template.html")
+	if err != nil {
+		return nil, err
 	}
 
 	domains := "onbekend"
@@ -186,7 +265,7 @@ func (cv *CV) GetHTML(profile Profile, matchText string) (*bytes.Buffer, error) 
 }
 
 // GetPDF generates a PDF from a cv that can be send
-func (cv *CV) GetPDF(profile Profile, matchText string) ([]byte, error) {
+func (cv *CV) GetPDF(profile Profile) ([]byte, error) {
 	generator, err := wkhtmltopdf.NewPDFGenerator()
 	if err != nil {
 		return nil, err
@@ -198,7 +277,7 @@ func (cv *CV) GetPDF(profile Profile, matchText string) ([]byte, error) {
 	generator.MarginRight.Set(0)
 	generator.ImageQuality.Set(100)
 
-	html, err := cv.GetHTML(profile, matchText)
+	html, err := cv.GetEmailAttachmentHTML(profile)
 	if err != nil {
 		return nil, err
 	}
@@ -239,4 +318,20 @@ func (cv *CV) Validate() error {
 	}
 
 	return nil
+}
+
+// FullName returns the full name of the cv
+func (cv *CV) FullName() string {
+	details := cv.PersonalDetails
+
+	res := details.FirstName
+	if details.SurName == "" {
+		return res
+	}
+
+	if details.SurNamePrefix == "" {
+		return res + " " + details.SurName
+	}
+
+	return res + " " + details.SurNamePrefix + " " + details.SurName
 }

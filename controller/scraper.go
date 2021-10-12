@@ -101,14 +101,22 @@ var routeScraperScanCV = routeBuilder.R{
 				}
 
 				if emailsLen > 0 {
-					pdf, err := body.CV.GetPDF(aMatch.Profile, aMatch.Matches.GetMatchSentence())
+					emailBody, err := body.CV.GetEmailHTML(aMatch.Profile, aMatch.Matches.GetMatchSentence())
+					if err != nil {
+						return fmt.Errorf("unable to generate email body from CV, err: %s", err.Error())
+					}
+
+					pdf, err := body.CV.GetPDF(aMatch.Profile)
 					if err != nil {
 						return fmt.Errorf("unable to generate PDF from CV, err: %s", err.Error())
 					}
 
 					for _, email := range aMatch.Profile.OnMatch.SendMail {
 						go func(email models.ProfileSendEmailData) {
-							email.SendEmail(aMatch.Profile, aMatch.Matches, email.Email, pdf)
+							err := email.SendEmail(aMatch.Profile, email.Email, emailBody.Bytes(), pdf)
+							if err != nil {
+								log.WithError(err).Error("unable to send email")
+							}
 							wg.Done()
 						}(email)
 					}

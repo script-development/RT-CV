@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>CV</title>
+    <link href="https://fonts.googleapis.com/css?family=Lato:300,400,400i,700,900" rel="stylesheet">
+    <style>
+        html,
+        body,
+        div,
+        span,
+        applet,
+        object,
+        iframe,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        p,
+        blockquote,
+        pre,
+        a,
+        abbr,
+        acronym,
+        address,
+        big,
+        cite,
+        code,
+        del,
+        dfn,
+        em,
+        img,
+        ins,
+        kbd,
+        q,
+        s,
+        samp,
+        small,
+        strike,
+        strong,
+        sub,
+        sup,
+        tt,
+        var,
+        b,
+        u,
+        i,
+        center,
+        dl,
+        dt,
+        dd,
+        ol,
+        ul,
+        li,
+        fieldset,
+        form,
+        label,
+        legend,
+        table,
+        caption,
+        tbody,
+        tfoot,
+        thead,
+        tr,
+        th,
+        td,
+        article,
+        aside,
+        canvas,
+        details,
+        embed,
+        figure,
+        figcaption,
+        footer,
+        header,
+        hgroup,
+        menu,
+        nav,
+        output,
+        ruby,
+        section,
+        summary,
+        time,
+        mark,
+        audio,
+        video {
+            margin: 0;
+            padding: 0;
+            border: 0;
+            font-size: 100%;
+            font: inherit;
+            vertical-align: baseline;
+            box-sizing: border-box;
+        }
+
+        /* HTML5 display-role reset for older browsers */
+        article,
+        aside,
+        details,
+        figcaption,
+        figure,
+        footer,
+        header,
+        hgroup,
+        menu,
+        nav,
+        section {
+            display: block;
+        }
+
+        body {
+            line-height: 1;
+            font-family: 'Lato', sans-serif;
+        }
+
+        ol,
+        ul {
+            list-style: none;
+        }
+
+        #wrapper {
+            padding: 0 3rem;
+        }
+
+        blockquote,
+        q {
+            quotes: none;
+        }
+
+        blockquote:before,
+        blockquote:after,
+        q:before,
+        q:after {
+            content: '';
+            content: none;
+        }
+
+        table {
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+
+        /* End Reset */
+        #container {
+            /* Seeting this to get an idea of the page size. Can be removed after design is finished */
+            width: 794px;
+            height: 1123px;
+            margin: 0 auto;
+        }
+
+        #head {
+            width: 100%;
+            height: 375px;
+            background: url({{ .HeaderURL }}) no-repeat center top;
+            background-size: contain;
+            padding: 3rem 320px 0 3rem;
+            color: #fff;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            font-weight: 900;
+            font-size: 3rem;
+        }
+
+        h1 small {
+            font-weight: 200;
+            font-size: 1.8rem;
+            display: block;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        #cv-meta {
+            border-top: 1px solid #c2bcbf;
+            margin-top: 1rem;
+            padding-top: 0.25rem;
+            font-size: 0.8125rem;
+            font-weight: 100;
+            line-height: 1.5;
+        }
+
+        #main {
+            margin-top: 50px;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            color: #444;
+        }
+
+        .column-table {
+            border: none;
+            border-collapse: collapse;
+            page-break-inside: avoid;
+            max-width: 100%;
+        }
+
+        .column-table td {
+            width: 50%;
+            padding: 0;
+        }
+
+        .column-table th {
+            padding: 0 0 5px;
+        }
+
+        #personal {
+            padding-right: 1rem;
+        }
+
+        #description {
+            border-left: 1px solid #f0f0f0;
+            padding: 0 0 0 1rem;
+            text-align: justify;
+        }
+
+        .section {
+            line-height: 1.5;
+            margin-top: 50px;
+        }
+
+        .section h2 {
+            font-weight: 700;
+            font-size: 2rem;
+        }
+
+        .section li {
+            background-repeat: no-repeat;
+            background-position: left 2rem;
+            padding: 2rem 1rem 2rem 66px;
+            background-size: 40px;
+            page-break-inside: avoid;
+        }
+
+        #jobs h2 {
+            margin-top: 2rem;
+            page-break-before: always;
+        }
+
+        #jobs li {
+            background-image: url({{ .JobIconURL }});
+        }
+
+        #education li {
+            background-image: url({{ .EducationIconURL }});
+        }
+
+        #courses li {
+            background-image: url({{ .CourseIconURL }});
+        }
+
+        #languages li {
+            background-image: url({{ .LanguageIconURL }});
+        }
+
+        .section li:last-child {
+            border-bottom: none;
+        }
+
+        .section h3 {
+            font-weight: 700;
+        }
+
+        .section h4 {
+            font-weight: 200;
+        }
+
+        .section h5,
+        .section h6 {
+            font-weight: 200;
+            color: #999;
+            font-size: 0.8125rem;
+        }
+
+        .section p {
+            font-size: 0.875rem;
+            line-height: 1.5;
+            color: #444;
+        }
+
+        .section p:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-wrapper .section {
+            width: 49.5%;
+            padding: 1rem;
+        }
+
+        #languages,
+        #drivers-licence {
+            background: #f0f0f0;
+            padding: 1rem;
+        }
+
+        #drivers-licence {
+            border-left: 3px solid #fff;
+        }
+
+        #languages h2,
+        #drivers-licence h2 {
+            font-size: 1.4rem;
+            margin: 0 0 1rem;
+        }
+
+        #competences.section h2,
+        #interests.section h2 {
+            margin-top: 1rem;
+        }
+
+        #competences.section li,
+        #interests.section li {
+            width: 32%;
+            border: 2px solid #eee;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 2%;
+            display: inline-block;
+        }
+
+        table {
+            width: 100%;
+        }
+
+        body table th {
+            font-weight: 700;
+            border-bottom: 1px solid #ccc;
+        }
+
+        table th,
+        table td {
+            text-align: left;
+            font-size: 0.8125rem;
+            border-bottom: 1px solid #ddd;
+            padding: 5px;
+        }
+
+        table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        dl {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        dl dt {
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: inline-block;
+            width: 40%;
+        }
+
+        dl dd {
+            display: inline-block;
+            width: 59%;
+            text-align: left;
+            margin-bottom: 10px;
+            font-weight: 400;
+        }
+
+        #competences, #interests {
+            page-break-inside: avoid;
+        }
+
+        #competences table,
+        #interests table {
+            border-collapse: separate;
+            border-spacing: 5px;
+        }
+
+        #competences td,
+        #interests td {
+            width: 32%;
+            margin-bottom: 2%;
+            height: 100%;
+            border: 2px solid #eee;
+            padding: 1rem;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+<div id="container">
+    <div id="head">
+        <h1>
+            {{ if .FullName }}
+                {{ .FullName }}
+            {{ end }}
+            <br>
+            <small>{{.Cv.Title}}</small>
+        </h1>
+        <div id="cv-meta">
+            Referentie: #{{.Cv.ReferenceNumber }}
+            <br>
+
+            {{ if .Cv.LastChanged }}
+                Laatst gewijzigd: {{ formatDateTime .Cv.LastChanged }}
+            {{ end }}
+        </div>
+    </div>
+    <div id="wrapper">
+        <div id="main">
+            <table class="column-table">
+                <tbody>
+                <tr>
+                    <td id="personal">
+                        <dl>
+                            {{ if .FullName }}
+                                <dt>Naam</dt>
+                                <dd>{{ .FullName }}</dd>
+                            {{ end }}
+
+                            {{ if .Cv.PersonalDetails.Gender }}
+                                <dt>Geslacht</dt>
+                                <dd>{{ .Cv.PersonalDetails.Gender }}</dd>
+                            {{ end }}
+
+                            {{ if .Cv.PersonalDetails.DateOfBirth }}
+                                <dt>Geboortedatum</dt>
+                                <dd>{{ .Cv.PersonalDetails.DateOfBirth }}</dd>
+                            {{ end }}
+
+                            {{ if .Cv.PersonalDetails.StreetName }}
+                                <dt>Adres</dt>
+                                <dd>
+                                    {{ .Cv.PersonalDetails.StreetName }} {{ .Cv.PersonalDetails.HouseNumber }} {{ .Cv.PersonalDetails.HouseNumberSuffix }}
+                                    <br>
+                                    {{ .Cv.PersonalDetails.Zip }} {{ .Cv.PersonalDetails.City }}
+                                </dd>
+                            {{ end }}
+
+
+                            {{ if .Cv.PersonalDetails.Email }}
+                                <dt>E-mailadres</dt>
+                                <dd>{{ .Cv.PersonalDetails.Email }}</dd>
+                            {{ end }}
+
+                            {{ if .Cv.PersonalDetails.PhoneNumber }}
+                                <dt>Telefoonnummer</dt>
+                                <dd>{{ .Cv.PersonalDetails.PhoneNumber }}</dd>
+                            {{ end }}
+                        </dl>
+                    </td>
+                    {{ if .Cv.PersonalPresentation }}
+                        <td id="description">
+                            <h2>Over mij</h2>
+                            <p>{{ .Cv.PersonalPresentation }}</p>
+                        </td>
+                    {{ end }}
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section" id="jobs">
+            <h2>Werkervaring</h2>
+            <ul>
+                {{ if .Cv.WorkExperiences }}
+                    {{ range .Cv.WorkExperiences }}
+                        <li>
+                            <h3>{{ .Profession }}</h3>
+
+                            {{ if .Employer }}
+                                <h4>{{ .Employer }}</h4>
+                            {{ end }}
+
+                            {{ if .StillEmployed }}
+                                <h5>{{ formatDate .StartDate }} - heden</h5>
+                            {{else }}
+                                <h5>{{ formatDate .StartDate }} - {{ formatDate .EndDate }}</h5>
+                            {{ end }}
+
+                            {{ if .Description }}
+                                <p>{{ .Description }}</p>
+                            {{ end }}
+                        </li>
+                    {{ end }}
+                {{ else }}
+                    <p>Geen</p>
+                {{ end }}
+            </ul>
+        </div>
+
+        <div class="section" id="education">
+            <h2>Opleidingen</h2>
+            <ul>
+                {{ if .Cv.Educations }}
+                    {{ range .Cv.Educations }}
+                        <li>
+                            <h3>{{ .Name }}</h3>
+                            {{ if .Institute}}
+                                <h4>{{ .Institute }}</h4>
+                            {{ end }}
+
+                            {{ if and .StartDate .EndDate }}
+                                <h5>{{ formatDate .StartDate }} - {{ formatDate .EndDate }}</h5>
+                            {{ end }}
+
+                            {{ if .Description }}
+                                <p>{{.Description}}</p>
+                            {{ end }}
+                        </li>
+                    {{ end }}
+                {{ else }}
+                    <p>Geen</p>
+                {{ end }}
+            </ul>
+        </div>
+
+        {{ if .Cv.Courses }}
+            <div class="section" id="courses">
+                <h2>Cursussen</h2>
+                <ul>
+                    {{ range .Cv.Courses }}
+                        <li>
+                            <h3>{{ .Name }}</h3>
+                            {{ if .Institute }}
+                                <h4>{{ .Institute }}</h4>
+                            {{ end }}
+
+                            {{ if and .StartDate .EndDate }}
+                                <h5>{{ formatDate .StartDate }} - {{ formatDate .EndDate }}</h5>
+                            {{ end }}
+
+                            {{ if .Description }}
+                                <p>{{ .Description }}</p>
+                            {{ end }}
+                        </li>
+                    {{ end }}
+                </ul>
+            </div>
+        {{ end }}
+
+        <table class="column-table">
+            <tbody>
+            <tr>
+                <td id="languages">
+                    <h2>Talen</h2>
+                    {{ if .Cv.Languages}}
+                        <table>
+                            <thead>
+                            <tr>
+                                <th>Taal</th>
+                                <th>Mondeling</th>
+                                <th>Schriftelijk</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {{ range .Cv.Languages }}
+                                <tr>
+                                    <td>{{ .Name }}</td>
+                                    <td>{{ string .LevelSpoken }}</td>
+                                    <td>{{ string .LevelWritten }}</td>
+                                </tr>
+                            {{ end }}
+                            </tbody>
+                        </table>
+                    {{ else }}
+                        <p>Geen</p>
+                    {{ end }}
+                </td>
+                <td id="drivers-licence">
+                    <h2>Rijbewijzen</h2>
+                    {{ if .Cv.DriversLicenses }}
+                        <p>
+                            {{ range $license := .Cv.DriversLicenses }}
+                                {{ $license }}
+                            {{ end }}</p>
+                    {{ else }}
+                        <p>Geen</p>
+                    {{ end }}
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        {{ if .Cv.Competences }}
+            <div class="section" id="competences">
+                <h2>Competenties</h2>
+                <table>
+                    <tbody>
+                    <tr>
+                        {{ range $index, $element := .Cv.Competences }}
+                        {{ if mod $index 3}}
+                    </tr>
+                    <tr>
+                        {{ end }}
+                        <!--// if n2 </tr><tr>-->
+                        <td>
+                            <h3>{{ .Name }}</h3>
+                            <p>{{ .Description }}</p>
+                        </td>
+                        {{ end }}
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        {{ end }}
+        {{ if .Cv.Interests }}
+            <div class="section" id="interests">
+                <h2>Interesses</h2>
+                <table>
+                    <tbody>
+                    <tr>
+                        {{ range .Cv.Interests }}
+                            <td>
+                                <h3>{{ .Name }}</h3>
+                                <p>{{ .Description }}</p>
+                            </td>
+                        {{ end }}
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        {{ end }}
+    </div>
+</div>
+</body>
+
+</html>
