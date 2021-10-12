@@ -127,10 +127,10 @@ type ProfileSendEmailData struct {
 }
 
 // SendEmail sends an email
-func (*ProfileSendEmailData) SendEmail(profile Profile, to string, htmlBody, pdfBytes []byte) error {
+func (d *ProfileSendEmailData) SendEmail(profile Profile, htmlBody, pdfBytes []byte) error {
 	e := email.NewEmail()
 
-	e.To = []string{to}
+	e.To = []string{d.Email}
 	e.Subject = "Nieuwe match voor " + profile.Name
 	e.HTML = htmlBody
 

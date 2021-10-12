@@ -1,64 +1,24 @@
 package models
 
 import (
+	"os"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/apex/log"
+	"github.com/joho/godotenv"
 	"github.com/script-development/RT-CV/db"
+	"github.com/script-development/RT-CV/helpers/emailservice"
 	"github.com/script-development/RT-CV/helpers/jsonHelpers"
 	. "github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func TestGetEmailHTML(t *testing.T) {
-	matchTest := "this is a test text that should re-appear in the response html"
-
-	cv := CV{
-		Title:           "Pilot with experience in farming simulator 2020",
-		ReferenceNumber: "4455-PIETER",
-
-		PersonalDetails: PersonalDetails{
-			Initials:          "P.S.",
-			FirstName:         "D.R. Pietter",
-			SurNamePrefix:     "Ven ther",
-			SurName:           "Steen",
-			DateOfBirth:       jsonHelpers.RFC3339Nano(time.Now()).ToPtr(),
-			Gender:            "Apache helicopter",
-			StreetName:        "Streetname abc",
-			HouseNumber:       "33",
-			HouseNumberSuffix: "b",
-			Zip:               "9999AB",
-			City:              "Groningen",
-			Country:           "Netherlands",
-			PhoneNumber:       "06-11223344",
-			Email:             "dr.p.steen@smart-people.com",
-		},
-	}
-
-	profileObjectID := primitive.NewObjectID()
-	profile := Profile{
-		M:       db.M{ID: profileObjectID},
-		Name:    "profile name",
-		Domains: []string{"test.com"},
-	}
-
-	htmlBuff, err := cv.GetEmailHTML(profile, matchTest)
-	NoError(t, err)
-
-	html := htmlBuff.String()
-	Contains(t, html, matchTest)
-	Contains(t, html, cv.PersonalDetails.FirstName+" "+cv.PersonalDetails.SurName)
-	Contains(t, html, cv.PersonalDetails.Email)
-	Contains(t, html, cv.PersonalDetails.PhoneNumber)
-	Contains(t, html, profile.Name)
-	Contains(t, html, cv.ReferenceNumber)
-	Contains(t, html, profile.ID.Hex())
-}
-
-func TestGetEmailAttachmentHTML(t *testing.T) {
+func getExampleCV() *CV {
 	now := jsonHelpers.RFC3339Nano(time.Now()).ToPtr()
-
-	cv := CV{
+	return &CV{
 		Title:           "Pilot with experience in farming simulator 2020",
 		ReferenceNumber: "4455-PIETER",
 		CreatedAt:       now,
@@ -123,6 +83,35 @@ func TestGetEmailAttachmentHTML(t *testing.T) {
 			Email:             "dr.p.steen@smart-people.com",
 		},
 	}
+}
+
+func TestGetEmailHTML(t *testing.T) {
+	matchTest := "this is a test text that should re-appear in the response html"
+
+	cv := getExampleCV()
+
+	profileObjectID := primitive.NewObjectID()
+	profile := Profile{
+		M:       db.M{ID: profileObjectID},
+		Name:    "profile name",
+		Domains: []string{"test.com"},
+	}
+
+	htmlBuff, err := cv.GetEmailHTML(profile, matchTest)
+	NoError(t, err)
+
+	html := htmlBuff.String()
+	Contains(t, html, matchTest)
+	Contains(t, html, cv.PersonalDetails.FirstName+" "+cv.PersonalDetails.SurName)
+	Contains(t, html, cv.PersonalDetails.Email)
+	Contains(t, html, cv.PersonalDetails.PhoneNumber)
+	Contains(t, html, profile.Name)
+	Contains(t, html, cv.ReferenceNumber)
+	Contains(t, html, profile.ID.Hex())
+}
+
+func TestGetEmailAttachmentHTML(t *testing.T) {
+	cv := getExampleCV()
 
 	profileObjectID := primitive.NewObjectID()
 	profile := Profile{
@@ -168,4 +157,72 @@ func TestGetEmailAttachmentHTML(t *testing.T) {
 
 	Contains(t, html, cv.Interests[0].Name)
 	Contains(t, html, cv.Interests[0].Description)
+}
+
+func TestSendMail(t *testing.T) {
+	envFileName := ".env"
+	_, err := os.Stat(envFileName)
+	if err != nil {
+		envFileName = "../.env"
+		_, err = os.Stat(envFileName)
+		if err != nil {
+			t.Skipf("Cannot test mail as no .env is available to read configuration from, error: %s", err.Error())
+		}
+	}
+
+	env, err := godotenv.Read(envFileName)
+	if err != nil {
+		t.Skipf("Unable to read .env, error: %s", err.Error())
+	}
+
+	// Set mail env vars
+	for key, value := range env {
+		if !strings.HasPrefix(key, "EMAIL_") {
+			continue
+		}
+		if os.Getenv(key) != "" {
+			continue
+		}
+		os.Setenv(key, value)
+	}
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+
+	// Initialize the mail service
+	err = emailservice.Setup(
+		emailservice.EmailServerConfiguration{
+			Identity: os.Getenv("EMAIL_IDENTITY"),
+			Username: os.Getenv("EMAIL_USER"),
+			Password: os.Getenv("EMAIL_PASSWORD"),
+			Host:     os.Getenv("EMAIL_HOST"),
+			Port:     os.Getenv("EMAIL_PORT"),
+			From:     os.Getenv("EMAIL_FROM"),
+		},
+		func(err error) {
+			NoError(t, err)
+			wg.Done()
+		},
+	)
+	if err != nil {
+		log.WithError(err).Error("Error initializing email service")
+		return
+	}
+
+	cv := getExampleCV()
+	profile := Profile{
+		M:       db.M{ID: primitive.NewObjectID()},
+		Name:    "profile name",
+		Domains: []string{"test.com"},
+	}
+
+	emailBody, err := cv.GetEmailHTML(profile, "on data from the void")
+	NoError(t, err)
+
+	emailToSendData := &ProfileSendEmailData{Email: "example@localhost"}
+	err = emailToSendData.SendEmail(profile, emailBody.Bytes(), []byte{})
+	NoError(t, err)
+
+	// Wait for the email to succeed
+	wg.Wait()
 }

@@ -20,9 +20,24 @@ func SendMail(content *email.Email) {
 	ch <- content
 }
 
+// EmailServerConfiguration contains the configuration for the email server
+type EmailServerConfiguration struct {
+	// Hostname and Port of the smtp server
+	Host string
+	Port string
+
+	// Authentication fields
+	Identity string
+	Username string
+	Password string
+
+	// The email address to send emails from
+	From string
+}
+
 // Setup sets up the email sender
-func Setup(identity, username, password, host, port, from string) error {
-	if host == "" || from == "" {
+func Setup(conf EmailServerConfiguration, onMailSend func(err error)) error {
+	if conf.Host == "" || conf.From == "" {
 		log.Warn("Email not configured (EMAIL_HOST and EMAIL_FROM must be set), DISABELING EMAIL SUPPORT")
 		go func() {
 			for {
@@ -31,21 +46,21 @@ func Setup(identity, username, password, host, port, from string) error {
 		}()
 		return nil
 	}
-	if port == "" {
-		port = "25"
+	if conf.Port == "" {
+		conf.Port = "25"
 	} else {
-		parsedPort, err := strconv.Atoi(port)
+		parsedPort, err := strconv.Atoi(conf.Port)
 		if err != nil || parsedPort <= 0 {
-			return errors.New("invalid port number " + port)
+			return errors.New("invalid port number " + conf.Port)
 		}
 	}
 
 	poolSize := 4
 
 	p, err := email.NewPool(
-		host+":"+port,
+		conf.Host+":"+conf.Port,
 		poolSize,
-		smtp.PlainAuth(identity, username, password, host),
+		smtp.PlainAuth(conf.Identity, conf.Username, conf.Password, conf.Host),
 	)
 	if err != nil {
 		return err
@@ -56,11 +71,12 @@ func Setup(identity, username, password, host, port, from string) error {
 			for e := range ch {
 				e.From = from
 				err := p.Send(e, 10*time.Second)
+				onMailSend(err)
 				if err != nil {
 					log.WithError(err).Error("Error sending email")
 				}
 			}
-		}(from)
+		}(conf.From)
 	}
 
 	log.Info("Email service running..")

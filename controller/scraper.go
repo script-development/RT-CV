@@ -113,7 +113,7 @@ var routeScraperScanCV = routeBuilder.R{
 
 					for _, email := range aMatch.Profile.OnMatch.SendMail {
 						go func(email models.ProfileSendEmailData) {
-							err := email.SendEmail(aMatch.Profile, email.Email, emailBody.Bytes(), pdf)
+							err := email.SendEmail(aMatch.Profile, emailBody.Bytes(), pdf)
 							if err != nil {
 								log.WithError(err).Error("unable to send email")
 							}
