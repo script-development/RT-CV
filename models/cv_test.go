@@ -2,6 +2,7 @@ package models
 
 import (
 	"os"
+	"os/exec"
 	"strings"
 	"sync"
 	"testing"
@@ -15,6 +16,34 @@ import (
 	. "github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+func loadEnvEmailEnv(t *testing.T) {
+	envFileName := ".env"
+	_, err := os.Stat(envFileName)
+	if err != nil {
+		envFileName = "../.env"
+		_, err = os.Stat(envFileName)
+		if err != nil {
+			t.Skipf("No .env is available to read configuration from, error: %s", err.Error())
+		}
+	}
+
+	env, err := godotenv.Read(envFileName)
+	if err != nil {
+		t.Skipf("Unable to read .env, error: %s", err.Error())
+	}
+
+	// Set mail env vars
+	for key, value := range env {
+		if !strings.HasPrefix(key, "EMAIL_") {
+			continue
+		}
+		if os.Getenv(key) != "" {
+			continue
+		}
+		os.Setenv(key, value)
+	}
+}
 
 func getExampleCV() *CV {
 	now := jsonHelpers.RFC3339Nano(time.Now()).ToPtr()
@@ -159,38 +188,35 @@ func TestGetEmailAttachmentHTML(t *testing.T) {
 	Contains(t, html, cv.Interests[0].Description)
 }
 
+func TestGetEmailAttachmentPDF(t *testing.T) {
+	_, err := exec.LookPath("wkhtmltopdf")
+	if err != nil {
+		t.Skip("wkhtmltopdf not found in path, error: " + err.Error())
+	}
+
+	loadEnvEmailEnv(t)
+
+	cv := getExampleCV()
+
+	profile := Profile{
+		M:       db.M{ID: primitive.NewObjectID()},
+		Name:    "profile name",
+		Domains: []string{"test.com"},
+	}
+
+	bytes, err := cv.GetPDF(profile)
+	NoError(t, err)
+	NotNil(t, bytes)
+}
+
 func TestSendMail(t *testing.T) {
-	envFileName := ".env"
-	_, err := os.Stat(envFileName)
-	if err != nil {
-		envFileName = "../.env"
-		_, err = os.Stat(envFileName)
-		if err != nil {
-			t.Skipf("Cannot test mail as no .env is available to read configuration from, error: %s", err.Error())
-		}
-	}
-
-	env, err := godotenv.Read(envFileName)
-	if err != nil {
-		t.Skipf("Unable to read .env, error: %s", err.Error())
-	}
-
-	// Set mail env vars
-	for key, value := range env {
-		if !strings.HasPrefix(key, "EMAIL_") {
-			continue
-		}
-		if os.Getenv(key) != "" {
-			continue
-		}
-		os.Setenv(key, value)
-	}
+	loadEnvEmailEnv(t)
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 
 	// Initialize the mail service
-	err = emailservice.Setup(
+	err := emailservice.Setup(
 		emailservice.EmailServerConfiguration{
 			Identity: os.Getenv("EMAIL_IDENTITY"),
 			Username: os.Getenv("EMAIL_USER"),

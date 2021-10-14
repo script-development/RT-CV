@@ -431,7 +431,7 @@
 
                             {{ if .Cv.PersonalDetails.DateOfBirth }}
                                 <dt>Geboortedatum</dt>
-                                <dd>{{ .Cv.PersonalDetails.DateOfBirth }}</dd>
+                                <dd>{{ formatDate .Cv.PersonalDetails.DateOfBirth }}</dd>
                             {{ end }}
 
                             {{ if .Cv.PersonalDetails.StreetName }}
