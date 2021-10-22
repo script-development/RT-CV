@@ -1,0 +1,10 @@
+kind: pipeline
+name: default
+type: docker
+
+steps:
+- name: test
+  image: golang
+  commands:
+  - go build
+  - go test -v ./...
