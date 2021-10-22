@@ -27,14 +27,14 @@ steps:
       - name: cache
         path: /go
 
-  - name: Build Docker container
-    pull: if-not-exists
-    image: docker
-    commands:
-      - docker build -t rtcv:latest .
-    volumes:
-      - name: dockerSocket
-        path: /var/run/docker.sock
+  # - name: Build Docker container
+  #   pull: if-not-exists
+  #   image: docker
+  #   commands:
+  #     - docker build -t rtcv:latest .
+  #   volumes:
+  #     - name: dockerSocket
+  #       path: /var/run/docker.sock
 
   - name: Rebuild cache
     image: meltwater/drone-cache
