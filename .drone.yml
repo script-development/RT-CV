@@ -3,62 +3,57 @@ name: default
 type: docker
 
 steps:
-  - name: Restore cache
-    image: meltwater/drone-cache
+  - name: Backend Build & Test
     pull: if-not-exists
-    settings:
-      backend: "filesystem"
-      restore: true
-      cache_key: "{{ .Repo.Owner }}-{{ .Repo.Name }}-{{ .Commit.Branch }}"
-      archive_format: "gzip"
-      mount:
-        - 'go-build-cache'
-    volumes:
-      - name: cache
-        path: /tmp/cache
-
-  - name: Build & Test
-    pull: if-not-exists
-    image: golang
+    image: golang:1.17-alpine
+    environment:
+      CGO_ENABLED: 0
+      GOCACHE: /tmp/cache/go-build # Change the go build cache to a persistent folder
+      GOMODCACHE: /tmp/cache/pkg.mod # Change the go module cache to a persistent folder
     commands:
-      - mv go-build-cache /root/.cache/go-build
+      - mkdir -p /tmp/cache/go-build /tmp/cache/pkg.mod # Make sure the cache folders exist
       - go build
       - go test -v ./...
-      - mv /root/.cache/go-build go-build-cache
-    volumes:
-      - name: cache
-        path: /go
-
-  # - name: Build Docker container
-  #   pull: if-not-exists
-  #   image: docker
-  #   commands:
-  #     - docker build -t rtcv:latest .
-  #   volumes:
-  #     - name: dockerSocket
-  #       path: /var/run/docker.sock
-
-  - name: Rebuild cache
-    image: meltwater/drone-cache
-    pull: if-not-exists
-    settings:
-      backend: "filesystem"
-      rebuild: true
-      cache_key: "volume"
-      archive_format: "gzip"
-      mount:
-        - 'go-build-cache'
     volumes:
       - name: cache
         path: /tmp/cache
 
-# trigger:
-#   branch:
-#     - main
+  - name: Frontend Build
+    pull: if-not-exists
+    image: node:16
+    environment:
+      NEXT_TELEMETRY_DISABLED: 1 # Don't take my data next js
+    commands:
+      - mkdir -p /tmp/cache/node-16-cache # Make sure the cache exists
+      - npm config set cache /tmp/cache/node-16-cache --global # Change the default node cache dir
+      - cd dashboard
+      - npm ci
+      - npm run build
+      - cd ..
+    volumes:
+      - name: cache
+        path: /tmp/cache
+
+  - name: Build Docker container
+    pull: if-not-exists
+    image: docker
+    commands:
+      - docker build -t rtcv:latest .
+    volumes:
+      - name: dockerSocket
+        path: /var/run/docker.sock
+    depends_on: # Build backend and frontend in parallel
+      - Backend Build & Test
+      - Frontend Build
+
+trigger:
+  branch:
+    - main
 
 volumes:
   - name: dockerSocket
     host:
       path: /var/run/docker.sock
   - name: cache
-    temp: {}
+    host:
+      path: /root/.buildcache
