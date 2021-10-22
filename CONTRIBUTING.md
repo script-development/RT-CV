@@ -22,5 +22,5 @@ go install github.com/mgechev/revive@latest
 
 ## New to MongoDB / NoSQL?
 
-This video explains well what a NoSQL database is (MongoDB is a NoSQL database): [https://youtu.be/v_hR4K4auoQ](https://youtu.be/v_hR4K4auoQ) _(What is a NoSQL Database? How is Cloud Firestore structured? | Get to know Cloud Firestore #1)_
+This video explains well what a NoSQL database is (MongoDB is a NoSQL database): [youtu.be/v_hR4K4auoQ](https://youtu.be/v_hR4K4auoQ) _(What is a NoSQL Database? How is Cloud Firestore structured? | Get to know Cloud Firestore #1)_
 _Note that some information is cloud firestore specific in that video but it should give you an overall idea on what NoSQL is_
