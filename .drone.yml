@@ -12,7 +12,7 @@ steps:
       cache_key: "{{ .Repo.Owner }}-{{ .Repo.Name }}-{{ .Commit.Branch }}"
       archive_format: "gzip"
       mount:
-        - '/root/.cache/go-build'
+        - 'go-build-cache'
     volumes:
       - name: cache
         path: /tmp/cache
@@ -21,8 +21,10 @@ steps:
     pull: if-not-exists
     image: golang
     commands:
+      - mv go-build-cache /root/.cache/go-build
       - go build
       - go test -v ./...
+      - mv /root/.cache/go-build go-build-cache
     volumes:
       - name: cache
         path: /go
@@ -45,14 +47,14 @@ steps:
       cache_key: "volume"
       archive_format: "gzip"
       mount:
-        - '/root/.cache/go-build'
+        - 'go-build-cache'
     volumes:
       - name: cache
         path: /tmp/cache
 
 trigger:
   branch:
-    - main
+    - *
 
 volumes:
   - name: dockerSocket
