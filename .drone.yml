@@ -52,7 +52,7 @@ steps:
 
 trigger:
   branch:
-    - master
+    - main
 
 volumes:
   - name: dockerSocket
