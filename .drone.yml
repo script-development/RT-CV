@@ -3,8 +3,60 @@ name: default
 type: docker
 
 steps:
-- name: test
-  image: golang
-  commands:
-  - go build
-  - go test -v ./...
+  - name: Restore cache
+    image: meltwater/drone-cache
+    pull: if-not-exists
+    settings:
+      backend: "filesystem"
+      restore: true
+      cache_key: "{{ .Repo.Owner }}-{{ .Repo.Name }}-{{ .Commit.Branch }}"
+      archive_format: "gzip"
+      mount:
+        - '/root/.cache/go-build'
+    volumes:
+      - name: cache
+        path: /tmp/cache
+
+  - name: Build & Test
+    pull: if-not-exists
+    image: golang
+    commands:
+      - go build
+      - go test -v ./...
+    volumes:
+      - name: cache
+        path: /go
+
+  - name: Build Docker container
+    pull: if-not-exists
+    image: docker
+    commands:
+      - docker build -t rtcv:latest .
+    volumes:
+      - name: dockerSocket
+        path: /var/run/docker.sock
+
+  - name: Rebuild cache
+    image: meltwater/drone-cache
+    pull: if-not-exists
+    settings:
+      backend: "filesystem"
+      rebuild: true
+      cache_key: "volume"
+      archive_format: "gzip"
+      mount:
+        - '/root/.cache/go-build'
+    volumes:
+      - name: cache
+        path: /tmp/cache
+
+trigger:
+  branch:
+    - master
+
+volumes:
+  - name: dockerSocket
+    host:
+      path: /var/run/docker.sock
+  - name: cache
+    temp: {}
