@@ -31,7 +31,7 @@ func main() {
 			log.Fatalf("Error loading .env file: %s", err.Error())
 		}
 	} else {
-		log.Warn("No .env file found")
+		log.Info("No .env file found")
 	}
 
 	// Initialize the mail service

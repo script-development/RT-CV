@@ -21,21 +21,21 @@ func ConnectToDB() db.Connection {
 	log.Info("Connecting to database...")
 	client, err := mongo.NewClient(options.Client().ApplyURI(os.Getenv("MONGODB_URI")))
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatalf("Mongo new client failed, error: " + err.Error())
 	}
 
 	ctx, ctxCancel := context.WithTimeout(dbHelpers.Ctx(), 10*time.Second)
 	err = client.Connect(ctx)
 	ctxCancel()
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal("Mongo client connect failed, error: " + err.Error())
 	}
 
 	ctx, ctxCancel = context.WithTimeout(dbHelpers.Ctx(), 10*time.Second)
 	err = client.Ping(ctx, readpref.Primary())
 	ctxCancel()
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal("Mongo client ping failed, error: " + err.Error())
 	}
 
 	mongoConnection := client.Database(os.Getenv("MONGODB_DATABASE"))

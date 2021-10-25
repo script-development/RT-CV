@@ -46,6 +46,22 @@ steps:
       - Backend Build & Test
       - Frontend Build
 
+  - name: Deploy Docker container
+    pull: if-not-exists
+    image: docker
+    commands:
+      - docker rm -f rtcv # Remove the old container
+      - /root/dockerRunScript # Run the script to deploy the container
+    volumes:
+      - name: dockerSocket
+        path: /var/run/docker.sock
+      - name: dockerRunEnv
+        path: /root/.env
+      - name: dockerRunScript
+        path: /root/dockerRunScript
+    depends_on:
+      - Build Docker container
+
 trigger:
   branch:
     - main
@@ -57,3 +73,9 @@ volumes:
   - name: cache
     host:
       path: /root/.buildcache
+  - name: dockerRunEnv
+    host:
+      path: /root/rtcv.env
+  - name: dockerRunScript
+    host:
+      path: /root/rtcv.sh
