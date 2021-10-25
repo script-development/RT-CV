@@ -51,6 +51,7 @@ steps:
     image: docker
     commands:
       - docker rm -f rtcv # Remove the old container
+      - ls /root/
       - /root/dockerRunScript # Run the script to deploy the container
     volumes:
       - name: dockerSocket
