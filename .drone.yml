@@ -51,13 +51,12 @@ steps:
     image: docker
     commands:
       - docker rm -f rtcv # Remove the old container
-      - chmod 777 /root/dockerRunScript # Docker remove the execute permissions of the script
       - /root/dockerRunScript # Run the script to deploy the container
     volumes:
       - name: dockerSocket
         path: /var/run/docker.sock
       - name: dockerRunEnv
-        path: /root/.env
+        path: /root/rtcv.env
       - name: dockerRunScript
         path: /root/dockerRunScript
     depends_on:
