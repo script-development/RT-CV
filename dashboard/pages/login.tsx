@@ -75,7 +75,7 @@ export default function Home() {
 			</form>
 			<style jsx>{`
 				.container {
-					min-height: 100vh;
+					flex-grow: 1;
 					display: flex;
 					justify-content: center;
 					align-items: center;

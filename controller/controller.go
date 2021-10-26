@@ -6,6 +6,7 @@ import (
 
 	"github.com/apex/log"
 	"github.com/gofiber/fiber/v2"
+	"github.com/script-development/RT-CV/controller/ctx"
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/routeBuilder"
 	"github.com/script-development/RT-CV/models"
@@ -16,10 +17,12 @@ import (
 type IMap map[string]interface{}
 
 // Routes defines the routes used
-func Routes(app *fiber.App, dbConn db.Connection, serverSeed string, testing bool) {
+func Routes(app *fiber.App, appVersion string, dbConn db.Connection, serverSeed string, testing bool) {
 	b := routeBuilder.New(app)
 
 	b.Group(`/api/v1`, func(b *routeBuilder.Router) {
+		b.Get(`/health`, getStatus(appVersion))
+
 		b.Group(`/schema`, func(b *routeBuilder.Router) {
 			b.Get(`/openAPI`, routeGetOpenAPISchema(b))
 			b.Get(`/cv`, routeGetCvSchema)
@@ -122,4 +125,25 @@ func ErrorRes(c *fiber.Ctx, status int, err error) error {
 	return c.Status(status).JSON(IMap{
 		"error": err.Error(),
 	})
+}
+
+// GetStatusResponse contains the response data for the getStatus route
+type GetStatusResponse struct {
+	Status     bool   `json:"status"`
+	AppVersion string `json:"appVersion"`
+	Seed       string `json:"seed"`
+}
+
+func getStatus(appVersion string) routeBuilder.R {
+	return routeBuilder.R{
+		Description: "Get the server status",
+		Res:         GetStatusResponse{},
+		Fn: func(c *fiber.Ctx) error {
+			return c.JSON(GetStatusResponse{
+				Status:     true,
+				AppVersion: appVersion,
+				Seed:       string(ctx.GetAuth(c).GetBaseSeed()),
+			})
+		},
+	}
 }

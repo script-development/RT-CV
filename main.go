@@ -16,6 +16,11 @@ import (
 	"github.com/script-development/RT-CV/models"
 )
 
+// AppVersion is used for the X-App-Version header
+// This variable can be set by:
+//   go build -ldflags "-X main.AppVersion=1.0.0"
+var AppVersion = "LOCAL"
+
 func main() {
 	// Seed the random package so generated values are "actually" random
 	random.Seed()
@@ -76,9 +81,14 @@ func main() {
 		ErrorHandler: controller.FiberErrorHandler,
 	})
 	app.Use(logger.New())
+	app.Use(func(c *fiber.Ctx) error {
+		err = c.Next()
+		c.Set("X-App-Version", AppVersion)
+		return err
+	})
 
 	// Setup the app routes
-	controller.Routes(app, dbConn, serverSeed, false)
+	controller.Routes(app, AppVersion, dbConn, serverSeed, false)
 
 	testingDieAfterInit := os.Getenv("TESTING_DIE_AFTER_INIT")
 	if testingDieAfterInit == "true" || testingDieAfterInit == "TRUE" {

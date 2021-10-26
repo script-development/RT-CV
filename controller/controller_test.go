@@ -31,7 +31,7 @@ func newTestingRouter(t *testing.T) *testingRouter {
 		ErrorHandler: FiberErrorHandler,
 	})
 
-	Routes(app, db, testingServerSeed, true)
+	Routes(app, "TESTING", db, testingServerSeed, true)
 	return &testingRouter{
 		t:        t,
 		fiber:    app,

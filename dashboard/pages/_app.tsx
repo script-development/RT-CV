@@ -2,20 +2,12 @@ import type { AppProps } from 'next/app'
 import Head from 'next/head'
 import CssBaseline from '@material-ui/core/CssBaseline'
 import { ThemeProvider } from '@material-ui/core/styles'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { fetcher } from '../src/auth'
 import { useRouter } from 'next/router'
 import { theme } from '../src/theme'
 
-function MyApp({ Component, pageProps }: AppProps) {
-  const router = useRouter()
-
-  useEffect(() => {
-    if ((!fetcher.getApiKey || !fetcher.getApiKeyId) && router.route != '/login') {
-      router.push('/login')
-    }
-  }, [])
-
+function MyApp(args: AppProps) {
   return (<>
     <Head>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
@@ -25,7 +17,7 @@ function MyApp({ Component, pageProps }: AppProps) {
     </Head>
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Component {...pageProps} />
+      <AppContent {...args} />
     </ThemeProvider>
     <style jsx global>{`
       * {
@@ -51,3 +43,58 @@ function MyApp({ Component, pageProps }: AppProps) {
   </>)
 }
 export default MyApp
+
+function AppContent({ Component, pageProps }: AppProps) {
+  const router = useRouter()
+  const [version, setVersion] = useState({
+    version: '',
+    githubCommitURL: '',
+  })
+
+  useEffect(() => {
+    if ((!fetcher.getApiKey || !fetcher.getApiKeyId) && router.route != '/login') {
+      router.push('/login')
+      return
+    }
+
+    let mounted = true
+    fetch('/api/v1/health', {
+      headers: { 'Content-Type': 'application/json' }
+    })
+      .then(r => r.json())
+      .then(({ appVersion }) => {
+        if (mounted) {
+          if (appVersion.length == 40) {
+            // App version is a git commit hash
+            setVersion({ version: appVersion, githubCommitURL: 'https://github.com/script-development/RT-CV/commit/' + appVersion })
+          } else {
+            setVersion({ version: appVersion, githubCommitURL: '' })
+          }
+        }
+      })
+    return () => { mounted = false }
+
+  }, [])
+  console.log('dee9caa16c71acf9db7c498da8d58133aaecb25a'.length)
+
+  return (
+    <div className="appContainer">
+      <Component {...pageProps} />
+      <div className="version">
+        version: <b>{version.githubCommitURL ? <a href={version.githubCommitURL}>{version.version}</a> : version.version}</b>
+      </div>
+      <style jsx>{`
+        .appContainer {
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+        }
+        .version {
+          padding: 10px;
+          text-align: center;
+          color: rgba(255, 255, 255, 0.7);
+        }
+      `}</style>
+    </div>
+  )
+}

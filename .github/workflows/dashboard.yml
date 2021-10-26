@@ -11,7 +11,6 @@ defaults:
     working-directory: dashboard
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
     steps:

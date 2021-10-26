@@ -5,7 +5,7 @@ RUN mkdir /project
 WORKDIR /project
 COPY ./ ./
 
-RUN go build -o rtcv
+RUN go build -ldflags "-X main.AppVersion=$(git log --format='%H' -n 1)" -o rtcv
 
 # build dashboard
 FROM node:16-alpine AS dashboard
