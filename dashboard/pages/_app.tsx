@@ -75,7 +75,6 @@ function AppContent({ Component, pageProps }: AppProps) {
     return () => { mounted = false }
 
   }, [])
-  console.log('dee9caa16c71acf9db7c498da8d58133aaecb25a'.length)
 
   return (
     <div className="appContainer">
