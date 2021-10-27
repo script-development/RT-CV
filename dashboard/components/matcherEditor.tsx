@@ -1,12 +1,11 @@
 import Monokai from 'monaco-themes/themes/Monokai.json'
-import MonacoEditor from "@monaco-editor/react"
-import React, { MutableRefObject, useState, useEffect, useRef } from 'react';
-import { CircularProgress, IconButton } from '@material-ui/core';
+import React, { MutableRefObject, useState, useEffect, useRef } from 'react'
+import { CircularProgress, IconButton } from '@material-ui/core'
 import PlayArrow from '@material-ui/icons/PlayArrow'
-import { fetcher } from '../src/auth';
+import { fetcher } from '../src/auth'
 import { parse } from 'jsonc-parser'
-import { Monaco } from '@monaco-editor/react'
-import { editor } from 'monaco-editor';
+import MonacoEditor, { Monaco } from '@monaco-editor/react'
+import type { editor } from 'monaco-editor'
 
 // This is required to fix a bug where if you re-rerender a next.js Head component the monaco editor breaks
 // issue: https://github.com/suren-atoyan/monaco-react/issues/272
