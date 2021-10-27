@@ -3,7 +3,7 @@ name: default
 type: docker
 
 steps:
-  - name: Backend Build & Test
+  - name: Test
     pull: if-not-exists
     image: golang:1.17-alpine
     environment:
@@ -12,24 +12,7 @@ steps:
       GOMODCACHE: /tmp/cache/pkg.mod # Change the go module cache to a persistent folder
     commands:
       - mkdir -p /tmp/cache/go-build /tmp/cache/pkg.mod # Make sure the cache folders exist
-      - go build
       - go test -v ./...
-    volumes:
-      - name: cache
-        path: /tmp/cache
-
-  - name: Frontend Build
-    pull: if-not-exists
-    image: node:16
-    environment:
-      NEXT_TELEMETRY_DISABLED: 1 # Don't take my data next js
-    commands:
-      - mkdir -p /tmp/cache/node-16-cache # Make sure the cache exists
-      - npm config set cache /tmp/cache/node-16-cache --global # Change the default node cache dir
-      - cd dashboard
-      - npm ci
-      - npm run build
-      - cd ..
     volumes:
       - name: cache
         path: /tmp/cache
@@ -37,14 +20,13 @@ steps:
   - name: Build Docker container
     pull: if-not-exists
     image: docker
+    environment:
+      DOCKER_BUILDKIT: 1 # This enables the docker build cache (this is NOT the dockerfile layers cache)
     commands:
       - docker build -t rtcv:latest .
     volumes:
       - name: dockerSocket
         path: /var/run/docker.sock
-    depends_on: # Build backend and frontend in parallel
-      - Backend Build & Test
-      - Frontend Build
 
   - name: Deploy Docker container
     pull: if-not-exists
@@ -59,8 +41,6 @@ steps:
         path: /root/rtcv.env
       - name: dockerRunScript
         path: /root/dockerRunScript
-    depends_on:
-      - Build Docker container
 
 trigger:
   branch:

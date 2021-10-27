@@ -14,4 +14,5 @@ module.exports = {
         }
         return config
     },
+    swcMinify: true, // Much faster way of minifying the javascript when running docker build
 }
