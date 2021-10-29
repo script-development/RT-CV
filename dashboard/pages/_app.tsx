@@ -52,7 +52,7 @@ function AppContent({ Component, pageProps }: AppProps) {
   })
 
   useEffect(() => {
-    if ((!fetcher.getApiKey || !fetcher.getApiKeyId) && router.route != '/login') {
+    if ((!fetcher.getApiKeyHashed || !fetcher.getApiKeyId) && router.route != '/login') {
       router.push('/login')
       return
     }
