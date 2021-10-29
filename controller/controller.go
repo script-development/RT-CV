@@ -6,7 +6,6 @@ import (
 
 	"github.com/apex/log"
 	"github.com/gofiber/fiber/v2"
-	"github.com/script-development/RT-CV/controller/ctx"
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/routeBuilder"
 	"github.com/script-development/RT-CV/models"
@@ -17,7 +16,7 @@ import (
 type IMap map[string]interface{}
 
 // Routes defines the routes used
-func Routes(app *fiber.App, appVersion string, dbConn db.Connection, serverSeed string, testing bool) {
+func Routes(app *fiber.App, appVersion string, dbConn db.Connection, testing bool) {
 	b := routeBuilder.New(app)
 
 	b.Group(`/api/v1`, func(b *routeBuilder.Router) {
@@ -28,10 +27,7 @@ func Routes(app *fiber.App, appVersion string, dbConn db.Connection, serverSeed 
 			b.Get(`/cv`, routeGetCvSchema)
 		})
 
-		b.Group(`/auth`, func(b *routeBuilder.Router) {
-			b.Get(`/keyinfo`, routeGetKeyInfo, requiresAuth(0))
-			b.Get(`/seed`, routeAuthSeed)
-		})
+		b.Get(`/auth/keyinfo`, routeGetKeyInfo, requiresAuth(0))
 
 		b.Group(`/scraper`, func(b *routeBuilder.Router) {
 			b.Post(`/scanCV`, routeScraperScanCV)
@@ -45,16 +41,22 @@ func Routes(app *fiber.App, appVersion string, dbConn db.Connection, serverSeed 
 				b.Get(`/:encryptionKey`, routeGetSecret)
 			}, validKeyMiddleware())
 		}
-		b.Group(`/secrets/myKey`, secretsRoutes, requiresAuth(models.APIKeyRoleAll), middlewareBindMyKey())
-		b.Group(`/secrets/otherKey`, func(b *routeBuilder.Router) {
-			// This route exposes a lot of user information that's why only the dashboard role can access it
-			b.Get(``, routeGetAllSecretsFromAllKeys, requiresAuth(models.APIKeyRoleDashboard))
-			b.Group(
-				`/:keyID`,
+		b.Group(`/secrets`, func(b *routeBuilder.Router) {
+			b.Group(`/myKey`,
 				secretsRoutes,
-				middlewareBindKey(),
-				requiresAuth(models.APIKeyRoleInformationObtainer|models.APIKeyRoleDashboard),
+				requiresAuth(models.APIKeyRoleAll),
+				middlewareBindMyKey(),
 			)
+			b.Group(`/otherKey`, func(b *routeBuilder.Router) {
+				// This route exposes a lot of user information that's why only the dashboard role can access it
+				b.Get(``, routeGetAllSecretsFromAllKeys, requiresAuth(models.APIKeyRoleDashboard))
+				b.Group(
+					`/:keyID`,
+					secretsRoutes,
+					middlewareBindKey(),
+					requiresAuth(models.APIKeyRoleInformationObtainer|models.APIKeyRoleDashboard),
+				)
+			})
 		})
 
 		b.Group(`/analytics`, func(b *routeBuilder.Router) {
@@ -84,7 +86,7 @@ func Routes(app *fiber.App, appVersion string, dbConn db.Connection, serverSeed 
 				b.Delete(``, routeDeleteKey)
 			}, middlewareBindKey())
 		}, requiresAuth(models.APIKeyRoleDashboard))
-	}, InsertData(dbConn, serverSeed))
+	}, InsertData(dbConn))
 
 	_, err := os.Stat("./dashboard/out")
 	if err == os.ErrNotExist {
@@ -142,7 +144,6 @@ func getStatus(appVersion string) routeBuilder.R {
 			return c.JSON(GetStatusResponse{
 				Status:     true,
 				AppVersion: appVersion,
-				Seed:       string(ctx.GetAuth(c).GetBaseSeed()),
 			})
 		},
 	}

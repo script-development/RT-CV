@@ -80,7 +80,6 @@ filtersLoop:
 					if !value.Type().ConvertibleTo(timeType) {
 						return false
 					}
-					fmt.Println(value, filter)
 					if value.Convert(timeType).Interface().(time.Time).Before(filter.Convert(timeType).Interface().(time.Time)) {
 						return false
 					}

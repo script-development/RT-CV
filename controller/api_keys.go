@@ -39,7 +39,6 @@ var routeCreateKey = routeBuilder.R{
 	Res:         models.APIKey{},
 	Fn: func(c *fiber.Ctx) error {
 		dbConn := ctx.GetDbConn(c)
-		authenticator := ctx.GetAuth(c)
 
 		body := apiKeyModifyCreateData{}
 		err := c.BodyParser(&body)
@@ -85,8 +84,6 @@ var routeCreateKey = routeBuilder.R{
 			return err
 		}
 
-		authenticator.AddKey(*newAPIKey)
-
 		return c.JSON(newAPIKey)
 	},
 }
@@ -105,6 +102,9 @@ var routeDeleteKey = routeBuilder.R{
 		if err != nil {
 			return err
 		}
+
+		ctx.GetAuth(c).RemoveKeyCache(apiKey.ID.Hex())
+
 		return c.JSON(apiKey)
 	},
 }
@@ -125,7 +125,6 @@ var routeUpdateKey = routeBuilder.R{
 	Fn: func(c *fiber.Ctx) error {
 		dbConn := ctx.GetDbConn(c)
 		apiKey := ctx.GetAPIKeyFromParam(c)
-		authenticator := ctx.GetAuth(c)
 		if apiKey.System {
 			return errors.New("you are not allowed to remove system keys")
 		}
@@ -173,7 +172,7 @@ var routeUpdateKey = routeBuilder.R{
 		}
 
 		if keyChanged {
-			authenticator.RefreshKey(*apiKey)
+			ctx.GetAuth(c).RemoveKeyCache(apiKey.ID.Hex())
 		}
 
 		return c.JSON(apiKey)
@@ -208,11 +207,9 @@ func middlewareBindKey() routeBuilder.M {
 			}
 			dbConn := ctx.GetDbConn(c)
 			apiKey := models.APIKey{}
-			err = dbConn.FindOne(&apiKey, bson.M{
-				"_id": keyID,
-			}, db.FindOptions{
-				NoDefaultFilters: true,
-			})
+			query := bson.M{"_id": keyID}
+			args := db.FindOptions{NoDefaultFilters: true}
+			err = dbConn.FindOne(&apiKey, query, args)
 			if err != nil {
 				return err
 			}

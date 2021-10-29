@@ -25,9 +25,6 @@ func main() {
 	// Seed the random package so generated values are "actually" random
 	random.Seed()
 
-	// Generate a server random seed used for auth
-	serverSeed := string(random.StringBytes(64))
-
 	// Loading the .env if available
 	_, err := os.Stat(".env")
 	if err == nil {
@@ -88,7 +85,7 @@ func main() {
 	})
 
 	// Setup the app routes
-	controller.Routes(app, AppVersion, dbConn, serverSeed, false)
+	controller.Routes(app, AppVersion, dbConn, false)
 
 	testingDieAfterInit := os.Getenv("TESTING_DIE_AFTER_INIT")
 	if testingDieAfterInit == "true" || testingDieAfterInit == "TRUE" {

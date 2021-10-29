@@ -9,19 +9,14 @@ import (
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/auth"
 	"github.com/script-development/RT-CV/helpers/routeBuilder"
-	"github.com/script-development/RT-CV/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // InsertData adds the profiles to every route
-func InsertData(dbConn db.Connection, serverSeed string) routeBuilder.M {
+func InsertData(dbConn db.Connection) routeBuilder.M {
 	requestContext := ctx.SetDbConn(context.Background(), dbConn)
 
-	keys, err := models.GetAPIKeys(dbConn)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	requestContext = ctx.SetAuth(requestContext, auth.New(keys, serverSeed))
+	requestContext = ctx.SetAuth(requestContext, auth.NewHelper(dbConn))
 
 	// We set this to nil so we can later run ctx.GetKey without panicing if the key is not yet set
 	requestContext = ctx.SetKey(requestContext, nil)

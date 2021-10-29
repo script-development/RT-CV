@@ -3,90 +3,47 @@ package auth
 import (
 	"testing"
 
-	"github.com/script-development/RT-CV/db"
-	"github.com/script-development/RT-CV/models"
+	"github.com/script-development/RT-CV/mock"
 	"github.com/stretchr/testify/assert"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func TestAuthenticate(t *testing.T) {
-	key1ID := primitive.NewObjectID()
-	key2ID := primitive.NewObjectID()
-	key3ID := primitive.NewObjectID()
+func TestAuthHelper(t *testing.T) {
+	db := mock.NewMockDB()
 
-	authSeed := "unsafe-testing-seed"
+	helper := NewHelper(db)
 
-	auth := New([]models.APIKey{
-		{
-			M:       db.M{ID: key1ID},
-			Enabled: true,
-			Domains: []string{"a", "b"},
-			Key:     "abc",
-			Roles:   models.APIKeyRoleScraper,
-		},
-		{
-			M:       db.M{ID: key2ID},
-			Enabled: true,
-			Domains: []string{"c", "d"},
-			Key:     "def",
-			Roles:   models.APIKeyRoleInformationObtainer,
-		},
-		{
-			M:       db.M{ID: key3ID},
-			Enabled: true,
-			Domains: []string{"e", "f"},
-			Key:     "ghi",
-			Roles:   models.APIKeyRoleController,
-		},
-	}, authSeed)
+	testCases := []struct {
+		name      string
+		id        string
+		key       string
+		expectErr error
+	}{
+		// Valid
+		{"valid mock key1", mock.Key1.ID.Hex(), mock.Key1.Key, nil},
+		{"valid mock key1 from cache", mock.Key1.ID.Hex(), mock.Key1.Key, nil},
+		{"valid mock key2", mock.Key2.ID.Hex(), mock.Key2.Key, nil},
+		{"valid mock key3", mock.Key3.ID.Hex(), mock.Key3.Key, nil},
+		{"valid mock dashboard key", mock.DashboardKey.ID.Hex(), mock.DashboardKey.Key, nil},
+		// Invalid
+		{"to short key", mock.Key1.ID.Hex()[:23], mock.Key1.Key, ErrAuthHeaderHasInvalidLen},
+		{"not a hex id", mock.Key1.ID.Hex()[:20] + "++++", mock.Key1.Key, ErrAuthHeaderInvalidFormat},
+		{"id does not exists", mock.Key1.ID.Hex()[:10] + "00000000000000", mock.Key1.Key, ErrAuthHeaderInvalid},
+		{"key is invalid", mock.Key1.ID.Hex(), "this is a invalid key", ErrAuthHeaderInvalid},
+	}
 
-	// No key provided
-	_, _, err := auth.Authenticate("")
-	assert.Error(t, err)
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			credentialsHeader := GenAuthHeaderKey(testCase.id, testCase.key)
 
-	// First time key usage
-	site1KeySaltFoo := NewAccessorHelper(key1ID, "abc", "foo", authSeed)
-	key := site1KeySaltFoo.Key()
-	site, _, err := auth.Authenticate(key)
-	assert.NoError(t, err)
-	assert.Equal(t, []string{"a", "b"}, site.Domains)
-
-	// Using the same key twice should yield an error
-	_, _, err = auth.Authenticate(key)
-	assert.Error(t, err)
-
-	// Generating a new key should work
-	site, _, err = auth.Authenticate(site1KeySaltFoo.Key())
-	assert.NoError(t, err)
-	assert.Equal(t, []string{"a", "b"}, site.Domains)
-
-	// Creating a new key for the same site with a diffrent salt should work
-	site1KeySaltBar := NewAccessorHelper(key1ID, "abc", "bar", authSeed)
-	site, _, err = auth.Authenticate(site1KeySaltBar.Key())
-	assert.NoError(t, err)
-	assert.Equal(t, []string{"a", "b"}, site.Domains)
-
-	// Generating a new key using the second key should work
-	_, _, err = auth.Authenticate(site1KeySaltBar.Key())
-	assert.NoError(t, err)
-
-	// The first key created should also still work
-	_, _, err = auth.Authenticate(site1KeySaltFoo.Key())
-	assert.NoError(t, err)
-
-	// Using the wrong input key should fail
-	site1WithWrongKey := NewAccessorHelper(key1ID, "this-is-a-wrong-key", "baz", authSeed)
-	_, _, err = auth.Authenticate(site1WithWrongKey.Key())
-	assert.Error(t, err)
-
-	// Authenticating a diffrent site should work
-	site2KeySaltFoo := NewAccessorHelper(key2ID, "def", "foo", authSeed)
-	site, _, err = auth.Authenticate(site2KeySaltFoo.Key())
-	assert.NoError(t, err)
-	assert.Equal(t, []string{"c", "d"}, site.Domains)
-
-	// Using another key id's key should fail
-	site1WithKeyFrom2 := NewAccessorHelper(key1ID, "def", "foobar", authSeed)
-	_, _, err = auth.Authenticate(site1WithKeyFrom2.Key())
-	assert.Error(t, err)
+			res, err := helper.Valid(credentialsHeader)
+			if testCase.expectErr != nil {
+				assert.Nil(t, res)
+				assert.NotNil(t, err)
+				assert.Equal(t, testCase.expectErr.Error(), err.Error())
+			} else {
+				assert.NotNil(t, res)
+				assert.Nil(t, err)
+			}
+		})
+	}
 }

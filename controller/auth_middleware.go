@@ -59,10 +59,10 @@ func requiresAuth(requiredRoles models.APIKeyRole) routeBuilder.M {
 				// NOTE: there seems to be a bug with fiber it seems where if try to access a non existing route or send an invalid url
 				// c.Get("Authorization") returns an empty string no matter the value of the header send
 				// This might cause some confusuion as you'll receive a auth.ErrNoAuthheader error over a 404 error
-				return ErrorRes(c, fiber.StatusBadRequest, auth.ErrNoAuthheader)
+				return ErrorRes(c, fiber.StatusBadRequest, auth.ErrNoAuthHeader)
 			}
 
-			key, salt, err := authService.Authenticate(authorizationHeader)
+			key, err := authService.Valid(authorizationHeader)
 			if err != nil {
 				return ErrorRes(c, fiber.StatusUnauthorized, err)
 			}
@@ -73,9 +73,8 @@ func requiresAuth(requiredRoles models.APIKeyRole) routeBuilder.M {
 			}
 
 			*logger = *logger.WithFields(log.Fields{
-				"apiKey":     key.Key,
-				"apiKeySalt": string(salt),
-				"domains":    key.Domains,
+				"apiKeyId": key.ID,
+				"domains":  key.Domains,
 			})
 
 			c.SetUserContext(

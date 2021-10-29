@@ -34,6 +34,8 @@ const (
 	requestIDCtxKey    = requestIDCtx(0)
 )
 
+// getCtxValue returns a value from the context
+// Will panic if the key is not found
 func getCtxValue(c *fiber.Ctx, key interface{}) interface{} {
 	return c.UserContext().Value(key)
 }
@@ -61,12 +63,12 @@ func SetProfile(ctx context.Context, value *models.Profile) context.Context {
 
 // GetAuth returns the auth key used to make the request
 // If the request is not authenticated this function panics
-func GetAuth(c *fiber.Ctx) *auth.Auth {
-	return getCtxValue(c, authCtxKey).(*auth.Auth)
+func GetAuth(c *fiber.Ctx) *auth.Helper {
+	return getCtxValue(c, authCtxKey).(*auth.Helper)
 }
 
 // SetAuth sets the auth key used to make the request
-func SetAuth(ctx context.Context, value *auth.Auth) context.Context {
+func SetAuth(ctx context.Context, value *auth.Helper) context.Context {
 	return context.WithValue(ctx, authCtxKey, value)
 }
 

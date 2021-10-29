@@ -61,6 +61,13 @@ func GetAPIKeys(conn db.Connection) ([]APIKey, error) {
 	return keys, err
 }
 
+// GetAPIKey returns a single api key
+func GetAPIKey(conn db.Connection, id primitive.ObjectID) (APIKey, error) {
+	key := APIKey{}
+	err := conn.FindOne(&key, bson.M{"_id": id})
+	return key, err
+}
+
 // APIKeyRole is a role that tells what someone can and can't do
 // Roles can be combined together using bit sifting
 // For example:

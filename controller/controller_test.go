@@ -10,33 +10,31 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/script-development/RT-CV/db/testingdb"
 	"github.com/script-development/RT-CV/helpers/auth"
-	"github.com/script-development/RT-CV/helpers/random"
 	"github.com/script-development/RT-CV/helpers/routeBuilder"
 	"github.com/script-development/RT-CV/mock"
 	. "github.com/stretchr/testify/assert"
 )
 
-var testingServerSeed = "static-server-seed"
-
 type testingRouter struct {
-	t        *testing.T
-	fiber    *fiber.App
-	db       *testingdb.TestConnection
-	accessor *auth.TestAccessor
+	t          *testing.T
+	fiber      *fiber.App
+	db         *testingdb.TestConnection
+	authHeader string
 }
 
 func newTestingRouter(t *testing.T) *testingRouter {
 	db := mock.NewMockDB()
+
 	app := fiber.New(fiber.Config{
 		ErrorHandler: FiberErrorHandler,
 	})
+	Routes(app, "TESTING", db, true)
 
-	Routes(app, "TESTING", db, testingServerSeed, true)
 	return &testingRouter{
-		t:        t,
-		fiber:    app,
-		db:       db,
-		accessor: auth.NewAccessorHelper(mock.Key1.ID, "aaa", string(random.StringBytes(32)), testingServerSeed),
+		t:          t,
+		fiber:      app,
+		db:         db,
+		authHeader: auth.GenAuthHeaderKey(mock.Key1.ID.Hex(), mock.Key1.Key),
 	}
 }
 
@@ -62,7 +60,7 @@ func (r *testingRouter) MakeRequest(method routeBuilder.Method, route string, op
 		req.Header.Set("Content-Type", "application/json")
 	}
 	if !opts.NoAuth {
-		req.Header.Set("Authorization", string(r.accessor.Key()))
+		req.Header.Set("Authorization", r.authHeader)
 	}
 
 	res, err = r.fiber.Test(req, -1)

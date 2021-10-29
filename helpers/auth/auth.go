@@ -1,217 +1,115 @@
 package auth
 
 import (
-	"crypto/sha256"
-	"crypto/sha512"
-	"encoding/base64"
-	"encoding/hex"
 	"errors"
-	"strings"
+	"time"
 
+	"github.com/script-development/RT-CV/db"
+	"github.com/script-development/RT-CV/helpers/crypto"
 	"github.com/script-development/RT-CV/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type hashMethod uint8
+// GenAuthHeaderKey generates a authentication header value
+func GenAuthHeaderKey(id, key string) string {
+	return "Basic " + id + ":" + crypto.HashSha512String(key)
+}
 
-var (
-	hashSha512 = hashMethod(0)
-	hashSha256 = hashMethod(1)
-)
+// Helper helps authenticate a user
+type Helper struct {
+	// the cache key is the key ID
+	cache  map[string]cachedKey
+	dbConn db.Connection
+}
 
-func hashSha(method hashMethod, in string) string {
-	if method == hashSha256 {
-		res := sha256.Sum256([]byte(in))
-		return hex.EncodeToString(res[:])
+type cachedKey struct {
+	LastRefreshed time.Time
+	KeyAsSha512   string
+	key           models.APIKey
+}
+
+// NewHelper returns a new instance of AuthHelper
+func NewHelper(dbConn db.Connection) *Helper {
+	return &Helper{
+		cache:  map[string]cachedKey{},
+		dbConn: dbConn,
 	}
-
-	res := sha512.Sum512([]byte(in))
-	return hex.EncodeToString(res[:])
-}
-
-// Auth can be used to check authentication headers
-type Auth struct {
-	keys     map[string]key
-	baseSeed string
-}
-
-type key struct {
-	key    string
-	apiKey models.APIKey
-	sha512 []rollingHash
-	sha256 []rollingHash
-}
-
-type rollingHash struct {
-	salt  string
-	value string
-}
-
-// New returns a new Auth instance that can be used to check auth tokens
-func New(keys []models.APIKey, baseSeed string) *Auth {
-	res := Auth{
-		keys:     map[string]key{},
-		baseSeed: baseSeed,
-	}
-	for _, dbKey := range keys {
-		if !dbKey.Enabled {
-			continue
-		}
-
-		res.keys[dbKey.ID.Hex()] = key{
-			apiKey: dbKey,
-			key:    dbKey.Key,
-			sha512: []rollingHash{},
-			sha256: []rollingHash{},
-		}
-	}
-	return &res
 }
 
 var (
-	// ErrInvalidKey is a returned when a key is invalid
-	ErrInvalidKey = errors.New("invalid authentication key")
-	// ErrNoAuthheader is send when the authentication header is empty
-	ErrNoAuthheader = errors.New("missing authorization header of type Basic")
-	// ErrAuthHeaderToShort is send whenthe authorization is to short to even check
-	ErrAuthHeaderToShort = errors.New("invalid authorization header, must be of type Basic and contain data")
+	// ErrNoAuthHeader = no authorization header
+	ErrNoAuthHeader = errors.New("missing authorization header of type Basic")
+	// ErrAuthHeaderHasInvalidLen = auth header has invalid length
+	ErrAuthHeaderHasInvalidLen = errors.New("auth header has invalid length")
+	// ErrAuthHeaderNotBasic = auth header expected to be \"Basic ...\"
+	ErrAuthHeaderNotBasic = errors.New("auth header expected to be \"Basic ...\"")
+	// ErrAuthHeaderInvalidFormat = auth header has invalid format, expect \"Basic keyID:sha512(Key)\"
+	ErrAuthHeaderInvalidFormat = errors.New("auth header has invalid format, expect \"Basic keyID:sha512(Key)\"")
+	// ErrAuthHeaderInvalid = auth header is invalid
+	ErrAuthHeaderInvalid = errors.New("auth header is invalid")
 )
 
-// GetBaseSeed returns the server base seed
-func (a *Auth) GetBaseSeed() string {
-	return a.baseSeed
+// RemoveKeyCache removes a cached key
+func (h *Helper) RemoveKeyCache(id string) {
+	delete(h.cache, id)
 }
 
-// RefreshKey resets a key
-// This should be called if the updatedKey.key changed otherwise users can still send auth requests with the old key
-func (a *Auth) RefreshKey(updatedKey models.APIKey) {
-	id := updatedKey.ID.Hex()
-	if !updatedKey.Enabled {
-		delete(a.keys, id)
-		return
-	}
-
-	a.keys[id] = key{
-		apiKey: updatedKey,
-		key:    updatedKey.Key,
-		sha512: []rollingHash{},
-		sha256: []rollingHash{},
-	}
-}
-
-// AddKey Adds a key to the authenticator so it can be used to authenticate with
-func (a *Auth) AddKey(newKey models.APIKey) {
-	if !newKey.Enabled {
-		return
-	}
-
-	a.keys[newKey.ID.Hex()] = key{
-		apiKey: newKey,
-		key:    newKey.Key,
-		sha512: []rollingHash{},
-		sha256: []rollingHash{},
-	}
-}
-
-// Authenticate check is a authorizationHeader is correct
-func (a *Auth) Authenticate(authorizationHeader string) (site *models.APIKey, salt string, err error) {
-	authorizationHeaderLen := len(authorizationHeader)
-	if authorizationHeaderLen < 7 {
-		if authorizationHeaderLen == 0 {
-			return nil, salt, ErrNoAuthheader
-		}
-		return nil, salt, ErrAuthHeaderToShort
+// Valid validates an authorizationHeader
+func (h *Helper) Valid(authorizationHeader string) (*models.APIKey, error) {
+	if len(authorizationHeader) != 159 {
+		return nil, ErrAuthHeaderHasInvalidLen
 	}
 
 	if "Basic " != authorizationHeader[:6] {
-		return nil, salt, errors.New("authorization must be of type Basic")
+		return nil, ErrAuthHeaderNotBasic
 	}
 
-	auth, err := base64.URLEncoding.DecodeString(authorizationHeader[6:])
+	startID := 6
+	endID := 6 + 24
+
+	id := authorizationHeader[startID:endID]
+
+	if authorizationHeader[endID] != ':' {
+		return nil, ErrAuthHeaderInvalidFormat
+	}
+
+	keyAsSha512 := authorizationHeader[endID+1:]
+
+	keyCacheEntry, ok := h.cache[id]
+	if ok {
+		if time.Now().Before(keyCacheEntry.LastRefreshed.Add(time.Hour * 12)) {
+			// Yay a cache entry for this key exists and is still valid
+			if keyCacheEntry.KeyAsSha512 != keyAsSha512 {
+				return nil, ErrAuthHeaderInvalid
+			}
+			return &keyCacheEntry.key, nil
+		}
+		// Cache entry outdated
+		h.RemoveKeyCache(id)
+	}
+
+	parsedID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return nil, salt, err
+		return nil, ErrAuthHeaderInvalidFormat
 	}
-
-	parts := strings.Split(string(auth), ":")
-	if len(parts) != 4 {
-		return nil, salt, ErrInvalidKey
-	}
-
-	hashMethod := hashSha256
-	if parts[0] == "sha512" {
-		hashMethod = hashSha512
-	}
-	if hashMethod == hashSha256 && parts[0] != "sha256" {
-		return nil, salt, errors.New("only sha512 and sha256 are supported")
-	}
-
-	siteID := string(parts[1])
-	if !primitive.IsValidObjectID(siteID) {
-		return nil, salt, errors.New("invalid key ID")
-	}
-
-	salt = parts[2]
-	if len(salt) == 0 {
-		return nil, salt, errors.New("salt cannot be empty")
-	}
-
-	key := parts[3]
-	if len(key) == 0 {
-		return nil, salt, errors.New("key cannot be empty")
-	}
-
-	knownKey, ok := a.keys[siteID]
-	if !ok {
-		return nil, salt, ErrInvalidKey
-	}
-	keyAndSalt := knownKey.key + salt
-
-	itemsArr := knownKey.sha512
-	if hashMethod == hashSha256 {
-		itemsArr = knownKey.sha256
-	}
-
-	for idx, entry := range itemsArr {
-		if entry.salt != salt {
-			continue
+	key, err := models.GetAPIKey(h.dbConn, parsedID)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, ErrAuthHeaderInvalid
 		}
-
-		// Key + salt combo earlier created lets check if the credentials match
-		if entry.value != key {
-			return nil, salt, ErrInvalidKey
-		}
-
-		entry.value = hashSha(hashMethod, entry.value+knownKey.key+entry.salt)
-		if hashMethod == hashSha512 {
-			knownKey.sha512[idx] = entry
-		} else {
-			knownKey.sha256[idx] = entry
-		}
-
-		return &knownKey.apiKey, salt, nil
+		return nil, err
 	}
 
-	// Create a new key + salt combo
-	hash := hashSha(hashMethod, a.baseSeed+keyAndSalt)
-	hash = hashSha(hashMethod, hash+keyAndSalt)
-
-	if hash != key {
-		return nil, salt, ErrInvalidKey
+	hashedKey := crypto.HashSha512String(key.Key)
+	h.cache[id] = cachedKey{
+		LastRefreshed: time.Now(),
+		KeyAsSha512:   hashedKey,
+		key:           key,
 	}
 
-	// Pre calculate next hash in the chain
-	hash = hashSha(hashMethod, hash+keyAndSalt)
-
-	rollingKey := rollingHash{
-		salt:  salt,
-		value: hash,
+	if keyAsSha512 != hashedKey {
+		return nil, ErrAuthHeaderInvalid
 	}
-	if hashMethod == hashSha512 {
-		knownKey.sha512 = append(knownKey.sha512, rollingKey)
-	} else {
-		knownKey.sha256 = append(knownKey.sha256, rollingKey)
-	}
-
-	a.keys[siteID] = knownKey
-	return &knownKey.apiKey, salt, nil
+	return &key, nil
 }

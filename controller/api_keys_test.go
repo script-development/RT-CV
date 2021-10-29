@@ -6,6 +6,7 @@ import (
 
 	"github.com/script-development/RT-CV/helpers/random"
 	"github.com/script-development/RT-CV/helpers/routeBuilder"
+	"github.com/script-development/RT-CV/mock"
 	"github.com/script-development/RT-CV/models"
 	. "github.com/stretchr/testify/assert"
 )
@@ -34,6 +35,10 @@ func TestApiKeyRoutes(t *testing.T) {
 
 	// Get each key from earlier by id
 	for _, listKey := range resKeys {
+		if listKey.ID.Hex() == mock.Key1.ID.Hex() {
+			continue
+		}
+
 		keyRoute := `/api/v1/keys/` + listKey.ID.Hex()
 		_, res = app.MakeRequest(routeBuilder.Get, keyRoute, TestReqOpts{})
 
