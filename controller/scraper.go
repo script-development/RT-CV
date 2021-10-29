@@ -61,8 +61,11 @@ var routeScraperScanCV = routeBuilder.R{
 			)
 		}
 
-		profiles := ctx.GetProfiles(c)
-		matchedProfiles := match.Match(key.Domains, *profiles, body.CV)
+		profiles, err := models.GetProfiles(dbConn)
+		if err != nil {
+			return err
+		}
+		matchedProfiles := match.Match(key.Domains, profiles, body.CV)
 
 		// Insert analytics data
 		analyticsData := make([]db.Entry, len(matchedProfiles))

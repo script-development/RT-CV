@@ -13,6 +13,7 @@ import (
 	"github.com/script-development/RT-CV/helpers/emailservice"
 	"github.com/valyala/fasthttp"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // Profile contains all the information about a search profile
@@ -61,6 +62,13 @@ func GetProfiles(conn db.Connection) ([]Profile, error) {
 	profiles := []Profile{}
 	err := conn.Find(&Profile{}, &profiles, nil)
 	return profiles, err
+}
+
+// GetProfile returns a profile by id
+func GetProfile(conn db.Connection, id primitive.ObjectID) (Profile, error) {
+	profile := Profile{}
+	err := conn.FindOne(&profile, bson.M{"_id": id})
+	return profile, err
 }
 
 // ProfileProfession contains information about a proffession

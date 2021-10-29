@@ -16,7 +16,6 @@ import (
 // It might give a performance improvement and also make the code more safe as then we can do nil checks
 //
 
-type profilesCtx uint8
 type profileCtx uint8
 type authCtx uint8
 type keyCtx uint8
@@ -26,7 +25,6 @@ type dbConnCtx uint8
 type requestIDCtx uint8
 
 const (
-	profilesCtxKey     = profilesCtx(0)
 	profileCtxKey      = profileCtx(0)
 	authCtxKey         = authCtx(0)
 	keyCtxKey          = keyCtx(0)
@@ -49,16 +47,6 @@ func GetRequestID(c *fiber.Ctx) primitive.ObjectID {
 // SetRequestID sets the request id
 func SetRequestID(ctx context.Context, value primitive.ObjectID) context.Context {
 	return context.WithValue(ctx, requestIDCtxKey, value)
-}
-
-// GetProfiles returns the search profiles
-func GetProfiles(c *fiber.Ctx) *[]models.Profile {
-	return getCtxValue(c, profilesCtxKey).(*[]models.Profile)
-}
-
-// SetProfiles sets the search profiles
-func SetProfiles(ctx context.Context, value *[]models.Profile) context.Context {
-	return context.WithValue(ctx, profilesCtxKey, value)
 }
 
 // GetProfile returns a single profile

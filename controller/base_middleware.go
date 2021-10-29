@@ -15,19 +15,13 @@ import (
 
 // InsertData adds the profiles to every route
 func InsertData(dbConn db.Connection, serverSeed string) routeBuilder.M {
-	profiles, err := models.GetProfiles(dbConn)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	requestContext := ctx.SetProfiles(context.Background(), &profiles)
+	requestContext := ctx.SetDbConn(context.Background(), dbConn)
 
 	keys, err := models.GetAPIKeys(dbConn)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-
 	requestContext = ctx.SetAuth(requestContext, auth.New(keys, serverSeed))
-	requestContext = ctx.SetDbConn(requestContext, dbConn)
 
 	// We set this to nil so we can later run ctx.GetKey without panicing if the key is not yet set
 	requestContext = ctx.SetKey(requestContext, nil)

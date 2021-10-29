@@ -6,14 +6,17 @@ import (
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/routeBuilder"
 	"github.com/script-development/RT-CV/models"
-	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var routeAllProfiles = routeBuilder.R{
 	Description: "get all profiles stored in the database",
 	Res:         []models.Profile{},
 	Fn: func(c *fiber.Ctx) error {
-		profiles := ctx.GetProfiles(c)
+		profiles, err := models.GetProfiles(ctx.GetDbConn(c))
+		if err != nil {
+			return err
+		}
 		return c.JSON(profiles)
 	},
 }
@@ -22,19 +25,25 @@ func middlewareBindProfile() routeBuilder.M {
 	return routeBuilder.M{
 		Fn: func(c *fiber.Ctx) error {
 			profileParam := c.Params(`profile`)
-			profiles := ctx.GetProfiles(c)
-			for _, profile := range *profiles {
-				if profile.ID.Hex() == profileParam {
-					c.SetUserContext(
-						ctx.SetProfile(
-							c.UserContext(),
-							&profile,
-						),
-					)
-					return c.Next()
-				}
+
+			profileID, err := primitive.ObjectIDFromHex(profileParam)
+			if err != nil {
+				return err
 			}
-			return mongo.ErrNoDocuments
+
+			dbConn := ctx.GetDbConn(c)
+			profile, err := models.GetProfile(dbConn, profileID)
+			if err != nil {
+				return err
+			}
+
+			c.SetUserContext(
+				ctx.SetProfile(
+					c.UserContext(),
+					&profile,
+				),
+			)
+			return c.Next()
 		},
 	}
 }
@@ -74,16 +83,13 @@ var routeCreateProfile = routeBuilder.R{
 			return err
 		}
 
-		ctxProfiles := ctx.GetProfiles(c)
-		*ctxProfiles = append(*ctxProfiles, profile)
-
 		return c.JSON(profile)
 	},
 }
 
 func routeModifyProfile(c *fiber.Ctx) error {
 	profile := ctx.GetProfile(c)
-	// FIXME implment route
+	// FIXME implement route
 	return c.JSON(profile)
 }
 
@@ -97,14 +103,6 @@ var routeDeleteProfile = routeBuilder.R{
 		if err != nil {
 			return err
 		}
-
-		// Update the cached local profiles list
-		profilesInDB, err := models.GetProfiles(dbConn)
-		if err != nil {
-			return err
-		}
-		ctxProfiles := ctx.GetProfiles(c)
-		*ctxProfiles = profilesInDB
 
 		return c.JSON(profile)
 	},
