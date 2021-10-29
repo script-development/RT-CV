@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/script-development/RT-CV/helpers/schema"
+	"github.com/mjarkk/jsonschema"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -16,13 +16,13 @@ import (
 type RFC3339Nano time.Time
 
 // JSONSchemaDescribe implements schema.Describe
-func (RFC3339Nano) JSONSchemaDescribe() schema.Property {
+func (RFC3339Nano) JSONSchemaDescribe() jsonschema.Property {
 	minLen := uint(10)
-	return schema.Property{
+	return jsonschema.Property{
 		Title: "RFC3339 time string",
 		Description: "This field is a RFC3339 (nano) time string, " +
 			"RFC3339 is basicly an extension of ISO 8601 so that should also be fine here",
-		Type: schema.PropertyTypeString,
+		Type: jsonschema.PropertyTypeString,
 		Examples: []interface{}{
 			"2019-10-12T07:20:50.52Z",
 			"2019-10-12T14:20:50.52+07:00",

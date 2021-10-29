@@ -13,6 +13,7 @@ require (
 	github.com/joho/godotenv v1.4.0
 	github.com/jordan-wright/email v4.0.1-0.20210109023952-943e75fe5223+incompatible // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
+	github.com/mjarkk/jsonschema v0.0.0-20211029074809-f305c740f2cb // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/valyala/fasthttp v1.30.0

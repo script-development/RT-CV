@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/SebastiaanKlippert/go-wkhtmltopdf"
+	"github.com/mjarkk/jsonschema"
 	"github.com/script-development/RT-CV/helpers/jsonHelpers"
-	"github.com/script-development/RT-CV/helpers/schema"
 )
 
 // CV contains all information that belongs to a curriculum vitae
@@ -101,11 +101,11 @@ func (ll LanguageLevel) Valid() bool {
 }
 
 // JSONSchemaDescribe implements schema.Describe
-func (LanguageLevel) JSONSchemaDescribe() schema.Property {
-	return schema.Property{
+func (LanguageLevel) JSONSchemaDescribe() jsonschema.Property {
+	return jsonschema.Property{
 		Title:       "Language level",
 		Description: langLevelDescription,
-		Type:        schema.PropertyTypeNumber,
+		Type:        jsonschema.PropertyTypeNumber,
 		Enum: []interface{}{
 			LanguageLevelUnknown,
 			LanguageLevelReasonable,

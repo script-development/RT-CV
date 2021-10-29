@@ -9,28 +9,28 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/mjarkk/jsonschema"
 	"github.com/script-development/RT-CV/helpers/routeBuilder"
-	"github.com/script-development/RT-CV/helpers/schema"
 	"github.com/script-development/RT-CV/models"
 )
 
 var routeGetCvSchema = routeBuilder.R{
 	Description: "returns cv as a json schema, " +
 		"currently used in the dashboard for the /tryMatcher page to give intelligent suggestions",
-	Res: schema.Property{},
+	Res: jsonschema.Property{},
 	Fn: func(c *fiber.Ctx) error {
-		defs := map[string]schema.Property{}
-		resSchema, err := schema.From(
+		defs := map[string]jsonschema.Property{}
+		resSchema, err := jsonschema.From(
 			models.CV{},
 			"#/$defs/",
-			func(key string, value schema.Property) {
+			func(key string, value jsonschema.Property) {
 				defs[key] = value
 			},
 			func(key string) bool {
 				_, ok := defs[key]
 				return ok
 			},
-			&schema.WithMeta{SchemaID: "/api/v1/schema/cv"},
+			&jsonschema.WithMeta{SchemaID: "/api/v1/schema/cv"},
 		)
 		if err != nil {
 			return err
@@ -106,12 +106,12 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 			}
 
 			componentsSchema := IMap{
-				"Error": schema.Property{
-					Type:     schema.PropertyTypeObject,
+				"Error": jsonschema.Property{
+					Type:     jsonschema.PropertyTypeObject,
 					Required: []string{"error"},
-					Properties: map[string]schema.Property{
+					Properties: map[string]jsonschema.Property{
 						"error": {
-							Type: schema.PropertyTypeString,
+							Type: jsonschema.PropertyTypeString,
 						},
 					},
 				},
@@ -128,10 +128,10 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 
 				// Create the response value
 				if route.Info.Res != nil {
-					schemaValue, err := schema.From(
+					schemaValue, err := jsonschema.From(
 						route.Info.Res,
 						"#/components/schemas/",
-						func(key string, value schema.Property) {
+						func(key string, value jsonschema.Property) {
 							componentsSchema[key] = value
 						},
 						func(key string) bool {
@@ -156,10 +156,10 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 					for key, value := range route.Info.ResMap {
 						content := IMap{}
 						if value != nil {
-							schemaValue, err := schema.From(
+							schemaValue, err := jsonschema.From(
 								value,
 								"#/components/schemas/",
-								func(key string, value schema.Property) {
+								func(key string, value jsonschema.Property) {
 									componentsSchema[key] = value
 								},
 								func(key string) bool {
@@ -219,10 +219,10 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 
 				// Create the request body expected value
 				if route.Info.Body != nil {
-					schemaValue, err := schema.From(
+					schemaValue, err := jsonschema.From(
 						route.Info.Body,
 						"#/components/schemas/",
-						func(key string, value schema.Property) {
+						func(key string, value jsonschema.Property) {
 							componentsSchema[key] = value
 						},
 						func(key string) bool {
