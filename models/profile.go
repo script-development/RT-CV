@@ -43,6 +43,9 @@ type Profile struct {
 
 	// What should happen on a match
 	OnMatch ProfileOnMatch `json:"onMatch"`
+
+	// OldID is used to keep track of converted old profiles
+	OldID *uint64 `json:"-"`
 }
 
 // CollectionName returns the collection name of the Profile
