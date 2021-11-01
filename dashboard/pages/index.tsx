@@ -1,4 +1,5 @@
 import { Button, Icon } from '@material-ui/core'
+import { ForumTwoTone } from '@material-ui/icons'
 import Head from 'next/head'
 import Link from 'next/link'
 import React, { useEffect } from 'react'
@@ -17,34 +18,39 @@ function getWebsocketUrl() {
 
 export default function Home() {
 	const connectToSocket = () => {
-		const socket = new WebSocket(getWebsocketUrl())
+		try {
+			const socket = new WebSocket(getWebsocketUrl())
 
-		let open = true
-		const close = () => {
-			if (!open) { return }
-			open = false
-			socket.onmessage = null
-			socket.onopen = null
-			socket.onerror = null
-			socket.onclose = null
-			setTimeout(() => connectToSocket(), 5000)
-		}
+			let open = true
+			const close = () => {
+				if (!open) { return }
+				open = false
+				socket.onmessage = null
+				socket.onopen = null
+				socket.onerror = null
+				socket.onclose = null
+				setTimeout(() => connectToSocket(), 5000)
+			}
 
-		socket.onmessage = (ev: MessageEvent<any>) => {
-			console.log('received message', ev)
+			socket.onmessage = (ev: MessageEvent<any>) => {
+				console.log('received message', ev)
+			}
+			socket.onopen = () => {
+				console.log('connected')
+			}
+			socket.onerror = (e) => {
+				console.log('disconnected from websocket, error:', e)
+				close()
+			}
+			socket.onclose = (e) => {
+				console.log('disconnected from websocket, error:', e)
+				close()
+			}
+			return () => socket.close(1000, 'navigating to different route')
+		} catch (e) {
+			console.error(e)
+			return () => { }
 		}
-		socket.onopen = () => {
-			console.log('connected')
-		}
-		socket.onerror = (e) => {
-			console.log('disconnected from websocket, error:', e)
-			close()
-		}
-		socket.onclose = (e) => {
-			console.log('disconnected from websocket, error:', e)
-			close()
-		}
-		return () => socket.close(1000, 'navigating to different route')
 	}
 
 	useEffect(() => {
