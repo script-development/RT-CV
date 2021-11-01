@@ -23,7 +23,7 @@ type R struct {
 	// OR use res map if there are multiple possible responses
 	ResMap map[string]interface{}
 
-	Fn func(c *fiber.Ctx) error
+	Fn fiber.Handler
 
 	// Optional
 	// Body can be set to hint the route builder what kind of body this request expects
