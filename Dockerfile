@@ -14,7 +14,11 @@ WORKDIR /app
 COPY ./dashboard/ .
 
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm ci && npm run build
+RUN apk update \
+    && apk upgrade \
+    && apk install --no-cache libc6-compat \
+    && npm ci \
+    && npm run build
 
 # Setup the runtime
 FROM ubuntu AS runtime
