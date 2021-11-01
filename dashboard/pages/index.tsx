@@ -10,12 +10,9 @@ import { fetcher } from '../src/auth'
 
 function getWebsocketUrl() {
 	const url = fetcher.getAPIPath(`/api/v1/events/ws/${fetcher.authorizationValue}`, true)
-	console.log(1, url)
 	if (url[0] == '/') {
-		console.log(2, `ws${location.protocol == 'https:' ? 's' : ''}//${location.host}${url}`)
-		return `ws${location.protocol == 'https:' ? 's' : ''}//${location.host}${url}`
+		return `ws${location.protocol == 'https:' ? 's' : ''}://${location.host}${url}`
 	} else {
-		console.log(3)
 		return url
 	}
 }
