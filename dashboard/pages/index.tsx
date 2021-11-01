@@ -9,11 +9,15 @@ import Statistics from '../components/statistics'
 import { fetcher } from '../src/auth'
 
 function getWebsocketUrl() {
-	let url = fetcher.getAPIPath(`/api/v1/events/ws/${fetcher.authorizationValue}`, true)
+	const url = fetcher.getAPIPath(`/api/v1/events/ws/${fetcher.authorizationValue}`, true)
+	console.log(1, url)
 	if (url[0] == '/') {
-		url = `ws${location.protocol == 'https:' ? 's' : ''}//${location.host}${url}`
+		console.log(2, `ws${location.protocol == 'https:' ? 's' : ''}//${location.host}${url}`)
+		return `ws${location.protocol == 'https:' ? 's' : ''}//${location.host}${url}`
+	} else {
+		console.log(3)
+		return url
 	}
-	return url
 }
 
 export default function Home() {
