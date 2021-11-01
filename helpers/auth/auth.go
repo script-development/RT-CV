@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"sync"
 	"time"
 
 	"github.com/script-development/RT-CV/db"
@@ -19,7 +20,7 @@ func GenAuthHeaderKey(id, key string) string {
 // Helper helps authenticate a user
 type Helper struct {
 	// the cache key is the key ID
-	cache  map[string]cachedKey
+	cache  sync.Map // = map[string]cachedKey
 	dbConn db.Connection
 }
 
@@ -32,7 +33,6 @@ type cachedKey struct {
 // NewHelper returns a new instance of AuthHelper
 func NewHelper(dbConn db.Connection) *Helper {
 	return &Helper{
-		cache:  map[string]cachedKey{},
 		dbConn: dbConn,
 	}
 }
@@ -52,7 +52,7 @@ var (
 
 // RemoveKeyCache removes a cached key
 func (h *Helper) RemoveKeyCache(id string) {
-	delete(h.cache, id)
+	h.cache.Delete(id)
 }
 
 // Valid validates an authorizationHeader
@@ -76,8 +76,9 @@ func (h *Helper) Valid(authorizationHeader string) (*models.APIKey, error) {
 
 	keyAsSha512 := authorizationHeader[endID+1:]
 
-	keyCacheEntry, ok := h.cache[id]
+	keyCacheEntryInterf, ok := h.cache.Load(id)
 	if ok {
+		keyCacheEntry := keyCacheEntryInterf.(cachedKey)
 		if time.Now().Before(keyCacheEntry.LastRefreshed.Add(time.Hour * 12)) {
 			// Yay a cache entry for this key exists and is still valid
 			if keyCacheEntry.KeyAsSha512 != keyAsSha512 {
@@ -102,11 +103,11 @@ func (h *Helper) Valid(authorizationHeader string) (*models.APIKey, error) {
 	}
 
 	hashedKey := crypto.HashSha512String(key.Key)
-	h.cache[id] = cachedKey{
+	h.cache.Store(id, cachedKey{
 		LastRefreshed: time.Now(),
 		KeyAsSha512:   hashedKey,
 		key:           key,
-	}
+	})
 
 	if keyAsSha512 != hashedKey {
 		return nil, ErrAuthHeaderInvalid
