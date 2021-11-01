@@ -16,7 +16,7 @@ COPY ./dashboard/ .
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN apk update \
     && apk upgrade \
-    && apk install --no-cache libc6-compat \
+    && apk add --no-cache libc6-compat \
     && npm ci \
     && npm run build
 
