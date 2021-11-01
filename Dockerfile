@@ -8,16 +8,13 @@ COPY ./ ./
 RUN go build -ldflags "-X main.AppVersion=$(git log --format='%H' -n 1)" -o rtcv
 
 # build dashboard
-FROM node:16-alpine AS dashboard
+FROM node:16-buster AS dashboard
 
 WORKDIR /app
 COPY ./dashboard/ .
 
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN apk update \
-    && apk upgrade \
-    && apk add --no-cache libc6-compat \
-    && npm ci \
+RUN npm ci \
     && npm run build
 
 # Setup the runtime
