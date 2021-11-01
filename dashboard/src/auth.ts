@@ -64,6 +64,22 @@ class AuthenticatedFetcher {
         return await this.fetch(path)
     }
 
+    getAPIPath(path: string, isWebsocketURL?: boolean): string {
+        if (window.location.host != 'localhost:3000' && window.location.host != '127.0.0.1:3000')
+            return path
+
+        else if (isWebsocketURL ? (path.indexOf('wss://') == 0 || path.indexOf('ws://') == 0) : (path.indexOf('https://') == 0 || path.indexOf('http://') == 0))
+            return path
+
+        const protocol = !isWebsocketURL ?
+            window.location.protocol
+            : window.location.protocol == 'https:'
+                ? 'wss:'
+                : 'ws:'
+
+        return `${protocol}//${window.location.hostname}:4000${path}`
+    }
+
     async fetch(path: string, method: 'POST' | 'GET' | 'PUT' | 'DELETE' = 'GET', data?: any) {
         try {
             if (path.replace(/http(s?):\/\//, '').indexOf('//') != -1)
@@ -71,18 +87,17 @@ class AuthenticatedFetcher {
 
             if (!this.triedToRestoreCredentials) this.tryRestoreCredentials();
 
-            const authHeader = this.authorizationHeader()
-            const url = (path[0] != '/' ? '/' : '') + path
-            const args = (authHeader: string): RequestInit => ({
+            const url = this.getAPIPath((path[0] != '/' ? '/' : '') + path)
+            const args: RequestInit = {
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": authHeader,
+                    "Authorization": this.authorizationHeader,
                 },
                 method: method,
                 body: data ? JSON.stringify(data) : undefined,
-            })
+            }
 
-            const r = await fetch(url, args(authHeader))
+            const r = await fetch(url, args)
             const { status } = r
             const resJsonData = await r.json()
             const error = resJsonData?.error
@@ -118,8 +133,12 @@ class AuthenticatedFetcher {
         localStorage.setItem('rtcv_api_key_hashed', this.apiKeyHashed)
     }
 
-    private authorizationHeader(): string {
-        return `Basic ${this.apiKeyId}:${this.apiKeyHashed}`;
+    get authorizationHeader(): string {
+        return `Basic ${this.authorizationValue}`
+    }
+
+    get authorizationValue(): string {
+        return `${this.apiKeyId}:${this.apiKeyHashed}`
     }
 
     private async hash(data: string): Promise<string> {

@@ -1,12 +1,58 @@
 import { Button, Icon } from '@material-ui/core'
 import Head from 'next/head'
 import Link from 'next/link'
-import React from 'react'
+import React, { useEffect } from 'react'
 import KeysCard from '../components/keysCard'
 import SecretsCard from '../components/secretsCard'
 import Statistics from '../components/statistics'
+import { fetcher } from '../src/auth'
+
+function getWebsocketUrl() {
+	let url = fetcher.getAPIPath(`/api/v1/events/ws/${fetcher.authorizationValue}`, true)
+	if (url[0] == '/') {
+		url = `ws${location.protocol == 'https:' ? 's' : ''}//${location.host}${url}`
+	}
+	return url
+}
 
 export default function Home() {
+	const connectToSocket = () => {
+		const socket = new WebSocket(getWebsocketUrl())
+
+		let open = true
+		const close = () => {
+			if (!open) { return }
+			open = false
+			socket.onmessage = null
+			socket.onopen = null
+			socket.onerror = null
+			socket.onclose = null
+			setTimeout(() => connectToSocket(), 5000)
+		}
+
+		socket.onmessage = (ev: MessageEvent<any>) => {
+			console.log('received message', ev)
+		}
+		socket.onopen = () => {
+			console.log('connected')
+		}
+		socket.onerror = (e) => {
+			console.log('disconnected from websocket, error:', e)
+			close()
+		}
+		socket.onclose = (e) => {
+			console.log('disconnected from websocket, error:', e)
+			close()
+		}
+		return () => socket.close(1000, 'navigating to different route')
+	}
+
+	useEffect(() => {
+		let closeConn = undefined
+		closeConn = connectToSocket()
+		return closeConn
+	}, [])
+
 	return (
 		<div>
 			<Head><title>RT-CV home</title></Head>

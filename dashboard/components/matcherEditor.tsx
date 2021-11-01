@@ -56,8 +56,7 @@ export default function MatcherEditor({ expose, height, top }: MatcherEditorProp
         outputEditorRef.current = editor
 
     const fetchSchema = async () => {
-        const r = await fetch('/api/v1/schema/cv')
-        const jsonData = await r.json()
+        const jsonData = await fetcher.fetch('/api/v1/schema/cv')
         jsonData.$id = schemaUrl()
         setCvSchema(jsonData)
     }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/apex/log"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/joho/godotenv"
 	"github.com/script-development/RT-CV/controller"
@@ -16,7 +17,7 @@ import (
 	"github.com/script-development/RT-CV/models"
 )
 
-// AppVersion is used for the X-App-Version header
+// AppVersion is used for the X-App-Version header and in the /health route
 // This variable can be set by:
 //   go build -ldflags "-X main.AppVersion=1.0.0"
 var AppVersion = "LOCAL"
@@ -77,6 +78,7 @@ func main() {
 	app := fiber.New(fiber.Config{
 		ErrorHandler: controller.FiberErrorHandler,
 	})
+	app.Use(cors.New())
 	app.Use(logger.New())
 	app.Use(func(c *fiber.Ctx) error {
 		err = c.Next()

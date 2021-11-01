@@ -58,7 +58,7 @@ function AppContent({ Component, pageProps }: AppProps) {
     }
 
     let mounted = true
-    fetch('/api/v1/health', {
+    fetch(fetcher.getAPIPath('/api/v1/health'), {
       headers: { 'Content-Type': 'application/json' }
     })
       .then(r => r.json())

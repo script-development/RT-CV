@@ -54,15 +54,22 @@ func requiresAuth(requiredRoles models.APIKeyRole) routeBuilder.M {
 			logger := ctx.GetLogger(c)
 
 			// Check auth header
-			authorizationHeader := c.Get("Authorization")
-			if len(authorizationHeader) == 0 {
+			authorizationValue := c.Get("Authorization")
+			if len(authorizationValue) == 0 {
+				// Used by the websocket routes
+				authorizationValue = c.Params("authorization")
+				if len(authorizationValue) != 0 {
+					authorizationValue = "Basic " + authorizationValue
+				}
+			}
+			if len(authorizationValue) == 0 {
 				// NOTE: there seems to be a bug with fiber it seems where if try to access a non existing route or send an invalid url
 				// c.Get("Authorization") returns an empty string no matter the value of the header send
 				// This might cause some confusuion as you'll receive a auth.ErrNoAuthheader error over a 404 error
 				return ErrorRes(c, fiber.StatusBadRequest, auth.ErrNoAuthHeader)
 			}
 
-			key, err := authService.Valid(authorizationHeader)
+			key, err := authService.Valid(authorizationValue)
 			if err != nil {
 				return ErrorRes(c, fiber.StatusUnauthorized, err)
 			}

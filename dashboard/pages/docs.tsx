@@ -2,6 +2,7 @@ import Header from '../components/header'
 import { useEffect, useState } from "react"
 import Dynamic from 'next/dynamic'
 import { LinearProgress } from '@material-ui/core'
+import { fetcher } from '../src/auth'
 
 import '@stoplight/elements/styles.min.css'
 const API = Dynamic<any>(
@@ -14,8 +15,11 @@ const API = Dynamic<any>(
 export default function Docs() {
 	const [currentSize, setCurrentSize] = useState(0)
 	const mobile = currentSize < 1000
+	const [openApiPath, setOpenApiPath] = useState('')
 
 	useEffect(() => {
+		setOpenApiPath(fetcher.getAPIPath("/api/v1/schema/openAPI"))
+
 		let lastSetCurrentSize = 0;
 		const onResize = () => {
 			// Only set the currentSize attr if the window size has changed by a certain amount
@@ -37,12 +41,14 @@ export default function Docs() {
 			<Header
 				arrowBackStyle={{ top: 0 }}
 			/>
-			<API
-				apiDescriptionUrl="/api/v1/schema/openAPI"
-				router="hash"
-				hideTryIt={true}
-				layout={mobile ? "stacked" : "sidebar"}
-			/>
+			{openApiPath ?
+				<API
+					apiDescriptionUrl={openApiPath}
+					router="hash"
+					hideTryIt={true}
+					layout={mobile ? "stacked" : "sidebar"}
+				/>
+				: ''}
 			<style global jsx>{`
 				.rtcvDocs {
 					background-color: white;
