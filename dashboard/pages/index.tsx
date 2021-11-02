@@ -1,5 +1,4 @@
 import { Button, Icon } from '@material-ui/core'
-import { ForumTwoTone } from '@material-ui/icons'
 import Head from 'next/head'
 import Link from 'next/link'
 import React, { useEffect } from 'react'

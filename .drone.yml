@@ -23,7 +23,7 @@ steps:
     environment:
       DOCKER_BUILDKIT: 1 # This enables the docker build cache (this is NOT the dockerfile layers cache)
     commands:
-      - docker build -t rtcv:latest .
+      - docker build --memory 1.5GB -t rtcv:latest .
     volumes:
       - name: dockerSocket
         path: /var/run/docker.sock
