@@ -9,7 +9,7 @@ This tool also provides helper tools for managing secrets and keys.
 
 - A CV scraper for x website (that's up to you)
 - A gui where you can search for CVs (this is only an API nor a database)
-- A CV database (it might cache some cv information but **CVs are never written to disk by this program**)
+- A CV database (it might cache some cv information but **CVs are never written to any disk by this program**)
 
 **What this is:**
 
