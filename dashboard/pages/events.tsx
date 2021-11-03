@@ -17,6 +17,7 @@ export default function Events() {
         connected: false,
         msg: '',
     })
+    const [events, setEvents] = useState<Array<any>>([])
 
     const connectToSocket = () => {
         try {
@@ -44,7 +45,11 @@ export default function Events() {
             }
 
             socket.onmessage = (ev: MessageEvent<any>) => {
-                console.log('received message', ev)
+                console.log('received message', ev.data)
+                try {
+                    const newMsg = JSON.parse(ev.data)
+                    setEvents(prev => [newMsg, ...prev])
+                } catch (e) { }
             }
             socket.onopen = () => {
                 setConnectionStatus({
@@ -53,8 +58,8 @@ export default function Events() {
                 })
                 console.log('connected to websocket')
             }
-            socket.onerror = (e) => {
-                console.log('disconnected from websocket, error:', e)
+            socket.onerror = () => {
+                console.log('disconnected due to websocket error')
                 close()
             }
             socket.onclose = () => {
@@ -91,7 +96,15 @@ export default function Events() {
                 {connectionStatus.connected ? 'connected to server' : connectionStatus.msg ? 'disconnected, ' + connectionStatus.msg : 'disconnected'}
             </div>
 
+            <div className="eventsList">
+                <h2>Events</h2>
+                {events.map((ev, idx) => <pre key={idx}>{JSON.stringify(ev, null, 2)}</pre>)}
+            </div>
+
             <style jsx>{`
+                .eventsList {
+                    padding: 20px;
+                }
                 .status {
                     padding: 10px;
                     text-align: center;
