@@ -2,7 +2,6 @@ package controller
 
 import (
 	"encoding/json"
-	"fmt"
 	"sync"
 	"time"
 
@@ -38,7 +37,6 @@ var routeControlEventsWSHandler = websocket.New(func(c *websocket.Conn) {
 	keepAliveTicker := time.NewTicker(time.Second * 30)
 	go func() {
 		for range keepAliveTicker.C {
-			fmt.Println("ping..")
 			err := c.WriteMessage(websocket.PingMessage, []byte("PING"))
 			if err != nil {
 				close(closer)
@@ -54,8 +52,6 @@ var routeControlEventsWSHandler = websocket.New(func(c *websocket.Conn) {
 	})
 
 	<-closer
-
-	fmt.Println("close..")
 
 	keepAliveTicker.Stop()
 	removeListenerFn()
