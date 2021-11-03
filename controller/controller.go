@@ -105,12 +105,14 @@ func Routes(app *fiber.App, appVersion string, dbConn db.Connection, testing boo
 	} else {
 		// FIXME we currently need to manually add every dashboard route here.
 		// It would be nice if these where auto generated
-		b.Static("", "./dashboard/out/index.html", fiber.Static{Compress: true})
-		b.Static("login", "./dashboard/out/login.html", fiber.Static{Compress: true})
-		b.Static("tryMatcher", "./dashboard/out/tryMatcher.html", fiber.Static{Compress: true})
-		b.Static("docs", "./dashboard/out/docs.html", fiber.Static{Compress: true})
-		b.Static("_next", "./dashboard/out/_next", fiber.Static{Compress: true})
-		b.Static("favicon.ico", "./dashboard/out/favicon.ico", fiber.Static{Compress: true})
+		staticOpts := fiber.Static{Compress: true}
+		b.Static("", "./dashboard/out/index.html", staticOpts)
+		b.Static("login", "./dashboard/out/login.html", staticOpts)
+		b.Static("tryMatcher", "./dashboard/out/tryMatcher.html", staticOpts)
+		b.Static("docs", "./dashboard/out/docs.html", staticOpts)
+		b.Static("events", "./dashboard/out/events.html", staticOpts)
+		b.Static("_next", "./dashboard/out/_next", staticOpts)
+		b.Static("favicon.ico", "./dashboard/out/favicon.ico", staticOpts)
 		app.Use(func(c *fiber.Ctx) error {
 			// 404 page
 			return c.Status(404).SendFile("./dashboard/out/404.html", true)

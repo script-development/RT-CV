@@ -138,6 +138,7 @@ class AuthenticatedFetcher {
     }
 
     get authorizationValue(): string {
+        if (!this.triedToRestoreCredentials) this.tryRestoreCredentials()
         return `${this.apiKeyId}:${this.apiKeyHashed}`
     }
 
