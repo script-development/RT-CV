@@ -93,11 +93,19 @@ func (e *eventListeners) addListener(listener eventListener) func() {
 	}
 }
 
-func (e *eventListeners) publish(data interface{}) error {
+func (e *eventListeners) publish(kind string, data interface{}) error {
 	e.m.Lock()
 	defer e.m.Unlock()
 
-	bytes, err := json.Marshal(data)
+	fullData := struct {
+		Kind string      `json:"kind"`
+		Data interface{} `json:"data"`
+	}{
+		Kind: kind,
+		Data: data,
+	}
+
+	bytes, err := json.Marshal(fullData)
 	if err != nil {
 		return err
 	}

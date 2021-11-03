@@ -17,20 +17,20 @@ import (
 // CV contains all information that belongs to a curriculum vitae
 // TODO check the json removed fields if we actually should use them
 type CV struct {
-	Title                string                   `json:"-"`
-	ReferenceNumber      string                   `json:"-"`
-	CreatedAt            *jsonHelpers.RFC3339Nano `json:"-"`
-	LastChanged          *jsonHelpers.RFC3339Nano `json:"-"`
-	Educations           []Education              `json:"educations"`
-	Courses              []Course                 `json:"courses"`
-	WorkExperiences      []WorkExperience         `json:"workExperiences"`
-	PreferredJobs        []string                 `json:"preferredJobs"`
-	Languages            []Language               `json:"languages"`
-	Competences          []Competence             `json:"-"`
-	Interests            []Interest               `json:"-"`
-	PersonalDetails      PersonalDetails          `json:"personalDetails"`
-	PersonalPresentation string                   `json:"-"`
-	DriversLicenses      []string                 `json:"driversLicenses"`
+	Title                string                   `json:"-"` // Not supported yet
+	ReferenceNumber      string                   `json:"-"` // Not supported yet
+	CreatedAt            *jsonHelpers.RFC3339Nano `json:"-"` // Not supported yet
+	LastChanged          *jsonHelpers.RFC3339Nano `json:"-"` // Not supported yet
+	Educations           []Education              `json:"educations,omitempty"`
+	Courses              []Course                 `json:"courses,omitempty"`
+	WorkExperiences      []WorkExperience         `json:"workExperiences,omitempty"`
+	PreferredJobs        []string                 `json:"preferredJobs,omitempty"`
+	Languages            []Language               `json:"languages,omitempty"`
+	Competences          []Competence             `json:"-"` // Not supported yet
+	Interests            []Interest               `json:"-"` // Not supported yet
+	PersonalDetails      PersonalDetails          `json:"personalDetails" jsonSchema:"notRequired"`
+	PersonalPresentation string                   `json:"-"` // Not supported yet
+	DriversLicenses      []string                 `json:"driversLicenses,omitempty"`
 }
 
 // Education is something a user has followed
@@ -136,20 +136,20 @@ type Interest struct {
 
 // PersonalDetails contains personal info
 type PersonalDetails struct {
-	Initials          string                   `json:"initials" jsonSchema:"notRequired"`
-	FirstName         string                   `json:"firstName"`
-	SurNamePrefix     string                   `json:"surNamePrefix" jsonSchema:"notRequired"`
-	SurName           string                   `json:"surName" jsonSchema:"notRequired"`
-	DateOfBirth       *jsonHelpers.RFC3339Nano `json:"dob" jsonSchema:"notRequired"`
-	Gender            string                   `json:"gender" jsonSchema:"notRequired"`
-	StreetName        string                   `json:"streetName" jsonSchema:"notRequired"`
-	HouseNumber       string                   `json:"houseNumber" jsonSchema:"notRequired"`
-	HouseNumberSuffix string                   `json:"houseNumberSuffix" jsonSchema:"notRequired"`
-	Zip               string                   `json:"zip" jsonSchema:"notRequired"`
-	City              string                   `json:"city" jsonSchema:"notRequired"`
-	Country           string                   `json:"country" jsonSchema:"notRequired"`
-	PhoneNumber       string                   `json:"phoneNumber" jsonSchema:"notRequired"`
-	Email             string                   `json:"email" jsonSchema:"notRequired"`
+	Initials          string                   `json:"initials,omitempty" jsonSchema:"notRequired"`
+	FirstName         string                   `json:"firstName,omitempty" jsonSchema:"notRequired"`
+	SurNamePrefix     string                   `json:"surNamePrefix,omitempty" jsonSchema:"notRequired"`
+	SurName           string                   `json:"surName,omitempty" jsonSchema:"notRequired"`
+	DateOfBirth       *jsonHelpers.RFC3339Nano `json:"dob,omitempty" jsonSchema:"notRequired"`
+	Gender            string                   `json:"gender,omitempty" jsonSchema:"notRequired"`
+	StreetName        string                   `json:"streetName,omitempty" jsonSchema:"notRequired"`
+	HouseNumber       string                   `json:"houseNumber,omitempty" jsonSchema:"notRequired"`
+	HouseNumberSuffix string                   `json:"houseNumberSuffix,omitempty" jsonSchema:"notRequired"`
+	Zip               string                   `json:"zip,omitempty" jsonSchema:"notRequired"`
+	City              string                   `json:"city,omitempty" jsonSchema:"notRequired"`
+	Country           string                   `json:"country,omitempty" jsonSchema:"notRequired"`
+	PhoneNumber       string                   `json:"phoneNumber,omitempty" jsonSchema:"notRequired"`
+	Email             string                   `json:"email,omitempty" jsonSchema:"notRequired"`
 }
 
 func getTemplateFromFile(funcs template.FuncMap, filename string) (*template.Template, error) {

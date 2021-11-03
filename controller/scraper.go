@@ -44,6 +44,11 @@ var routeScraperScanCV = routeBuilder.R{
 			return err
 		}
 
+		err = dashboardListeners.publish("recived_cv", body.CV)
+		if err != nil {
+			return err
+		}
+
 		if body.Debug && !key.Roles.ContainsSome(models.APIKeyRoleDashboard) {
 			return ErrorRes(
 				c,
