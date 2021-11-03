@@ -1,6 +1,9 @@
 package controller
 
 import (
+	"encoding/json"
+	"fmt"
+	"sync"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -23,37 +26,88 @@ var routeControlEventsWS = routeBuilder.R{
 }
 
 var routeControlEventsWSHandler = websocket.New(func(c *websocket.Conn) {
+	closer := make(chan struct{})
+
+	c.SetCloseHandler(func(int, string) error {
+		close(closer)
+		return nil
+	})
+
 	// Somtimes due to a network setup a websocket might be automatically closed
 	// If there are no messages send / received so we send a ping message every 30 seconds
 	keepAliveTicker := time.NewTicker(time.Second * 30)
-	for {
-		<-keepAliveTicker.C
-		err := c.WriteMessage(websocket.PingMessage, []byte("PING"))
-		if err != nil {
-			break
+	go func() {
+		for range keepAliveTicker.C {
+			fmt.Println("ping..")
+			err := c.WriteMessage(websocket.PingMessage, []byte("PING"))
+			if err != nil {
+				close(closer)
+			}
 		}
-	}
+	}()
+
+	removeListenerFn := dashboardListeners.addListener(func(jsonData []byte) {
+		err := c.WriteMessage(websocket.TextMessage, jsonData)
+		if err != nil {
+			close(closer)
+		}
+	})
+
+	<-closer
+
+	fmt.Println("close..")
+
 	keepAliveTicker.Stop()
-
-	// // websocket.Conn bindings https://pkg.go.dev/github.com/fasthttp/websocket?tab=doc#pkg-index
-	// var (
-	// 	mt  int
-	// 	msg []byte
-	//  err error
-	// )
-
-	// for {
-	// 	mt, msg, err = c.ReadMessage()
-	// 	if err != nil {
-	// 		log.Println("read:", err)
-	// 		break
-	// 	}
-	// 	log.Printf("recv: %s", msg)
-
-	// 	err = c.WriteMessage(mt, msg)
-	// 	if err != nil {
-	// 		log.Println("write:", err)
-	// 		break
-	// 	}
-	// }
+	removeListenerFn()
 })
+
+// events contains all listeners
+var dashboardListeners eventListeners
+
+// eventListener contains a single event listener
+type eventListener func(jsonData []byte)
+
+// eventListeners is a list of event listeners
+type eventListeners struct {
+	m sync.Mutex
+
+	// A pointer to eventListener is used so we can compare array entries
+	// See addListener for more info
+	listeners []*eventListener
+}
+
+func (e *eventListeners) addListener(listener eventListener) func() {
+	e.m.Lock()
+	defer e.m.Unlock()
+	if listener == nil {
+		return func() {}
+	}
+
+	listenerPtr := &listener
+	e.listeners = append(e.listeners, listenerPtr)
+	return func() {
+		e.m.Lock()
+		for idx, listener := range e.listeners {
+			if listener == listenerPtr {
+				e.listeners = append(e.listeners[:idx], e.listeners[idx+1:]...)
+				break
+			}
+		}
+		e.m.Unlock()
+	}
+}
+
+func (e *eventListeners) publish(data interface{}) error {
+	e.m.Lock()
+	defer e.m.Unlock()
+
+	bytes, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	for _, listener := range e.listeners {
+		(*listener)(bytes)
+	}
+	return nil
+}
