@@ -1,0 +1,7 @@
+{
+    "recommendations": [
+        "divlo.vscode-styled-jsx-syntax",
+        "divlo.vscode-styled-jsx-languageserver",
+        "golang.go"
+    ]
+}
