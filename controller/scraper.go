@@ -2,7 +2,6 @@ package controller
 
 import (
 	"errors"
-	"fmt"
 	"sync"
 
 	"github.com/apex/log"
@@ -102,37 +101,9 @@ var routeScraperScanCV = routeBuilder.R{
 			var wg sync.WaitGroup
 
 			for _, aMatch := range matchedProfiles {
-				emailsLen := len(aMatch.Profile.OnMatch.SendMail)
-
-				wg.Add(len(aMatch.Profile.OnMatch.HTTPCall) + emailsLen)
-
-				for _, http := range aMatch.Profile.OnMatch.HTTPCall {
-					go func(http models.ProfileHTTPCallData) {
-						http.MakeRequest(aMatch.Profile, aMatch.Matches)
-						wg.Done()
-					}(http)
-				}
-
-				if emailsLen > 0 {
-					emailBody, err := body.CV.GetEmailHTML(aMatch.Profile, aMatch.Matches.GetMatchSentence())
-					if err != nil {
-						return fmt.Errorf("unable to generate email body from CV, err: %s", err.Error())
-					}
-
-					pdf, err := body.CV.GetPDF(aMatch.Profile)
-					if err != nil {
-						return fmt.Errorf("unable to generate PDF from CV, err: %s", err.Error())
-					}
-
-					for _, email := range aMatch.Profile.OnMatch.SendMail {
-						go func(email models.ProfileSendEmailData) {
-							err := email.SendEmail(aMatch.Profile, emailBody.Bytes(), pdf)
-							if err != nil {
-								log.WithError(err).Error("unable to send email")
-							}
-							wg.Done()
-						}(email)
-					}
+				err := aMatch.SendMatch(&wg, &body.CV)
+				if err != nil {
+					log.WithError(err).Error("sending match error")
 				}
 			}
 
