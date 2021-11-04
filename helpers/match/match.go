@@ -372,8 +372,8 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 	return res
 }
 
-// SendMatch sends a match to the desired destination based on the OnMatch field in the profile
-func (match FoundMatch) SendMatch(wg *sync.WaitGroup, cv *models.CV) error {
+// HandleMatch sends a match to the desired destination based on the OnMatch field in the profile
+func (match FoundMatch) HandleMatch(wg *sync.WaitGroup, cv *models.CV) error {
 	onMatch := match.Profile.OnMatch
 
 	wg.Add(len(onMatch.HTTPCall))
@@ -385,7 +385,7 @@ func (match FoundMatch) SendMatch(wg *sync.WaitGroup, cv *models.CV) error {
 	}
 
 	emailsLen := len(onMatch.SendMail)
-	if emailsLen > 0 {
+	if emailsLen != 0 {
 		emailBody, err := cv.GetEmailHTML(match.Profile, match.Matches.GetMatchSentence())
 		if err != nil {
 			return fmt.Errorf("unable to generate email body from CV, error: %s", err.Error())
@@ -402,6 +402,8 @@ func (match FoundMatch) SendMatch(wg *sync.WaitGroup, cv *models.CV) error {
 				err := email.SendEmail(match.Profile, emailBody.Bytes(), pdf)
 				if err != nil {
 					log.WithError(err).Error("unable to send email")
+				} else {
+					log.Infof("send match mail to %s", email.Email)
 				}
 				wg.Done()
 			}(email)

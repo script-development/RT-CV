@@ -101,7 +101,7 @@ var routeScraperScanCV = routeBuilder.R{
 			var wg sync.WaitGroup
 
 			for _, aMatch := range matchedProfiles {
-				err := aMatch.SendMatch(&wg, &body.CV)
+				err := aMatch.HandleMatch(&wg, &body.CV)
 				if err != nil {
 					log.WithError(err).Error("sending match error")
 				}
