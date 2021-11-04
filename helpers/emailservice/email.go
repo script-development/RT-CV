@@ -69,6 +69,7 @@ func Setup(conf EmailServerConfiguration, onMailSend func(err error)) error {
 	for i := 0; i < poolSize; i++ {
 		go func(from string) {
 			for e := range ch {
+				log.Infof("sending mail to %s", e.To)
 				e.From = from
 				err := p.Send(e, 10*time.Second)
 				onMailSend(err)

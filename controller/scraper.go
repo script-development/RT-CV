@@ -71,6 +71,7 @@ var routeScraperScanCV = routeBuilder.R{
 			return err
 		}
 		matchedProfiles := match.Match(key.Domains, profiles, body.CV)
+		foundMatches := len(matchedProfiles) != 0
 
 		// Insert analytics data
 		analyticsData := make([]db.Entry, len(matchedProfiles))
@@ -82,18 +83,22 @@ var routeScraperScanCV = routeBuilder.R{
 			analyticsData[idx] = &matchedProfiles[idx].Matches
 		}
 
-		go func(logger *log.Entry, analyticsData []db.Entry) {
-			err := dbConn.Insert(analyticsData...)
-			if err != nil {
-				logger.WithError(err).Error("analytics data insertion failed")
-			}
-		}(logger.WithField("analytics_entries_count", len(analyticsData)), analyticsData)
+		if foundMatches {
+			go func(logger *log.Entry, analyticsData []db.Entry) {
+				err := dbConn.Insert(analyticsData...)
+				if err != nil {
+					logger.WithError(err).Error("analytics data insertion failed")
+				}
+			}(logger.WithField("analytics_entries_count", len(analyticsData)), analyticsData)
+		}
 
 		if body.Debug {
 			return c.JSON(RouteScraperScanCVRes{Success: true, Matches: matchedProfiles})
 		}
 
-		if len(matchedProfiles) > 0 {
+		if foundMatches {
+			logger.Infof("found %d matches", len(matchedProfiles))
+
 			var wg sync.WaitGroup
 
 			for _, aMatch := range matchedProfiles {
