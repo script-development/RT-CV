@@ -112,7 +112,14 @@ func (c *Connection) Insert(e ...db.Entry) error {
 		_, err := c.collection(e[0]).InsertOne(dbHelpers.Ctx(), e[0])
 		return err
 	default:
-		_, err := c.collection(e[0]).InsertMany(dbHelpers.Ctx(), interface{}(e).([]interface{}))
+		// Convert e to a slice of interface{}
+		// Fixes: panic: interface conversion: interface {} is []db.Entry, not []interface {}
+		eAsInterf := []interface{}{}
+		for _, entry := range e {
+			eAsInterf = append(eAsInterf, entry)
+		}
+
+		_, err := c.collection(e[0]).InsertMany(dbHelpers.Ctx(), eAsInterf)
 		return err
 	}
 }
