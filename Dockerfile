@@ -23,7 +23,7 @@ FROM ubuntu AS runtime
 RUN ln -fs /usr/share/zoneinfo/Europe/Amsterdam /etc/localtime \
     && mkdir -p /project/dashboard \
     && apt update \
-    && apt install -y --no-install-recommends poppler-utils \
+    && apt install -y --no-install-recommends xvfb libfontconfig wkhtmltopdf \
     fonts-dejavu fonts-freefont-ttf fonts-ubuntu ttf-bitstream-vera \
     && apt autoremove \
     && apt clean \
