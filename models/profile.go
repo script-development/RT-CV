@@ -24,25 +24,25 @@ type Profile struct {
 	Domains     []string `json:"domains"`
 	ListProfile bool     `json:"-" bson:"-"` // TODO find out what this is
 
-	MustDesiredProfession bool                `json:"mustDesiredProfession"`
-	DesiredProfessions    []ProfileProfession `json:"desiredProfessions"`
+	MustDesiredProfession bool                `json:"mustDesiredProfession" bson:"mustDesiredProfession"`
+	DesiredProfessions    []ProfileProfession `json:"desiredProfessions" bson:"desiredProfessions"`
 
-	YearsSinceWork        *int `json:"yearsSinceWork"`
-	MustExpProfession     bool `json:"mustExpProfession"`
+	YearsSinceWork        *int `json:"yearsSinceWork" bson:"yearsSinceWork"`
+	MustExpProfession     bool `json:"mustExpProfession" bson:"mustExpProfession"`
 	ProfessionExperienced []ProfileProfession
 
-	MustDriversLicense bool `json:"mustDriversLicense"`
+	MustDriversLicense bool `json:"mustDriversLicense" bson:"mustDriversLicense"`
 	DriversLicenses    []ProfileDriversLicense
 
-	MustEducationFinished bool               `json:"mustEducationFinished"`
-	MustEducation         bool               `json:"mustEducation"`
-	YearsSinceEducation   int                `json:"yearsSinceEducation"`
-	Educations            []ProfileEducation `json:"educations"`
+	MustEducationFinished bool               `json:"mustEducationFinished" bson:"mustEducationFinished"`
+	MustEducation         bool               `json:"mustEducation" bson:"mustEducation"`
+	YearsSinceEducation   int                `json:"yearsSinceEducation" bson:"yearsSinceEducation"`
+	Educations            []ProfileEducation `json:"educations" bson:"educations"`
 
-	Zipcodes []ProfileDutchZipcode `json:"zipCodes"`
+	Zipcodes []ProfileDutchZipcode `json:"zipCodes" bson:"zipCodes"`
 
 	// What should happen on a match
-	OnMatch ProfileOnMatch `json:"onMatch"`
+	OnMatch ProfileOnMatch `json:"onMatch" bson:"onMatch"`
 
 	// OldID is used to keep track of converted old profiles
 	OldID *uint64 `bson:"_old_id" json:"-"`
@@ -128,8 +128,8 @@ func (p *ProfileDutchZipcode) IsWithinCithAndArea(cityAndArea uint16) bool {
 
 // ProfileOnMatch defines what should happen when a profile is matched to a CV
 type ProfileOnMatch struct {
-	SendMail []ProfileSendEmailData `json:"sendMail"`
-	HTTPCall []ProfileHTTPCallData  `json:"httpCall"`
+	SendMail []ProfileSendEmailData `json:"sendMail" bson:"sendMail"`
+	HTTPCall []ProfileHTTPCallData  `json:"httpCall" bson:"httpCall"`
 }
 
 // ProfileSendEmailData only contains an email address atm
