@@ -29,6 +29,6 @@ Notes:
 ` + mdBlockCodeSample("js", `
 apiKey = getApiKey();
 apiKeyID = getApiKeyID();
-key = "Basic " + apiKey + ":" + sha512(apiKeyID);
+key = "Basic " + apiKeyID + ":" + sha512(apiKey);
 `) + `
 `
