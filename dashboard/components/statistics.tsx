@@ -18,13 +18,16 @@ export default function Statistics() {
     const [loading, setLoading] = useState(true)
     const [matches, setMatches] = useState<Array<Match>>([])
     const [dateRange, setDateRangeFromAndTo] = useState<[Date, Date] | undefined>(undefined)
+    const [profilesStats, setProfilesStats] = useState({ total: undefined as undefined | number, usable: undefined as undefined | number })
 
     const fetchAnalytics = async (from: Date, to: Date) => {
         try {
             setLoading(true)
-            const fetchedData = await fetcher.fetch(
-                `/api/v1/analytics/matches/period/${formatRFC3339(from)}/${formatRFC3339(to)}`
-            )
+            const [fetchedData, profilesStats] = await Promise.all([
+                fetcher.fetch(`/api/v1/analytics/matches/period/${formatRFC3339(from)}/${formatRFC3339(to)}`),
+                fetcher.fetch(`/api/v1/profiles/count`),
+            ])
+            setProfilesStats(profilesStats)
             setMatches(
                 fetchedData.map((entry: any) => ({
                     ...entry,
@@ -65,7 +68,7 @@ export default function Statistics() {
         <div className="charts">
             <div className="chartContainer">
                 <h3>Matches per day</h3>
-                <div className="chart">
+                <div className="box chart">
                     {loading
                         ? <ChartLoader />
                         : <BarChart
@@ -76,6 +79,15 @@ export default function Statistics() {
                     }
                 </div>
             </div>
+            <div>
+                <h3>Profiles Count</h3>
+                <div className="box">
+                    <p>Total</p>
+                    {profilesStats.total}
+                    <p>Used by matcher</p>
+                    {profilesStats.usable}
+                </div>
+            </div>
             <style jsx>{`
                 .charts {
                     padding: 10px;
@@ -83,8 +95,9 @@ export default function Statistics() {
                     box-sizing: border-box;
                     max-width: calc(100vw - 20px);
                     display: flex;
+                    flex-wrap: wrap;
                 }
-                .chart {
+                .box {
                     padding: 20px 20px 10px 20px;
                     overflow: hidden;
                     border-radius: 4px;
