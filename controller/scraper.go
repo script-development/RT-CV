@@ -65,7 +65,7 @@ var routeScraperScanCV = routeBuilder.R{
 			)
 		}
 
-		profiles, err := models.GetProfiles(dbConn)
+		profiles, err := models.GetActiveProfilesWithOnMatch(dbConn)
 		if err != nil {
 			return err
 		}

@@ -29,10 +29,7 @@ func (f *filter) matches(value interface{}) bool {
 	}
 
 	valueReflection := reflect.ValueOf(value)
-	for {
-		if valueReflection.Kind() != reflect.Ptr {
-			break
-		}
+	for valueReflection.Kind() == reflect.Ptr {
 		valueReflection = valueReflection.Elem()
 	}
 
@@ -42,6 +39,10 @@ func (f *filter) matches(value interface{}) bool {
 var timeType = reflect.TypeOf(time.Time{})
 
 func filterMatchesValue(filterMap reflect.Value, value reflect.Value) bool {
+	for value.Kind() == reflect.Interface && !value.IsNil() {
+		value = value.Elem()
+	}
+
 	valueFieldsMap, valueIsStruct := mapStruct(value.Type())
 
 	iter := filterMap.MapRange()
@@ -63,6 +64,10 @@ filtersLoop:
 		}
 
 		if strings.HasPrefix(key, "$") {
+			for value.Kind() == reflect.Ptr && !value.IsNil() {
+				value = value.Elem()
+			}
+
 			switch key {
 			case "$gt":
 				if filter.Type().ConvertibleTo(timeType) {
@@ -108,11 +113,143 @@ filtersLoop:
 				} else if !compareNumbers(numComparisonLessOrEqual, value, filter) {
 					return false
 				}
-			// case "$eq":
-			// 	// FIXME eq also works for other data types
-			// 	if !compareNumbers(numComparisonEqual, filter, value) {
-			// 		return false
-			// 	}
+			case "$eq":
+				if !filterCompare(filter, value) {
+					return false
+				}
+			case "$not", "$ne":
+				if filterCompare(filter, value) {
+					return false
+				}
+			case "$or":
+				if filter.Kind() != reflect.Slice && filter.Kind() != reflect.Array {
+					return false
+				}
+
+				foundOk := false
+				for i := 0; i < filter.Len(); i++ {
+					orEntry := filter.Index(i)
+					if orEntry.Kind() != reflect.Map || orEntry.IsNil() {
+						// TODO maybe we should also support structs here
+						continue
+					}
+					assertMapHasStringKeys(orEntry.Type())
+					if filterMatchesValue(orEntry, value) {
+						foundOk = true
+						break
+					}
+				}
+				if !foundOk {
+					return false
+				}
+			case "$and":
+				if filter.Kind() != reflect.Slice && filter.Kind() != reflect.Array {
+					return false
+				}
+
+				for i := 0; i < filter.Len(); i++ {
+					andEntry := filter.Index(i)
+					if andEntry.Kind() != reflect.Map || andEntry.IsNil() {
+						// TODO maybe we should also support structs here
+						continue
+					}
+					assertMapHasStringKeys(andEntry.Type())
+					if !filterMatchesValue(andEntry, value) {
+						return false
+					}
+				}
+			case "$size":
+				var expectedSize int
+				switch filter.Kind() {
+				case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+					expectedSize = int(filter.Int())
+				case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+					expectedSize = int(filter.Uint())
+				default:
+					panic("$size should have a number as argument")
+				}
+
+				if value.Kind() != reflect.Slice && value.Kind() != reflect.Array {
+					return false
+				}
+				if value.IsNil() {
+					return false
+				}
+				if value.Len() != expectedSize {
+					return false
+				}
+			case "$type":
+				var expectedType string
+				intToTypeName := map[int64]string{
+					1:  "double",
+					2:  "string",
+					3:  "object",
+					4:  "array",
+					8:  "bool",
+					10: "null",
+					16: "int",
+					19: "decimal",
+				}
+
+				switch filter.Kind() {
+				case reflect.String:
+					expectedType = filter.String()
+				case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+					expectedType = intToTypeName[filter.Int()]
+				case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+					expectedType = intToTypeName[int64(filter.Uint())]
+				default:
+					panic("$type should have a string or number as argument")
+				}
+
+				valKind := value.Kind()
+				switch expectedType {
+				case "decimal", "double":
+					if valKind != reflect.Float64 && valKind != reflect.Float32 {
+						return false
+					}
+				case "int":
+					switch valKind {
+					case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+					case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+					default:
+						return false
+					}
+				case "string":
+					if valKind != reflect.String {
+						return false
+					}
+				case "object":
+					if valKind == reflect.Map {
+						if value.IsNil() {
+							return false
+						}
+					} else if valKind != reflect.Struct {
+						return false
+					}
+				case "array":
+					if valKind != reflect.Slice && valKind != reflect.Array {
+						return false
+					}
+					if value.IsNil() {
+						return false
+					}
+				case "bool":
+					if valKind != reflect.Bool {
+						return false
+					}
+				case "null":
+					switch valKind {
+					case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice:
+						if !value.IsNil() {
+							return false
+						}
+					default:
+						return false
+					}
+				default:
+					return false
+				}
 			default:
 				// For docs see:
 				// https://docs.mongodb.com/manual/reference/operator/query/
@@ -136,13 +273,6 @@ filtersLoop:
 		}
 		valueField := tempValueCopy.FieldByName(field.GoFieldName)
 
-		if valueField.Kind() == reflect.Ptr {
-			if valueField.IsNil() {
-				return false
-			}
-			valueField = valueField.Elem()
-		}
-
 		if !filter.IsValid() {
 			// filter is probably a nil interface{}
 			// note that isNil panics if the value is a nil interface without a type
@@ -157,44 +287,52 @@ filtersLoop:
 			return false
 		}
 
-		switch filter.Kind() {
-		case reflect.String:
-			if valueField.Kind() != reflect.String || valueField.String() != filter.String() {
+		if !filterCompare(filter, valueField) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func filterCompare(filter, value reflect.Value) bool {
+	if value.Kind() == reflect.Ptr {
+		if value.IsNil() {
+			return false
+		}
+		value = value.Elem()
+	}
+
+	switch filter.Kind() {
+	case reflect.String:
+		if value.Kind() != reflect.String || value.String() != filter.String() {
+			return false
+		}
+	case reflect.Bool:
+		if value.Kind() != reflect.Bool || value.Bool() != filter.Bool() {
+			return false
+		}
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		fallthrough
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		if !compareNumbers(numComparisonEqual, filter, value) {
+			return false
+		}
+	case reflect.Map:
+		assertMapHasStringKeys(filter.Type())
+		return filterMatchesValue(filter, value)
+	default:
+		filterValue := filter.Interface()
+		if filterObjectID, ok := filterValue.(primitive.ObjectID); ok {
+			goFieldValue, ok := value.Interface().(primitive.ObjectID)
+			if !ok {
 				return false
 			}
-		case reflect.Bool:
-			if valueField.Kind() != reflect.Bool || valueField.Bool() != filter.Bool() {
+			if goFieldValue != filterObjectID {
 				return false
 			}
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			fallthrough
-		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			if !compareNumbers(numComparisonEqual, filter, valueField) {
-				return false
-			}
-		case reflect.Map:
-			if filter.Type().Key().Kind() != reflect.String {
-				panic("TODO support filter type map with non string key")
-			}
-			return filterMatchesValue(filter, valueField)
-		default:
-			filterValue := filter.Interface()
-			if filterObjectID, ok := filterValue.(primitive.ObjectID); ok {
-				goFieldValue, ok := valueField.Interface().(primitive.ObjectID)
-				if !ok {
-					return false
-				}
-				if goFieldValue != filterObjectID {
-					return false
-				}
-			} else {
-				panic(fmt.Sprintf(
-					"Unimplemented value filter type: %T, key: %v, value: %#v",
-					filterValue,
-					key,
-					filterValue,
-				))
-			}
+		} else {
+			panic(fmt.Sprintf("Unimplemented value filter type: %T, value: %#v", filterValue, filterValue))
 		}
 	}
 
@@ -338,4 +476,10 @@ func compareNumbers(kind numComparison, a, b reflect.Value) bool {
 	}
 
 	return false
+}
+
+func assertMapHasStringKeys(m reflect.Type) {
+	if m.Key().Kind() != reflect.String {
+		panic("TODO support filter type map with non string key")
+	}
 }

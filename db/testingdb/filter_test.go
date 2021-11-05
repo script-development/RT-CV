@@ -9,6 +9,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+func FilterMatches(filter bson.M, data interface{}) bool {
+	return newFilter(filter).matches(data)
+}
+
 func TestFilter(t *testing.T) {
 	stringValue := "abc"
 
@@ -126,12 +130,104 @@ func TestFilter(t *testing.T) {
 			bson.M{"foo": bson.M{"$lt": time.Now()}},
 			struct{ Foo time.Time }{Foo: time.Now().Add(time.Minute * 30)},
 		},
+		{
+			"$eq",
+			bson.M{"foo": bson.M{"$eq": 5}},
+			bson.M{"foo": bson.M{"$eq": 2}},
+			struct{ Foo int }{Foo: 5},
+		},
+		{
+			"$or",
+			bson.M{"$or": []bson.M{
+				{"foo": 1},
+				{"foo": 2},
+				{"foo": 3},
+			}},
+			bson.M{"$or": []bson.M{
+				{"foo": 1},
+				{"foo": 3},
+			}},
+			struct{ Foo int }{Foo: 2},
+		},
+		{
+			"$and",
+			bson.M{"$and": []bson.M{
+				{"foo": 2},
+				{"bar": 1},
+			}},
+			bson.M{"$and": []bson.M{
+				{"foo": 2},
+				{"bar": 0},
+			}},
+			struct {
+				Foo int
+				Bar int
+			}{Foo: 2, Bar: 1},
+		},
+		{
+			"$not",
+			bson.M{"foo": bson.M{"$not": 1}},
+			bson.M{"foo": bson.M{"$not": 2}},
+			struct{ Foo int }{Foo: 2},
+		},
+		{
+			"$size",
+			bson.M{"foo": bson.M{"$size": 2}},
+			bson.M{"foo": bson.M{"$size": 3}},
+			struct{ Foo []int }{Foo: []int{1, 2}},
+		},
+		{
+			"$type",
+			bson.M{"foo": bson.M{"$type": 2}},
+			bson.M{"foo": bson.M{"$type": 3}},
+			struct{ Foo string }{},
+		},
 	}
 
 	for _, s := range scenarios {
 		t.Run(s.name, func(t *testing.T) {
-			True(t, newFilter(s.matchingFilter).matches(s.data))
-			False(t, newFilter(s.nonMatchingFilter).matches(s.data))
+			True(t, FilterMatches(s.matchingFilter, s.data))
+			False(t, FilterMatches(s.nonMatchingFilter, s.data))
+		})
+	}
+}
+
+func TestFilterType(t *testing.T) {
+	// From:
+	// https://docs.mongodb.com/manual/reference/operator/query/type/
+
+	scenarios := []struct {
+		typeID      int
+		typeName    string
+		dataToMatch interface{}
+	}{
+		{1, "double", 1.0},
+		{2, "string", "foo"},
+		{3, "object", struct{}{}},
+		{4, "array", []int{1, 2}},
+		// 5 binData
+		// 6 undefined
+		// 7 objectId
+		{8, "bool", true},
+		// 9 date
+		{10, "null", nil},
+		// 11 regex
+		// 12 dbPointer
+		// 13 javascript
+		// 14 symbol
+		// 15 javascriptWithScope
+		{16, "int", 1},
+		// 17 timestamp
+		// 18 long
+		{19, "decimal", 1.0},
+		// -1 minKey
+		// 127 maxKey
+	}
+
+	for _, s := range scenarios {
+		t.Run(s.typeName, func(t *testing.T) {
+			True(t, FilterMatches(bson.M{"foo": bson.M{"$type": s.typeName}}, struct{ Foo interface{} }{Foo: s.dataToMatch}))
+			True(t, FilterMatches(bson.M{"foo": bson.M{"$type": s.typeID}}, struct{ Foo interface{} }{Foo: s.dataToMatch}))
 		})
 	}
 }

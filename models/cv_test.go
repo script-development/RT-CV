@@ -17,20 +17,20 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func loadEnvEmailEnv(t *testing.T) {
+func tryLoadEmailEnv() {
 	envFileName := ".env"
 	_, err := os.Stat(envFileName)
 	if err != nil {
 		envFileName = "../.env"
 		_, err = os.Stat(envFileName)
 		if err != nil {
-			t.Skipf("No .env is available to read configuration from, error: %s", err.Error())
+			return
 		}
 	}
 
 	env, err := godotenv.Read(envFileName)
 	if err != nil {
-		t.Skipf("Unable to read .env, error: %s", err.Error())
+		return
 	}
 
 	// Set mail env vars
@@ -194,7 +194,7 @@ func TestGetEmailAttachmentPDF(t *testing.T) {
 		t.Skip("wkhtmltopdf not found in path, error: " + err.Error())
 	}
 
-	loadEnvEmailEnv(t)
+	tryLoadEmailEnv()
 
 	cv := getExampleCV()
 
@@ -210,7 +210,13 @@ func TestGetEmailAttachmentPDF(t *testing.T) {
 }
 
 func TestSendMail(t *testing.T) {
-	loadEnvEmailEnv(t)
+	tryLoadEmailEnv()
+
+	emailHost := os.Getenv("EMAIL_HOST")
+	emailFrom := os.Getenv("EMAIL_FROM")
+	if emailHost == "" || emailFrom == "" {
+		t.Skip("Missing email server env variables to test sending emails")
+	}
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
@@ -221,9 +227,9 @@ func TestSendMail(t *testing.T) {
 			Identity: os.Getenv("EMAIL_IDENTITY"),
 			Username: os.Getenv("EMAIL_USER"),
 			Password: os.Getenv("EMAIL_PASSWORD"),
-			Host:     os.Getenv("EMAIL_HOST"),
+			Host:     emailHost,
 			Port:     os.Getenv("EMAIL_PORT"),
-			From:     os.Getenv("EMAIL_FROM"),
+			From:     emailFrom,
 		},
 		func(err error) {
 			NoError(t, err)

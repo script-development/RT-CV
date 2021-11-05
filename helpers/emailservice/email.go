@@ -35,13 +35,17 @@ type EmailServerConfiguration struct {
 	From string
 }
 
+// ErrNoConf = email service not configured
+var ErrNoConf = errors.New("email service not configured")
+
 // Setup sets up the email sender
 func Setup(conf EmailServerConfiguration, onMailSend func(err error)) error {
 	if conf.Host == "" || conf.From == "" {
 		log.Warn("Email not configured (EMAIL_HOST and EMAIL_FROM must be set), DISABELING EMAIL SUPPORT")
 		go func() {
-			for {
-				<-ch
+			for data := range ch {
+				log.Infof("sending no mail to %v as email server is not configured", data.To)
+				onMailSend(ErrNoConf)
 			}
 		}()
 		return nil

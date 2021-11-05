@@ -53,11 +53,18 @@ func (*Profile) CollectionName() string {
 	return "profiles"
 }
 
-// DefaultFindFilters returns the default filters for the Find function
-func (*Profile) DefaultFindFilters() bson.M {
-	return bson.M{
+// GetActiveProfilesWithOnMatch returns all active profiles with a destination to send the match if no match is found
+func GetActiveProfilesWithOnMatch(conn db.Connection) ([]Profile, error) {
+	profiles := []Profile{}
+	filter := bson.M{
 		"active": true,
+		"$or": []bson.M{
+			{"onMatch.sendMail": bson.M{"$not": bson.M{"$size": 0}, "$type": "array"}},
+			{"onMatch.httpCall": bson.M{"$not": bson.M{"$size": 0}, "$type": "array"}},
+		},
 	}
+	err := conn.Find(&Profile{}, &profiles, filter)
+	return profiles, err
 }
 
 // GetProfiles returns all profiles from the database
