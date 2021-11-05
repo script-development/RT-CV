@@ -76,9 +76,9 @@ var (
 			Name: "Default",
 		}},
 		OnMatch: models.ProfileOnMatch{
-			SendMail: []models.ProfileSendEmailData{{
-				Email: "abc@example.com",
-			}},
+			SendMail: []models.ProfileSendEmailData{
+				{Email: "example@script.nl"},
+			},
 		},
 		Zipcodes: []models.ProfileDutchZipcode{{
 			From: 2000,
@@ -103,6 +103,11 @@ var (
 		DriversLicenses:       nil,
 		Educations:            nil,
 		Zipcodes:              nil,
+		OnMatch: models.ProfileOnMatch{
+			SendMail: []models.ProfileSendEmailData{
+				{Email: "example@script.nl"},
+			},
+		},
 	}
 )
 
