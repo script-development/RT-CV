@@ -103,7 +103,7 @@ class AuthenticatedFetcher {
             const error = resJsonData?.error
 
             if (status == 401) {
-                if (error)
+                if (error && error != "you do not have auth roles required to access this route")
                     // redirect to login screen as something with the credentials is going wrong
                     location.pathname = '/login'
 
