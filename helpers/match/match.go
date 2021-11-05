@@ -48,6 +48,12 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 			continue
 		}
 
+		// There are a lot of CVs that fail on this check on the end
+		// Lets make those cases quick as we can easily check that
+		if len(profile.Zipcodes) != 0 && len(cv.PersonalDetails.Zip) == 0 {
+			continue
+		}
+
 		match := FoundMatch{
 			Profile: profile,
 			Matches: models.Match{
@@ -339,8 +345,9 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 
 		// Check zipcodes
 		if len(profile.Zipcodes) != 0 {
-			zipStr := cv.PersonalDetails.Zip
-			if len(zipStr) < 4 {
+			zipStr := strings.TrimSpace(cv.PersonalDetails.Zip)
+			zipStrLen := len(zipStr)
+			if zipStrLen != 4 && zipStrLen != 6 {
 				// Client has invalid zipcode
 				continue
 			}

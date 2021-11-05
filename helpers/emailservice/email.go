@@ -45,7 +45,9 @@ func Setup(conf EmailServerConfiguration, onMailSend func(err error)) error {
 		go func() {
 			for data := range ch {
 				log.Infof("sending no mail to %v as email server is not configured", data.To)
-				onMailSend(ErrNoConf)
+				if onMailSend != nil {
+					onMailSend(ErrNoConf)
+				}
 			}
 		}()
 		return nil
@@ -76,7 +78,9 @@ func Setup(conf EmailServerConfiguration, onMailSend func(err error)) error {
 				log.Infof("sending mail to %s", e.To)
 				e.From = from
 				err := p.Send(e, 10*time.Second)
-				onMailSend(err)
+				if onMailSend != nil {
+					onMailSend(err)
+				}
 				if err != nil {
 					log.WithError(err).Error("Error sending email")
 				}
