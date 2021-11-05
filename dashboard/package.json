@@ -11,18 +11,18 @@
     "@material-ui/core": "^4.12.3",
     "@material-ui/icons": "^4.11.2",
     "@monaco-editor/react": "^4.3.1",
-    "@stoplight/elements": "^7.3.7",
+    "@stoplight/elements": "^7.3.9",
     "date-fns": "^2.25.0",
     "jsonc-parser": "^3.0.0",
-    "monaco-editor": "^0.29.1",
+    "monaco-editor": "^0.30.0",
     "monaco-themes": "^0.4.0",
-    "next": "^12.0.2",
+    "next": "^12.0.3",
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "react-syntax-highlighter": "^15.4.4"
   },
   "devDependencies": {
-    "@types/react": "^17.0.33",
+    "@types/react": "^17.0.34",
     "@types/react-syntax-highlighter": "^13.5.2",
     "typescript": "^4.4.4"
   }
