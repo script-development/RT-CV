@@ -48,7 +48,9 @@ export default function Events() {
                 console.log('received message', ev.data)
                 try {
                     const newMsg = JSON.parse(ev.data)
-                    setEvents(prev => [newMsg, ...prev])
+                    if (newMsg.kind == "recived_cv") {
+                        setEvents(prev => [newMsg, ...prev])
+                    }
                 } catch (e) { }
             }
             socket.onopen = () => {
@@ -80,10 +82,7 @@ export default function Events() {
         }
     }
 
-    useEffect(() => {
-        const closeConn = connectToSocket()
-        return closeConn
-    }, [])
+    useEffect(connectToSocket, [])
 
     return (
         <div>
@@ -98,7 +97,9 @@ export default function Events() {
 
             <div className="eventsList">
                 <h2>Events</h2>
-                {events.map((ev, idx) => <pre key={idx}>{JSON.stringify(ev, null, 2)}</pre>)}
+                {events.map((ev, idx) =>
+                    <Event key={idx} event={ev} />
+                )}
             </div>
 
             <style jsx>{`
@@ -117,6 +118,53 @@ export default function Events() {
                     background-color: white;
                     border-radius: 5px;
                     margin-right: 4px;
+                }
+            `}</style>
+        </div>
+    )
+}
+
+interface EventProps {
+    event: {
+        data: any,
+        kind: 'recived_cv',
+    }
+}
+
+function Event({ event }: EventProps) {
+    return (
+        <div className="event">
+            <div className="decoration">
+                <div className="dot" />
+                <div className="lineToNextEvent" />
+            </div>
+            <div className="content">
+                <pre>{JSON.stringify(event.data, null, 2)}</pre>
+            </div>
+            <style jsx>{`
+                .event {
+                    display: flex;
+                    padding: 10px;
+                }
+                .decoration {
+                    width: 60px;
+                    display: flex;
+                    justify-content: center;
+                    flex-direction: column;
+                    align-items: center;
+                }
+                .decoration .dot {
+                    height: 30px;
+                    width: 30px;
+                    border: 4px solid white;
+                    border-radius: 15px;
+                    margin-bottom: 10px;
+                }
+                .decoration .lineToNextEvent {
+                    width: 4px;
+                    flex-grow: 1;
+                    border-radius: 2px;
+                    background-color: white;
                 }
             `}</style>
         </div>
