@@ -83,6 +83,9 @@ var routeCreateProfile = routeBuilder.R{
 			return err
 		}
 
+		// Invalidate profiles cache
+		*ctx.GetMatcherProfilesCache(c) = ctx.MatcherProfilesCache{}
+
 		return c.JSON(profile)
 	},
 }
@@ -90,6 +93,10 @@ var routeCreateProfile = routeBuilder.R{
 func routeModifyProfile(c *fiber.Ctx) error {
 	profile := ctx.GetProfile(c)
 	// FIXME implement route
+
+	// Invalidate profiles cache
+	*ctx.GetMatcherProfilesCache(c) = ctx.MatcherProfilesCache{}
+
 	return c.JSON(profile)
 }
 
@@ -103,6 +110,9 @@ var routeDeleteProfile = routeBuilder.R{
 		if err != nil {
 			return err
 		}
+
+		// Invalidate profiles cache
+		*ctx.GetMatcherProfilesCache(c) = ctx.MatcherProfilesCache{}
 
 		return c.JSON(profile)
 	},

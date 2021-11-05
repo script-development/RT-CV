@@ -3,6 +3,7 @@ package controller
 import (
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/apex/log"
 	"github.com/gofiber/fiber/v2"
@@ -65,10 +66,18 @@ var routeScraperScanCV = routeBuilder.R{
 			)
 		}
 
-		// TODO fetching profiles takes a lot of time
-		profiles, err := models.GetActiveProfilesWithOnMatch(dbConn)
-		if err != nil {
-			return err
+		matcherProfilesCache := ctx.GetMatcherProfilesCache(c)
+		profiles := matcherProfilesCache.Profiles
+		if profiles == nil || matcherProfilesCache.InsertionTime.Add(time.Hour).Before(time.Now()) {
+			// Update the cache
+			profiles, err = models.GetActiveProfilesWithOnMatch(dbConn)
+			if err != nil {
+				return err
+			}
+			*matcherProfilesCache = ctx.MatcherProfilesCache{
+				Profiles:      profiles,
+				InsertionTime: time.Now(),
+			}
 		}
 
 		// Try to match a profile to a CV

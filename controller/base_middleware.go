@@ -16,6 +16,8 @@ import (
 func InsertData(dbConn db.Connection) routeBuilder.M {
 	requestContext := ctx.SetDbConn(context.Background(), dbConn)
 
+	requestContext = ctx.ResetMatcherProfilesCache(requestContext)
+
 	requestContext = ctx.SetAuth(requestContext, auth.NewHelper(dbConn))
 
 	// We set this to nil so we can later run ctx.GetKey without panicing if the key is not yet set

@@ -2,6 +2,7 @@ package ctx
 
 import (
 	"context"
+	"time"
 
 	"github.com/apex/log"
 	"github.com/gofiber/fiber/v2"
@@ -23,15 +24,17 @@ type keyFromParamCtx uint8
 type loggerCtx uint8
 type dbConnCtx uint8
 type requestIDCtx uint8
+type profilesCacheCtx uint8
 
 const (
-	profileCtxKey      = profileCtx(0)
-	authCtxKey         = authCtx(0)
-	keyCtxKey          = keyCtx(0)
-	keyFromParamCtxKey = keyFromParamCtx(0)
-	loggerCtxKey       = loggerCtx(0)
-	dbConnCtxKey       = dbConnCtx(0)
-	requestIDCtxKey    = requestIDCtx(0)
+	profileCtxKey       = profileCtx(0)
+	authCtxKey          = authCtx(0)
+	keyCtxKey           = keyCtx(0)
+	keyFromParamCtxKey  = keyFromParamCtx(0)
+	loggerCtxKey        = loggerCtx(0)
+	dbConnCtxKey        = dbConnCtx(0)
+	requestIDCtxKey     = requestIDCtx(0)
+	profilesCacheCtxKey = profilesCacheCtx(0)
 )
 
 // getCtxValue returns a value from the context
@@ -110,4 +113,20 @@ func GetDbConn(c *fiber.Ctx) db.Connection {
 // SetDbConn sets the database connection
 func SetDbConn(ctx context.Context, value db.Connection) context.Context {
 	return context.WithValue(ctx, dbConnCtxKey, value)
+}
+
+// MatcherProfilesCache contains the matcher profiles cache
+type MatcherProfilesCache struct {
+	InsertionTime time.Time
+	Profiles      []models.Profile
+}
+
+// GetMatcherProfilesCache returns the cached profiles used by the matcher
+func GetMatcherProfilesCache(c *fiber.Ctx) *MatcherProfilesCache {
+	return getCtxValue(c, profilesCacheCtxKey).(*MatcherProfilesCache)
+}
+
+// ResetMatcherProfilesCache sets the profiles cache to an empty object
+func ResetMatcherProfilesCache(ctx context.Context) context.Context {
+	return context.WithValue(ctx, profilesCacheCtxKey, &MatcherProfilesCache{})
 }
