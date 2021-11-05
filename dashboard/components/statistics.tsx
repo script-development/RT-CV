@@ -66,9 +66,9 @@ export default function Statistics() {
 
     return (
         <div className="charts">
-            <div className="chartContainer">
+            <div className="char">
                 <h3>Matches per day</h3>
-                <div className="box chart">
+                <div className="box">
                     {loading
                         ? <ChartLoader />
                         : <BarChart
@@ -79,7 +79,7 @@ export default function Statistics() {
                     }
                 </div>
             </div>
-            <div>
+            <div className="char">
                 <h3>Profiles Count</h3>
                 <div className="box">
                     <p>Total</p>
@@ -90,12 +90,14 @@ export default function Statistics() {
             </div>
             <style jsx>{`
                 .charts {
-                    padding: 10px;
                     width: 700px;
                     box-sizing: border-box;
                     max-width: calc(100vw - 20px);
                     display: flex;
                     flex-wrap: wrap;
+                }
+                .char {
+                    padding: 10px;
                 }
                 .box {
                     padding: 20px 20px 10px 20px;
