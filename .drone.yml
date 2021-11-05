@@ -42,6 +42,15 @@ steps:
       - name: dockerRunScript
         path: /root/dockerRunScript
 
+  - name: slack
+    image: plugins/slack
+    settings:
+      webhook:
+        from_secret: slack_webhook
+      channel:
+        from_secret: slack_webhook_channel
+      username: drone
+
 trigger:
   branch:
     - main
