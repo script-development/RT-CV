@@ -67,6 +67,7 @@ func Routes(app *fiber.App, appVersion string, dbConn db.Connection, testing boo
 
 		b.Group(`/control`, func(b *routeBuilder.Router) {
 			b.Group(`/profiles`, func(b *routeBuilder.Router) {
+				b.Get(`count`, routeGetProfilesCount)
 				b.Post(``, routeCreateProfile)
 				b.Get(``, routeAllProfiles)
 				b.Group(`/:profile`, func(b *routeBuilder.Router) {

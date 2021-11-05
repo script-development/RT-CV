@@ -83,3 +83,11 @@ func TestProfileRoutes(t *testing.T) {
 	NoError(t, err)
 	Equal(t, profileToInsert.Name, resProfile.Name)
 }
+
+func TestRouteGetProfilesCount(t *testing.T) {
+	app := newTestingRouter(t)
+
+	// Get all profiles
+	_, res := app.MakeRequest(routeBuilder.Get, `/api/v1/control/profiles/count`, TestReqOpts{})
+	Equal(t, `{"total":2,"usable":2}`, string(res))
+}
