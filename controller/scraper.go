@@ -65,24 +65,27 @@ var routeScraperScanCV = routeBuilder.R{
 			)
 		}
 
+		// TODO fetching profiles takes a lot of time
 		profiles, err := models.GetActiveProfilesWithOnMatch(dbConn)
 		if err != nil {
 			return err
 		}
+
+		// Try to match a profile to a CV
 		matchedProfiles := match.Match(key.Domains, profiles, body.CV)
 		foundMatches := len(matchedProfiles) != 0
 
 		// Insert analytics data
-		analyticsData := make([]db.Entry, len(matchedProfiles))
-		for idx := range matchedProfiles {
-			matchedProfiles[idx].Matches.RequestID = requestID
-			matchedProfiles[idx].Matches.KeyID = key.ID
-			matchedProfiles[idx].Matches.Debug = body.Debug
-
-			analyticsData[idx] = &matchedProfiles[idx].Matches
-		}
-
 		if foundMatches {
+			analyticsData := make([]db.Entry, len(matchedProfiles))
+			for idx := range matchedProfiles {
+				matchedProfiles[idx].Matches.RequestID = requestID
+				matchedProfiles[idx].Matches.KeyID = key.ID
+				matchedProfiles[idx].Matches.Debug = body.Debug
+
+				analyticsData[idx] = &matchedProfiles[idx].Matches
+			}
+
 			go func(logger *log.Entry, analyticsData []db.Entry) {
 				err := dbConn.Insert(analyticsData...)
 				if err != nil {
