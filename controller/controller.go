@@ -65,18 +65,16 @@ func Routes(app *fiber.App, appVersion string, dbConn db.Connection, testing boo
 			})
 		}, requiresAuth(models.APIKeyRoleInformationObtainer|models.APIKeyRoleDashboard))
 
-		b.Group(`/control`, func(b *routeBuilder.Router) {
-			b.Group(`/profiles`, func(b *routeBuilder.Router) {
-				b.Get(`count`, routeGetProfilesCount)
-				b.Post(``, routeCreateProfile)
-				b.Get(``, routeAllProfiles)
-				b.Group(`/:profile`, func(b *routeBuilder.Router) {
-					b.Get(``, routeGetProfile)
-					// b.Put(``, routeModifyProfile) // TODO
-					b.Delete(``, routeDeleteProfile)
-				}, middlewareBindProfile())
-			})
-		}, requiresAuth(models.APIKeyRoleController))
+		b.Group(`/profiles`, func(b *routeBuilder.Router) {
+			b.Get(`count`, routeGetProfilesCount, requiresAuth(models.APIKeyRoleInformationObtainer|models.APIKeyRoleDashboard))
+			b.Post(``, routeCreateProfile, requiresAuth(models.APIKeyRoleController))
+			b.Get(``, routeAllProfiles, requiresAuth(models.APIKeyRoleInformationObtainer))
+			b.Group(`/:profile`, func(b *routeBuilder.Router) {
+				b.Get(``, routeGetProfile, requiresAuth(models.APIKeyRoleInformationObtainer))
+				// b.Put(``, routeModifyProfile) // TODO
+				b.Delete(``, routeDeleteProfile, requiresAuth(models.APIKeyRoleController))
+			}, middlewareBindProfile())
+		}, requiresAuth(0))
 
 		b.Group(`/keys`, func(b *routeBuilder.Router) {
 			b.Get(``, routeGetKeys)

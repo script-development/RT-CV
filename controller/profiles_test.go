@@ -13,7 +13,7 @@ func TestProfileRoutes(t *testing.T) {
 	app := newTestingRouter(t)
 
 	// Get all profiles
-	_, res := app.MakeRequest(routeBuilder.Get, `/api/v1/control/profiles`, TestReqOpts{})
+	_, res := app.MakeRequest(routeBuilder.Get, `/api/v1/profiles`, TestReqOpts{})
 
 	// Check if the response contains the profiles inserted in the mock data
 	resProfiles := []models.Profile{}
@@ -33,7 +33,7 @@ func TestProfileRoutes(t *testing.T) {
 
 	// Get each profile from earlier by id
 	for _, listProfile := range resProfiles {
-		profileRoute := `/api/v1/control/profiles/` + listProfile.ID.Hex()
+		profileRoute := `/api/v1/profiles/` + listProfile.ID.Hex()
 		_, res = app.MakeRequest(routeBuilder.Get, profileRoute, TestReqOpts{})
 
 		resProfile := &models.Profile{}
@@ -49,7 +49,7 @@ func TestProfileRoutes(t *testing.T) {
 		app.MakeRequest(routeBuilder.Delete, profileRoute, TestReqOpts{})
 
 		// Count how many profiles we have after the deletion
-		_, res := app.MakeRequest(routeBuilder.Get, `/api/v1/control/profiles`, TestReqOpts{})
+		_, res := app.MakeRequest(routeBuilder.Get, `/api/v1/profiles`, TestReqOpts{})
 		resProfiles = []models.Profile{}
 		err = json.Unmarshal(res, &resProfiles)
 		NoError(t, err)
@@ -69,7 +69,7 @@ func TestProfileRoutes(t *testing.T) {
 	}
 	body, err := json.Marshal(profileToInsert)
 	NoError(t, err)
-	_, res = app.MakeRequest(routeBuilder.Post, `/api/v1/control/profiles`, TestReqOpts{Body: body})
+	_, res = app.MakeRequest(routeBuilder.Post, `/api/v1/profiles`, TestReqOpts{Body: body})
 	resProfile := &models.Profile{}
 	err = json.Unmarshal(res, resProfile)
 	NoError(t, err)
@@ -77,7 +77,7 @@ func TestProfileRoutes(t *testing.T) {
 	Equal(t, profileToInsert.Name, resProfile.Name)
 
 	// Check if we can fetch the newly inserted profile
-	_, res = app.MakeRequest(routeBuilder.Get, `/api/v1/control/profiles/`+resProfile.ID.Hex(), TestReqOpts{})
+	_, res = app.MakeRequest(routeBuilder.Get, `/api/v1/profiles/`+resProfile.ID.Hex(), TestReqOpts{})
 	resProfile = &models.Profile{}
 	err = json.Unmarshal(res, resProfile)
 	NoError(t, err)
@@ -88,6 +88,6 @@ func TestRouteGetProfilesCount(t *testing.T) {
 	app := newTestingRouter(t)
 
 	// Get all profiles
-	_, res := app.MakeRequest(routeBuilder.Get, `/api/v1/control/profiles/count`, TestReqOpts{})
+	_, res := app.MakeRequest(routeBuilder.Get, `/api/v1/profiles/count`, TestReqOpts{})
 	Equal(t, `{"total":2,"usable":2}`, string(res))
 }

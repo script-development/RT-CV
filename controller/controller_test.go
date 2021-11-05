@@ -86,7 +86,7 @@ func TestCannotAccessCriticalRoutesWithoutCredentials(t *testing.T) {
 		{
 			"control profiles",
 			routeBuilder.Get,
-			"/api/v1/control/profiles",
+			"/api/v1/profiles",
 		},
 		{
 			"keys",
