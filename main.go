@@ -7,6 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/joho/godotenv"
 	"github.com/script-development/RT-CV/controller"
 	"github.com/script-development/RT-CV/db"
@@ -78,6 +79,7 @@ func main() {
 	app := fiber.New(fiber.Config{
 		ErrorHandler: controller.FiberErrorHandler,
 	})
+	app.Use(recover.New())
 	app.Use(cors.New())
 	app.Use(logger.New())
 	app.Use(func(c *fiber.Ctx) error {
