@@ -4,7 +4,7 @@ import { formatRFC3339, subDays, startOfDay } from 'date-fns'
 import React, { useEffect, useMemo, useState } from 'react'
 import { Match } from '../src/types'
 import { BarChartProps } from './chartProps'
-import { CircularProgress } from '@material-ui/core'
+import { CircularProgress, Tooltip } from '@material-ui/core'
 
 const BarChart = dynamic<BarChartProps>(() =>
     import('./chart').then(m => m.BarChart),
@@ -82,10 +82,16 @@ export default function Statistics() {
             <div className="char">
                 <h3>Profiles Count</h3>
                 <div className="box">
-                    <p>Total</p>
-                    {profilesStats.total}
-                    <p>Used by matcher</p>
-                    {profilesStats.usable}
+                    <div>
+                        <p>Total</p>
+                        <h1>{profilesStats.total}</h1>
+                    </div>
+                    <Tooltip title="The profiles that are active and have a OnMatch property set" placement="top">
+                        <div>
+                            <p>Used by matcher</p>
+                            <h1>{profilesStats.usable}</h1>
+                        </div>
+                    </Tooltip>
                 </div>
             </div>
             <style jsx>{`
@@ -95,11 +101,14 @@ export default function Statistics() {
                     max-width: calc(100vw - 20px);
                     display: flex;
                     flex-wrap: wrap;
+                    align-items: stretch;
                 }
                 .char {
                     padding: 10px;
+                    flex-grow: 1;
                 }
                 .box {
+                    height: 230px;
                     padding: 20px 20px 10px 20px;
                     overflow: hidden;
                     border-radius: 4px;
