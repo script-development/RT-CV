@@ -19,5 +19,5 @@ require (
 	github.com/valyala/fasthttp v1.31.0
 	go.mongodb.org/mongo-driver v1.7.4
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20211103235746-7861aae1554b // indirect
+	golang.org/x/sys v0.0.0-20211107104306-e0b2ad06fe42 // indirect
 )
