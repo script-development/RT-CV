@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
 	"github.com/script-development/RT-CV/helpers/routeBuilder"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var routeControlEventsWS = routeBuilder.R{
@@ -93,16 +94,18 @@ func (e *eventListeners) addListener(listener eventListener) func() {
 	}
 }
 
-func (e *eventListeners) publish(kind string, data interface{}) error {
+func (e *eventListeners) publish(kind string, requestID *primitive.ObjectID, data interface{}) error {
 	e.m.Lock()
 	defer e.m.Unlock()
 
 	fullData := struct {
-		Kind string      `json:"kind"`
-		Data interface{} `json:"data"`
+		Kind      string              `json:"kind"`
+		RequestID *primitive.ObjectID `json:"requestId,omitempty"`
+		Data      interface{}         `json:"data"`
 	}{
-		Kind: kind,
-		Data: data,
+		Kind:      kind,
+		RequestID: requestID,
+		Data:      data,
 	}
 
 	bytes, err := json.Marshal(fullData)

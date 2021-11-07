@@ -44,7 +44,7 @@ var routeScraperScanCV = routeBuilder.R{
 			return err
 		}
 
-		err = dashboardListeners.publish("recived_cv", body.CV)
+		err = dashboardListeners.publish("recived_cv", &requestID, body.CV)
 		if err != nil {
 			return err
 		}
@@ -86,6 +86,11 @@ var routeScraperScanCV = routeBuilder.R{
 
 		// Insert analytics data
 		if foundMatches {
+			err = dashboardListeners.publish("recived_cv_matches", &requestID, matchedProfiles)
+			if err != nil {
+				return err
+			}
+
 			analyticsData := make([]db.Entry, len(matchedProfiles))
 			for idx := range matchedProfiles {
 				matchedProfiles[idx].Matches.RequestID = requestID
