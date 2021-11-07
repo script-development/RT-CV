@@ -80,8 +80,8 @@ func requiresAuth(requiredRoles models.APIKeyRole) routeBuilder.M {
 			}
 
 			*logger = *logger.WithFields(log.Fields{
-				"apiKeyId": key.ID,
-				"domains":  key.Domains,
+				"api_key_id": key.ID.Hex(),
+				"domains":    key.Domains,
 			})
 
 			c.SetUserContext(

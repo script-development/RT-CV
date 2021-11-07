@@ -33,7 +33,7 @@ func InsertData(dbConn db.Connection) routeBuilder.M {
 			requestID := primitive.NewObjectID()
 			c.Response().Header.Add("X-Request-ID", requestID.Hex())
 
-			loggerEntity = log.WithField("request_id", requestID)
+			loggerEntity = log.WithField("request_id", requestID.Hex())
 
 			c.SetUserContext(
 				ctx.SetRequestID(

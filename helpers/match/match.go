@@ -409,8 +409,6 @@ func (match FoundMatch) HandleMatch(wg *sync.WaitGroup, cv *models.CV) error {
 				err := email.SendEmail(match.Profile, emailBody.Bytes(), pdf)
 				if err != nil {
 					log.WithError(err).Error("unable to send email")
-				} else {
-					log.Infof("send match mail to %s", email.Email)
 				}
 				wg.Done()
 			}(email)
