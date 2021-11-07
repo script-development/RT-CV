@@ -157,7 +157,7 @@ function Event({ event, isLast }: EventProps) {
     return (
         <div className="event">
             <div className="decoration">
-                <div className="dot" />
+                <Icon fontSize="large">contact_page</Icon>
                 {isLast ? undefined : <div className="lineToNextEvent" />}
             </div>
             <div className="content">
@@ -266,16 +266,10 @@ function Event({ event, isLast }: EventProps) {
                     flex-direction: column;
                     align-items: center;
                     position: relative;
-                    top: 15px;
-                }
-                .decoration .dot {
-                    height: 20px;
-                    width: 20px;
-                    border: 2px solid pink;
-                    border-radius: 10px;
-                    margin-bottom: 10px;
+                    top: 7px;
                 }
                 .decoration .lineToNextEvent {
+                    margin-top: 10px;
                     width: 2px;
                     flex-grow: 1;
                     border-radius: 1px;
