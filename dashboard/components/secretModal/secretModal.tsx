@@ -13,12 +13,7 @@ import Create from './modify'
 import { SecretValueStructure } from '../../src/types'
 import { SecretModalProps } from './secretModalProps'
 
-const SyntaxHighlighter = dynamic(
-    () => import('react-syntax-highlighter'),
-    { ssr: false },
-)
-
-let syntaxHighlighterStyleCache: any = undefined
+const JSONCode = dynamic(import('../jsonCode'), { ssr: false })
 
 export interface ModifyState {
     id: string
@@ -35,7 +30,6 @@ export interface ModifyState {
 export function SecretModal({ kind, setKind, onClose: onCloseArg, secret }: SecretModalProps) {
     const [apiError, setApiError] = useState('')
 
-    const [syntaxHighlighterStyle, setSyntaxHighlighterStyle] = useState<any>(syntaxHighlighterStyleCache)
     const [modifyState, setModifyState] = useState<ModifyState>({
         id: '',
         key: '',
@@ -79,26 +73,10 @@ export function SecretModal({ kind, setKind, onClose: onCloseArg, secret }: Secr
         onCloseArg()
     }
 
-    const loadReactSyntaxHighlighter = async () => {
-        try {
-            const [_, styles] = await Promise.all([
-                // Pre load the highlighter component
-                import('react-syntax-highlighter'),
-                // Load the styles
-                import('react-syntax-highlighter/dist/esm/styles/hljs'),
-            ])
-
-            syntaxHighlighterStyleCache = styles.monokaiSublime
-            setSyntaxHighlighterStyle(styles.monokaiSublime)
-        } catch (e: any) {
-            console.log(e)
-        }
-    }
-
     useEffect(() => {
-        if (kind == ModalKind.View && syntaxHighlighterStyle === undefined)
+        if (kind == ModalKind.View)
             // When the modal is opened start pre-loading the highlighter
-            loadReactSyntaxHighlighter()
+            import('../jsonCode')
 
         if (kind == ModalKind.Edit && secret?.id != modifyState.id)
             setModifyState(s => ({
@@ -195,16 +173,7 @@ export function SecretModal({ kind, setKind, onClose: onCloseArg, secret }: Secr
                                 startIcon={<Edit />}
                                 onClick={() => setKind(ModalKind.Edit)}
                             >Edit</Button>
-                            <div className="code">
-                                {syntaxHighlighterStyle
-                                    ? <SyntaxHighlighter
-                                        wrapLongLines={true}
-                                        language="json"
-                                        style={syntaxHighlighterStyle}
-                                    >{JSON.stringify(viewState.value, null, 4)}</SyntaxHighlighter>
-                                    : 'Loading...'
-                                }
-                            </div>
+                            <JSONCode json={viewState.value} />
                             <style jsx>{`
                                 .info {
                                     margin-bottom: 10px;
