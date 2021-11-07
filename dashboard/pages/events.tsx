@@ -1,11 +1,14 @@
 import Head from 'next/head'
-import { ReactNode, useEffect, useState } from 'react'
-import { Icon, Typography } from '@material-ui/core'
+import React, { ReactNode, useEffect, useState } from 'react'
+import { FormControlLabel, Icon, Switch, Typography } from '@material-ui/core'
 import { fetcher } from '../src/auth'
 import Header from '../components/header'
 import { CV, LanguageLevelToString } from '../src/types'
 import Check from '@material-ui/icons/Check'
 import Close from '@material-ui/icons/Close'
+import dynamic from 'next/dynamic'
+
+const JSONCode = dynamic(() => import('../components/jsonCode'), { ssr: false })
 
 function getWebsocketUrl() {
     const url = fetcher.getAPIPath(`/api/v1/events/ws/${fetcher.authorizationValue}`, true)
@@ -84,7 +87,11 @@ export default function Events() {
         }
     }
 
-    useEffect(connectToSocket, [])
+    useEffect(() => {
+        // Start pre-loading the json code component
+        import('../components/jsonCode')
+        return connectToSocket()
+    }, [])
 
     return (
         <div>
@@ -150,6 +157,8 @@ interface EventProps {
 function Event({ event, isLast }: EventProps) {
     const { data } = event
 
+    const [rawMode, setRawMode] = useState(false)
+
     const name = (
         (data.personalDetails?.firstName || data.personalDetails?.initials || '')
         + (data.personalDetails?.surNamePrefix ? ' ' + data.personalDetails?.surNamePrefix : '')
@@ -165,101 +174,115 @@ function Event({ event, isLast }: EventProps) {
                 {isLast ? undefined : <div className="lineToNextEvent" />}
             </div>
             <div className="content">
-                {data.referenceNumber ? <p>{data.referenceNumber}</p> : undefined}
-                <h1>{name ? name : <span className="undefined">Unknown name</span>}</h1>
-                {zip || city || streetName || houseNumber || houseNumberSuffix || country ?
-                    <p>
-                        {zip
-                            ? <a target="_blank" rel="noopener noreferrer" href={"https://www.google.com/maps/search/" + zip}>{zip}</a>
-                            : undefined
-                        }
-                        {zip && city ? ' - ' : undefined}
-                        {city}
-                        {city && streetName ? ' ' : undefined}
-                        {streetName ? streetName + ' ' + houseNumber + (houseNumberSuffix ? ' ' + houseNumberSuffix : '') : undefined}
-                        {streetName && country ? ' - ' : undefined}
-                        {country}
-                    </p>
-                    : undefined}
+                <h3 className="kind">
+                    Uploaded CV
+                    <FormControlLabel
+                        style={{ marginLeft: '10px' }}
+                        control={<Switch size="small" checked={rawMode} onChange={() => setRawMode(v => !v)} />}
+                        label="View as JSON"
+                    />
+                </h3>
 
-                <div className="detailedInfo">
-                    {data.preferredJobs ?
-                        <EventDetailsSection
-                            icon="work"
-                            title={data.preferredJobs.length > 1 ? "Preferred jobs" : "Preferred job"}
-                        >
-                            {data.preferredJobs.map((job, idx) =>
-                                <p key={idx}>{job}</p>
-                            )}
-                        </EventDetailsSection>
-                        : undefined}
+                {rawMode ?
+                    <JSONCode json={data} />
+                    : <>
 
-                    {data.educations ?
-                        <EventDetailsSection
-                            icon="school"
-                            title={data.educations.length > 1 ? "Educations" : "Education"}
-                        >
-                            {data.educations.map((education, idx) =>
-                                <div key={idx} className="listItem">
-                                    {education.name}
-                                    <div className="checklist">
-                                        <div>
-                                            <IsOk>{education.isCompleted}</IsOk>
-                                            <span>{education.isCompleted ? 'Compleet' : 'Niet Compleet'}</span>
+                        {data.referenceNumber ? <p>{data.referenceNumber}</p> : undefined}
+                        <h1>{name ? name : <span className="undefined">Unknown name</span>}</h1>
+                        {zip || city || streetName || houseNumber || houseNumberSuffix || country ?
+                            <p>
+                                {zip
+                                    ? <a target="_blank" rel="noopener noreferrer" href={"https://www.google.com/maps/search/" + zip}>{zip}</a>
+                                    : undefined
+                                }
+                                {zip && city ? ' - ' : undefined}
+                                {city}
+                                {city && streetName ? ' ' : undefined}
+                                {streetName ? streetName + ' ' + houseNumber + (houseNumberSuffix ? ' ' + houseNumberSuffix : '') : undefined}
+                                {streetName && country ? ' - ' : undefined}
+                                {country}
+                            </p>
+                            : undefined}
+
+                        <div className="detailedInfo">
+                            {data.preferredJobs ?
+                                <EventDetailsSection
+                                    icon="work"
+                                    title={data.preferredJobs.length > 1 ? "Preferred jobs" : "Preferred job"}
+                                >
+                                    {data.preferredJobs.map((job, idx) =>
+                                        <p key={idx}>{job}</p>
+                                    )}
+                                </EventDetailsSection>
+                                : undefined}
+
+                            {data.educations ?
+                                <EventDetailsSection
+                                    icon="school"
+                                    title={data.educations.length > 1 ? "Educations" : "Education"}
+                                >
+                                    {data.educations.map((education, idx) =>
+                                        <div key={idx} className="listItem">
+                                            {education.name}
+                                            <div className="checklist">
+                                                <div>
+                                                    <IsOk>{education.isCompleted}</IsOk>
+                                                    <span>{education.isCompleted ? 'Compleet' : 'Niet Compleet'}</span>
+                                                </div>
+                                                <div>
+                                                    <IsOk>{education.hasDiploma}</IsOk>
+                                                    <span>{education.hasDiploma ? 'Heeft diploma' : 'Geen diploma'}</span>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <IsOk>{education.hasDiploma}</IsOk>
-                                            <span>{education.hasDiploma ? 'Heeft diploma' : 'Geen diploma'}</span>
+                                    )}
+                                </EventDetailsSection>
+                                : undefined}
+
+                            {data.courses ?
+                                <EventDetailsSection
+                                    icon="school"
+                                    title={data.courses.length > 1 ? "Courses" : "Course"}
+                                >
+                                    {data.courses.map((course, idx) =>
+                                        <div key={idx} className="listItem">
+                                            {course.name}
+                                            <div className="checklist">
+                                                <div>
+                                                    <IsOk>{course.isCompleted}</IsOk>
+                                                    <span>{course.isCompleted ? 'Compleet' : 'Niet Compleet'}</span>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                            )}
-                        </EventDetailsSection>
-                        : undefined}
+                                    )}
+                                </EventDetailsSection>
+                                : undefined}
 
-                    {data.courses ?
-                        <EventDetailsSection
-                            icon="school"
-                            title={data.courses.length > 1 ? "Courses" : "Course"}
-                        >
-                            {data.courses.map((course, idx) =>
-                                <div key={idx} className="listItem">
-                                    {course.name}
-                                    <div className="checklist">
-                                        <div>
-                                            <IsOk>{course.isCompleted}</IsOk>
-                                            <span>{course.isCompleted ? 'Compleet' : 'Niet Compleet'}</span>
+                            {data.driversLicenses ?
+                                <EventDetailsSection
+                                    icon="drive_eta"
+                                    title={data.driversLicenses.length > 1 ? "Drivers licenses" : "Driver license"}
+                                >
+                                    {data.driversLicenses.map((license, idx) =>
+                                        <span key={idx}>{license + ' '}</span>
+                                    )}
+                                </EventDetailsSection>
+                                : undefined}
+
+                            {data.languages ?
+                                <EventDetailsSection
+                                    icon="translate"
+                                    title={data.languages.length > 1 ? "Languages" : "Language"}
+                                >
+                                    {data.languages.map((language, idx) =>
+                                        <div key={idx} className="listItem">
+                                            {language.name} - Spoken: <b>{LanguageLevelToString(language.levelSpoken)}</b>, Written: <b>{LanguageLevelToString(language.levelWritten)}</b>
                                         </div>
-                                    </div>
-                                </div>
-                            )}
-                        </EventDetailsSection>
-                        : undefined}
-
-                    {data.driversLicenses ?
-                        <EventDetailsSection
-                            icon="drive_eta"
-                            title={data.driversLicenses.length > 1 ? "Drivers licenses" : "Driver license"}
-                        >
-                            {data.driversLicenses.map((license, idx) =>
-                                <span key={idx}>{license + ' '}</span>
-                            )}
-                        </EventDetailsSection>
-                        : undefined}
-
-                    {data.languages ?
-                        <EventDetailsSection
-                            icon="translate"
-                            title={data.languages.length > 1 ? "Languages" : "Language"}
-                        >
-                            {data.languages.map((language, idx) =>
-                                <div key={idx} className="listItem">
-                                    {language.name} - Spoken: <b>{LanguageLevelToString(language.levelSpoken)}</b>, Written: <b>{LanguageLevelToString(language.levelWritten)}</b>
-                                </div>
-                            )}
-                        </EventDetailsSection>
-                        : undefined}
-                </div>
+                                    )}
+                                </EventDetailsSection>
+                                : undefined}
+                        </div>
+                    </>}
             </div>
             <style jsx>{`
                 .event {
