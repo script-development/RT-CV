@@ -1,6 +1,6 @@
 import Head from 'next/head'
 import { ReactNode, useEffect, useState } from 'react'
-import { Icon } from '@material-ui/core'
+import { Icon, Typography } from '@material-ui/core'
 import { fetcher } from '../src/auth'
 import Header from '../components/header'
 import { CV, LanguageLevelToString } from '../src/types'
@@ -104,6 +104,10 @@ export default function Events() {
 
             <div className="eventsList">
                 <h2>Events</h2>
+                <Typography variant="body2">
+                    All events shown here are available as long as you have the tab open.
+                    Once you reload the tab the events are gone
+                </Typography>
                 {events.map((ev, idx) =>
                     <Event
                         key={idx}
@@ -178,82 +182,84 @@ function Event({ event, isLast }: EventProps) {
                     </p>
                     : undefined}
 
-                {data.preferredJobs ?
-                    <EventDetailsSection
-                        icon="work"
-                        title={data.preferredJobs.length > 1 ? "Preferred jobs" : "Preferred job"}
-                    >
-                        {data.preferredJobs.map((job, idx) =>
-                            <p key={idx}>{job}</p>
-                        )}
-                    </EventDetailsSection>
-                    : undefined}
+                <div className="detailedInfo">
+                    {data.preferredJobs ?
+                        <EventDetailsSection
+                            icon="work"
+                            title={data.preferredJobs.length > 1 ? "Preferred jobs" : "Preferred job"}
+                        >
+                            {data.preferredJobs.map((job, idx) =>
+                                <p key={idx}>{job}</p>
+                            )}
+                        </EventDetailsSection>
+                        : undefined}
 
-                {data.educations ?
-                    <EventDetailsSection
-                        icon="school"
-                        title={data.educations.length > 1 ? "Educations" : "Education"}
-                    >
-                        {data.educations.map((education, idx) =>
-                            <div key={idx} className="listItem">
-                                {education.name}
-                                <div className="checklist">
-                                    <div>
-                                        <IsOk>{education.isCompleted}</IsOk>
-                                        <span>{education.isCompleted ? 'Compleet' : 'Niet Compleet'}</span>
-                                    </div>
-                                    <div>
-                                        <IsOk>{education.hasDiploma}</IsOk>
-                                        <span>{education.hasDiploma ? 'Heeft diploma' : 'Geen diploma'}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </EventDetailsSection>
-                    : undefined}
-
-                {data.courses ?
-                    <EventDetailsSection
-                        icon="school"
-                        title={data.courses.length > 1 ? "Courses" : "Course"}
-                    >
-                        {data.courses.map((course, idx) =>
-                            <div key={idx} className="listItem">
-                                {course.name}
-                                <div className="checklist">
-                                    <div>
-                                        <IsOk>{course.isCompleted}</IsOk>
-                                        <span>{course.isCompleted ? 'Compleet' : 'Niet Compleet'}</span>
+                    {data.educations ?
+                        <EventDetailsSection
+                            icon="school"
+                            title={data.educations.length > 1 ? "Educations" : "Education"}
+                        >
+                            {data.educations.map((education, idx) =>
+                                <div key={idx} className="listItem">
+                                    {education.name}
+                                    <div className="checklist">
+                                        <div>
+                                            <IsOk>{education.isCompleted}</IsOk>
+                                            <span>{education.isCompleted ? 'Compleet' : 'Niet Compleet'}</span>
+                                        </div>
+                                        <div>
+                                            <IsOk>{education.hasDiploma}</IsOk>
+                                            <span>{education.hasDiploma ? 'Heeft diploma' : 'Geen diploma'}</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        )}
-                    </EventDetailsSection>
-                    : undefined}
+                            )}
+                        </EventDetailsSection>
+                        : undefined}
 
-                {data.driversLicenses ?
-                    <EventDetailsSection
-                        icon="drive_eta"
-                        title={data.driversLicenses.length > 1 ? "Drivers licenses" : "Driver license"}
-                    >
-                        {data.driversLicenses.map((license, idx) =>
-                            <span key={idx}>{license + ' '}</span>
-                        )}
-                    </EventDetailsSection>
-                    : undefined}
+                    {data.courses ?
+                        <EventDetailsSection
+                            icon="school"
+                            title={data.courses.length > 1 ? "Courses" : "Course"}
+                        >
+                            {data.courses.map((course, idx) =>
+                                <div key={idx} className="listItem">
+                                    {course.name}
+                                    <div className="checklist">
+                                        <div>
+                                            <IsOk>{course.isCompleted}</IsOk>
+                                            <span>{course.isCompleted ? 'Compleet' : 'Niet Compleet'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </EventDetailsSection>
+                        : undefined}
 
-                {data.languages ?
-                    <EventDetailsSection
-                        icon="translate"
-                        title={data.languages.length > 1 ? "Languages" : "Language"}
-                    >
-                        {data.languages.map((language, idx) =>
-                            <div key={idx} className="listItem">
-                                {language.name} - Spoken: <b>{LanguageLevelToString(language.levelSpoken)}</b>, Written: <b>{LanguageLevelToString(language.levelWritten)}</b>
-                            </div>
-                        )}
-                    </EventDetailsSection>
-                    : undefined}
+                    {data.driversLicenses ?
+                        <EventDetailsSection
+                            icon="drive_eta"
+                            title={data.driversLicenses.length > 1 ? "Drivers licenses" : "Driver license"}
+                        >
+                            {data.driversLicenses.map((license, idx) =>
+                                <span key={idx}>{license + ' '}</span>
+                            )}
+                        </EventDetailsSection>
+                        : undefined}
+
+                    {data.languages ?
+                        <EventDetailsSection
+                            icon="translate"
+                            title={data.languages.length > 1 ? "Languages" : "Language"}
+                        >
+                            {data.languages.map((language, idx) =>
+                                <div key={idx} className="listItem">
+                                    {language.name} - Spoken: <b>{LanguageLevelToString(language.levelSpoken)}</b>, Written: <b>{LanguageLevelToString(language.levelWritten)}</b>
+                                </div>
+                            )}
+                        </EventDetailsSection>
+                        : undefined}
+                </div>
             </div>
             <style jsx>{`
                 .event {
@@ -265,8 +271,6 @@ function Event({ event, isLast }: EventProps) {
                     display: flex;
                     flex-direction: column;
                     align-items: center;
-                    position: relative;
-                    top: 7px;
                 }
                 .decoration .lineToNextEvent {
                     margin-top: 10px;
@@ -278,8 +282,13 @@ function Event({ event, isLast }: EventProps) {
                 h1 .undefined {
                     color: rgba(255, 255, 255, 0.4)
                 }
-                ul {
-                    list-style-position: inside;
+                .content {
+                    flex-grow: 1;
+                }
+                .detailedInfo {
+                    width: 100%;
+                        display: grid;
+                        grid-template-columns: repeat(var(--detailed-info-rows, 1), 1fr);
                 }
                 .listItem {
                     margin-bottom: 5px;
@@ -292,6 +301,15 @@ function Event({ event, isLast }: EventProps) {
                 }
                 .checklist > * > span {
                     margin-left: 3px;
+                }
+                @media screen and (min-width: 900px) {
+                    .detailedInfo { --detailed-info-rows: 2; }
+                }
+                @media screen and (min-width: 1300px) {
+                    .detailedInfo { --detailed-info-rows: 3; }
+                }
+                @media screen and (min-width: 1700px) {
+                    .detailedInfo { --detailed-info-rows: 4; }
                 }
             `}</style>
         </div>
