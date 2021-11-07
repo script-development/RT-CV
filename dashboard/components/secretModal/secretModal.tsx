@@ -13,7 +13,7 @@ import Create from './modify'
 import { SecretValueStructure } from '../../src/types'
 import { SecretModalProps } from './secretModalProps'
 
-const JSONCode = dynamic(import('../jsonCode'), { ssr: false })
+const JSONCode = dynamic(() => import('../jsonCode'), { ssr: false })
 
 export interface ModifyState {
     id: string
