@@ -18,7 +18,7 @@ import (
 // TODO check the json removed fields if we actually should use them
 type CV struct {
 	Title                string                   `json:"-"` // Not supported yet
-	ReferenceNumber      string                   `json:"-"` // Not supported yet
+	ReferenceNumber      string                   `json:"referenceNumber"`
 	CreatedAt            *jsonHelpers.RFC3339Nano `json:"-"` // Not supported yet
 	LastChanged          *jsonHelpers.RFC3339Nano `json:"-"` // Not supported yet
 	Educations           []Education              `json:"educations,omitempty"`
