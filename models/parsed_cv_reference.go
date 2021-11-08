@@ -7,12 +7,19 @@ import (
 	"github.com/script-development/RT-CV/helpers/jsonHelpers"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// ReferenceNrIsParsed retruns if the reference number is parsed
-func ReferenceNrIsParsed(conn db.Connection, keyID primitive.ObjectID, referenceNr string) bool {
+// ReferenceNrAlreadyParsed retruns if the reference number is parsed
+func ReferenceNrAlreadyParsed(conn db.Connection, keyID primitive.ObjectID, referenceNr string) (bool, error) {
 	err := conn.FindOne(&ParsedCVReference{}, bson.M{"keyId": keyID, "referenceNumber": referenceNr})
-	return err != nil
+	if err == nil {
+		return true, nil
+	} else if err == mongo.ErrNoDocuments {
+		return false, nil
+	} else {
+		return false, err
+	}
 }
 
 // InsertParsedCVReference inserts a new ParsedCVReference into the database

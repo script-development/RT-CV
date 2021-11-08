@@ -53,9 +53,14 @@ var routeScraperScanCV = routeBuilder.R{
 			)
 		}
 
-		if models.ReferenceNrIsParsed(dbConn, key.ID, body.CV.ReferenceNumber) {
+		alreadyParsed, err := models.ReferenceNrAlreadyParsed(dbConn, key.ID, body.CV.ReferenceNumber)
+		if alreadyParsed {
 			return ErrorRes(c, fiber.StatusBadRequest, errors.New("a CV with this referenceNumber was previousely uploaded and parsed"))
 		}
+		if err != nil {
+			logger.WithError(err).Error("unable detect if reference number was already matched")
+		}
+
 		err = models.InsertParsedCVReference(dbConn, key.ID, body.CV.ReferenceNumber)
 		if err != nil {
 			logger.WithError(err).Error("unable to save CV reference to database")
