@@ -7,17 +7,26 @@ import { fetcher } from '../src/auth'
 import { useRouter } from 'next/router'
 import { theme } from '../src/theme'
 
-function MyApp(args: AppProps) {
+export default function MyApp(props: AppProps) {
+  useEffect(() => {
+    // Remove the server-side injected CSS.
+    const jssStyles = document.querySelector('#jss-server-side');
+    if (jssStyles) {
+      jssStyles.parentElement?.removeChild(jssStyles);
+    }
+  }, []);
+
   return (<>
     <Head>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
       <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
       <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width" />
+      <meta name="theme-color" content={theme.palette.primary.main} />
       <link rel="icon" href="/favicon.ico" />
     </Head>
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AppContent {...args} />
+      <AppContent {...props} />
     </ThemeProvider>
     <style jsx global>{`
       * {
@@ -42,7 +51,6 @@ function MyApp(args: AppProps) {
     `}</style>
   </>)
 }
-export default MyApp
 
 function AppContent({ Component, pageProps }: AppProps) {
   const router = useRouter()
