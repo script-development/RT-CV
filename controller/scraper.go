@@ -44,6 +44,23 @@ var routeScraperScanCV = routeBuilder.R{
 			return err
 		}
 
+		err = body.CV.Validate()
+		if err != nil {
+			return ErrorRes(
+				c,
+				fiber.StatusBadRequest,
+				err,
+			)
+		}
+
+		if models.ReferenceNrIsParsed(dbConn, key.ID, body.CV.ReferenceNumber) {
+			return ErrorRes(c, fiber.StatusBadRequest, errors.New("a CV with this referenceNumber was previousely uploaded and parsed"))
+		}
+		err = models.InsertParsedCVReference(dbConn, key.ID, body.CV.ReferenceNumber)
+		if err != nil {
+			logger.WithError(err).Error("unable to save CV reference to database")
+		}
+
 		err = dashboardListeners.publish("recived_cv", &requestID, body.CV)
 		if err != nil {
 			return err
@@ -54,15 +71,6 @@ var routeScraperScanCV = routeBuilder.R{
 				c,
 				fiber.StatusForbidden,
 				errors.New("you are not allowed to set the debug field, only api keys with the Dashboard role can set it"),
-			)
-		}
-
-		err = body.CV.Validate()
-		if err != nil {
-			return ErrorRes(
-				c,
-				fiber.StatusBadRequest,
-				err,
 			)
 		}
 

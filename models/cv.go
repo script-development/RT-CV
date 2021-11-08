@@ -297,6 +297,10 @@ func (cv *CV) GetPDF(profile Profile) ([]byte, error) {
 
 // Validate validates the cv and returns an error if it's not valid
 func (cv *CV) Validate() error {
+	if cv.ReferenceNumber == "" {
+		return errors.New("referenceNumber must be set")
+	}
+
 	now := time.Now()
 	if cv.CreatedAt != nil && cv.CreatedAt.Time().After(now) {
 		return errors.New("createdAt can't be in the future")

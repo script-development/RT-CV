@@ -70,6 +70,7 @@ func main() {
 		&models.Profile{},
 		&models.Secret{},
 		&models.Match{},
+		&models.ParsedCVReference{},
 	)
 
 	models.CheckDashboardKeyExists(dbConn)
