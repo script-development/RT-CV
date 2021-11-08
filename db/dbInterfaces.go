@@ -16,11 +16,23 @@ type FindOptions struct {
 // - MongoConnection (For the MongoDB driver)
 // - TestConnection (For a fake temp database)
 type Connection interface {
+	// RegisterEntries tells the database to register the given entries
+	// In the case of the mongodb database this means we'll create a collection for each entry
 	RegisterEntries(entries ...Entry)
+
+	// FindOne finds one entry inside the database
 	FindOne(result Entry, filters bson.M, opts ...FindOptions) error
+
+	// Find finds multiple entries in the database
 	Find(entry Entry, results interface{}, filters bson.M, opts ...FindOptions) error
+
+	// Insert inserts an entry into the database
 	Insert(data ...Entry) error
+
+	// UpdateID updates an entry in the database
 	UpdateByID(data Entry) error
+
+	// DeleteByID deletes an entry from the database
 	DeleteByID(data Entry) error
 }
 
