@@ -174,7 +174,7 @@ type ToString interface {
 }
 
 // GetEmailAttachmentHTML returns the html for the email attachment
-func (cv *CV) GetEmailAttachmentHTML(profile Profile) (*bytes.Buffer, error) {
+func (cv *CV) GetEmailAttachmentHTML() (*bytes.Buffer, error) {
 	tmplFuncs := template.FuncMap{
 		"mod": func(i, j int) bool { return i%j == 0 },
 		"formatDate": func(value *jsonHelpers.RFC3339Nano) string {
@@ -203,7 +203,6 @@ func (cv *CV) GetEmailAttachmentHTML(profile Profile) (*bytes.Buffer, error) {
 	}
 
 	input := struct {
-		Profile  Profile
 		Cv       *CV
 		FullName string
 
@@ -213,7 +212,6 @@ func (cv *CV) GetEmailAttachmentHTML(profile Profile) (*bytes.Buffer, error) {
 		CourseIconURL    string
 		LanguageIconURL  string
 	}{
-		Profile:  profile,
 		Cv:       cv,
 		FullName: cv.FullName(),
 
@@ -265,7 +263,7 @@ func (cv *CV) GetEmailHTML(profile Profile, matchText string) (*bytes.Buffer, er
 }
 
 // GetPDF generates a PDF from a cv that can be send
-func (cv *CV) GetPDF(profile Profile) ([]byte, error) {
+func (cv *CV) GetPDF() ([]byte, error) {
 	generator, err := wkhtmltopdf.NewPDFGenerator()
 	if err != nil {
 		return nil, err
@@ -277,7 +275,7 @@ func (cv *CV) GetPDF(profile Profile) ([]byte, error) {
 	generator.MarginRight.Set(0)
 	generator.ImageQuality.Set(100)
 
-	html, err := cv.GetEmailAttachmentHTML(profile)
+	html, err := cv.GetEmailAttachmentHTML()
 	if err != nil {
 		return nil, err
 	}

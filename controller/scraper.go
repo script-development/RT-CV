@@ -2,7 +2,6 @@ package controller
 
 import (
 	"errors"
-	"sync"
 	"time"
 
 	"github.com/apex/log"
@@ -128,16 +127,30 @@ var routeScraperScanCV = routeBuilder.R{
 		if foundMatches {
 			logger.Infof("found %d matches", len(matchedProfiles))
 
-			var wg sync.WaitGroup
+			// The below is inside a goroutine to prevent blocking the fiber request
+			//
+			// Note that this might cause issues with slow servers when you spam the server with CV requests the go routines
+			// below will not complete in time before the next request stats and thus stacking goroutines filling up the server resources
+			// that could lead to 100% cpu usage or a out of memory panic
+			go func(matchedProfiles []match.FoundMatch, cv models.CV) {
+				var pdfBytes []byte
+				for _, aMatch := range matchedProfiles {
+					if len(aMatch.Profile.OnMatch.SendMail) > 0 && pdfBytes == nil {
+						// Only once create the email attachment pdf as this takes quite a bit of time
+						//
+						// MAYBE TODO:
+						// Generate a pdf with placeholder values and replace the value inside the output pdf.
+						// If that's possible we can speedup the pdf creation by a shitload
+						pdfBytes, err = body.CV.GetPDF()
+						if err != nil {
+							log.WithError(err).Error("mail attachment creation error")
+							return
+						}
+					}
 
-			for _, aMatch := range matchedProfiles {
-				err := aMatch.HandleMatch(&wg, &body.CV)
-				if err != nil {
-					log.WithError(err).Error("sending match error")
+					aMatch.HandleMatch(cv, pdfBytes)
 				}
-			}
-
-			wg.Wait()
+			}(matchedProfiles, body.CV)
 		}
 
 		return c.JSON(RouteScraperScanCVRes{Success: true})

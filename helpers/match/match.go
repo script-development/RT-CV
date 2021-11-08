@@ -1,10 +1,8 @@
 package match
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/apex/log"
@@ -380,14 +378,12 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 }
 
 // HandleMatch sends a match to the desired destination based on the OnMatch field in the profile
-func (match FoundMatch) HandleMatch(wg *sync.WaitGroup, cv *models.CV) error {
+func (match FoundMatch) HandleMatch(cv models.CV, pdfBytes []byte) {
 	onMatch := match.Profile.OnMatch
 
-	wg.Add(len(onMatch.HTTPCall))
 	for _, http := range onMatch.HTTPCall {
 		go func(http models.ProfileHTTPCallData) {
 			http.MakeRequest(match.Profile, match.Matches)
-			wg.Done()
 		}(http)
 	}
 
@@ -395,25 +391,15 @@ func (match FoundMatch) HandleMatch(wg *sync.WaitGroup, cv *models.CV) error {
 	if emailsLen != 0 {
 		emailBody, err := cv.GetEmailHTML(match.Profile, match.Matches.GetMatchSentence())
 		if err != nil {
-			return fmt.Errorf("unable to generate email body from CV, error: %s", err.Error())
+			log.WithError(err).Error("unable to generate email body from CV")
+			return
 		}
 
-		pdf, err := cv.GetPDF(match.Profile)
-		if err != nil {
-			return fmt.Errorf("unable to generate PDF from CV, error: %s", err.Error())
-		}
-
-		wg.Add(emailsLen)
 		for _, email := range onMatch.SendMail {
-			go func(email models.ProfileSendEmailData) {
-				err := email.SendEmail(match.Profile, emailBody.Bytes(), pdf)
-				if err != nil {
-					log.WithError(err).Error("unable to send email")
-				}
-				wg.Done()
-			}(email)
+			err := email.SendEmail(match.Profile, emailBody.Bytes(), pdfBytes)
+			if err != nil {
+				log.WithError(err).Error("unable to send email")
+			}
 		}
 	}
-
-	return nil
 }

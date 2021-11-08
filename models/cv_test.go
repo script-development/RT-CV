@@ -142,14 +142,7 @@ func TestGetEmailHTML(t *testing.T) {
 func TestGetEmailAttachmentHTML(t *testing.T) {
 	cv := getExampleCV()
 
-	profileObjectID := primitive.NewObjectID()
-	profile := Profile{
-		M:       db.M{ID: profileObjectID},
-		Name:    "profile name",
-		Domains: []string{"test.com"},
-	}
-
-	htmlBuff, err := cv.GetEmailAttachmentHTML(profile)
+	htmlBuff, err := cv.GetEmailAttachmentHTML()
 	NoError(t, err)
 
 	html := htmlBuff.String()
@@ -197,14 +190,7 @@ func TestGetEmailAttachmentPDF(t *testing.T) {
 	tryLoadEmailEnv()
 
 	cv := getExampleCV()
-
-	profile := Profile{
-		M:       db.M{ID: primitive.NewObjectID()},
-		Name:    "profile name",
-		Domains: []string{"test.com"},
-	}
-
-	bytes, err := cv.GetPDF(profile)
+	bytes, err := cv.GetPDF()
 	NoError(t, err)
 	NotNil(t, bytes)
 }
