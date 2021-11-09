@@ -262,7 +262,9 @@ filtersLoop:
 			return false
 		}
 
-		field, fieldFound := valueFieldsMap[key]
+		splittedKey := strings.SplitN(key, ".", 2)
+
+		field, fieldFound := valueFieldsMap[splittedKey[0]]
 		if !fieldFound {
 			return false
 		}
@@ -285,6 +287,10 @@ filtersLoop:
 				}
 			}
 			return false
+		}
+
+		if len(splittedKey) == 2 {
+			filter = reflect.ValueOf(primitive.M{splittedKey[1]: filter.Interface()})
 		}
 
 		if !filterCompare(filter, valueField) {

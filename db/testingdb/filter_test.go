@@ -182,6 +182,12 @@ func TestFilter(t *testing.T) {
 			bson.M{"foo": bson.M{"$type": 3}},
 			struct{ Foo string }{},
 		},
+		{
+			"path with dots",
+			bson.M{"foo.bar": "abc"},
+			bson.M{"foo.bas": "abc"},
+			struct{ Foo exampleNestedField }{Foo: exampleNestedField{Bar: "abc"}},
+		},
 	}
 
 	for _, s := range scenarios {

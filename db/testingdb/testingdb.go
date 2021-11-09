@@ -26,9 +26,8 @@ type Collection struct {
 }
 
 // RegisterEntries implements db.Connection
-func (*TestConnection) RegisterEntries(...db.Entry) {
-	// We don't need to implement this function
-}
+// We don't need to implement this function
+func (*TestConnection) RegisterEntries(...db.Entry) {}
 
 func (c *TestConnection) getCollectionFromEntry(e db.Entry) Collection {
 	collectionName := e.CollectionName()
