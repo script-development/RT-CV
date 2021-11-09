@@ -188,10 +188,35 @@ func TestFilter(t *testing.T) {
 			bson.M{"foo.bas": "abc"},
 			struct{ Foo exampleNestedField }{Foo: exampleNestedField{Bar: "abc"}},
 		},
+		{
+			"filter slice of numbers",
+			bson.M{"foo": 2},
+			bson.M{"foo": 4},
+			struct{ Foo []int }{Foo: []int{1, 2, 3}},
+		},
+		{
+			"filter slice of numbers using a specific index",
+			bson.M{"foo.1": 2},
+			bson.M{"foo.2": 2},
+			struct{ Foo []int }{Foo: []int{1, 2, 3}},
+		},
+		{
+			"filter slice with objects",
+			bson.M{"foo": bson.M{"bar": "bbb"}},
+			bson.M{"foo": bson.M{"bar": "zzz"}},
+			struct{ Foo []exampleNestedField }{[]exampleNestedField{{"aaa"}, {"bbb"}, {"ccc"}}},
+		},
+		{
+			"filter slice with objects using dotted paths",
+			bson.M{"foo.bar": "bbb"},
+			bson.M{"foo.bar": "zzz"},
+			struct{ Foo []exampleNestedField }{[]exampleNestedField{{"aaa"}, {"bbb"}, {"ccc"}}},
+		},
 	}
 
-	for _, s := range scenarios {
-		t.Run(s.name, func(t *testing.T) {
+	for idx := range scenarios {
+		t.Run(scenarios[idx].name, func(t *testing.T) {
+			s := scenarios[idx]
 			True(t, FilterMatches(s.matchingFilter, s.data))
 			False(t, FilterMatches(s.nonMatchingFilter, s.data))
 		})

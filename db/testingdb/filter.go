@@ -3,6 +3,7 @@ package testingdb
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -33,12 +34,12 @@ func (f *filter) matches(value interface{}) bool {
 		valueReflection = valueReflection.Elem()
 	}
 
-	return filterMatchesValue(f.filters, valueReflection)
+	return filterMatchesValue(f.filters, valueReflection, valueReflection)
 }
 
 var timeType = reflect.TypeOf(time.Time{})
 
-func filterMatchesValue(filterMap reflect.Value, value reflect.Value) bool {
+func filterMatchesValue(filterMap reflect.Value, value, listParentOrValue reflect.Value) bool {
 	for value.Kind() == reflect.Interface && !value.IsNil() {
 		value = value.Elem()
 	}
@@ -114,11 +115,11 @@ filtersLoop:
 					return false
 				}
 			case "$eq":
-				if !filterCompare(filter, value) {
+				if !filterCompare(filter, value, false) {
 					return false
 				}
 			case "$not", "$ne":
-				if filterCompare(filter, value) {
+				if filterCompare(filter, value, false) {
 					return false
 				}
 			case "$or":
@@ -134,7 +135,7 @@ filtersLoop:
 						continue
 					}
 					assertMapHasStringKeys(orEntry.Type())
-					if filterMatchesValue(orEntry, value) {
+					if filterMatchesValue(orEntry, listParentOrValue, listParentOrValue) {
 						foundOk = true
 						break
 					}
@@ -154,7 +155,7 @@ filtersLoop:
 						continue
 					}
 					assertMapHasStringKeys(andEntry.Type())
-					if !filterMatchesValue(andEntry, value) {
+					if !filterMatchesValue(andEntry, listParentOrValue, listParentOrValue) {
 						return false
 					}
 				}
@@ -169,13 +170,13 @@ filtersLoop:
 					panic("$size should have a number as argument")
 				}
 
-				if value.Kind() != reflect.Slice && value.Kind() != reflect.Array {
+				if listParentOrValue.Kind() != reflect.Slice && listParentOrValue.Kind() != reflect.Array {
 					return false
 				}
-				if value.IsNil() {
+				if listParentOrValue.Kind() == reflect.Slice && listParentOrValue.IsNil() {
 					return false
 				}
-				if value.Len() != expectedSize {
+				if listParentOrValue.Len() != expectedSize {
 					return false
 				}
 			case "$type":
@@ -202,7 +203,7 @@ filtersLoop:
 					panic("$type should have a string or number as argument")
 				}
 
-				valKind := value.Kind()
+				valKind := listParentOrValue.Kind()
 				switch expectedType {
 				case "decimal", "double":
 					if valKind != reflect.Float64 && valKind != reflect.Float32 {
@@ -221,7 +222,7 @@ filtersLoop:
 					}
 				case "object":
 					if valKind == reflect.Map {
-						if value.IsNil() {
+						if listParentOrValue.IsNil() {
 							return false
 						}
 					} else if valKind != reflect.Struct {
@@ -231,7 +232,7 @@ filtersLoop:
 					if valKind != reflect.Slice && valKind != reflect.Array {
 						return false
 					}
-					if value.IsNil() {
+					if listParentOrValue.Kind() == reflect.Slice && listParentOrValue.IsNil() {
 						return false
 					}
 				case "bool":
@@ -241,7 +242,7 @@ filtersLoop:
 				case "null":
 					switch valKind {
 					case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice:
-						if !value.IsNil() {
+						if !listParentOrValue.IsNil() {
 							return false
 						}
 					default:
@@ -263,7 +264,6 @@ filtersLoop:
 		}
 
 		splittedKey := strings.SplitN(key, ".", 2)
-
 		field, fieldFound := valueFieldsMap[splittedKey[0]]
 		if !fieldFound {
 			return false
@@ -291,9 +291,10 @@ filtersLoop:
 
 		if len(splittedKey) == 2 {
 			filter = reflect.ValueOf(primitive.M{splittedKey[1]: filter.Interface()})
-		}
-
-		if !filterCompare(filter, valueField) {
+			if !filterCompare(filter, valueField, true) {
+				return false
+			}
+		} else if !filterCompare(filter, valueField, false) {
 			return false
 		}
 	}
@@ -301,21 +302,45 @@ filtersLoop:
 	return true
 }
 
-func filterCompare(filter, value reflect.Value) bool {
-	if value.Kind() == reflect.Ptr {
+func filterCompare(filter, value reflect.Value, filterIsRemainderOfKey bool) bool {
+	for value.Kind() == reflect.Ptr {
 		if value.IsNil() {
 			return false
 		}
 		value = value.Elem()
 	}
 
-	switch filter.Kind() {
+	filterKind := filter.Kind()
+	valueKind := value.Kind()
+
+	if filter.Kind() == reflect.Array {
+		filterObjectID, ok := filter.Interface().(primitive.ObjectID)
+		if ok {
+			goFieldValue, ok := value.Interface().(primitive.ObjectID)
+			return ok && goFieldValue == filterObjectID
+		}
+	}
+
+	valueIsList := valueKind == reflect.Array || valueKind == reflect.Slice
+	if filterKind != reflect.Map && valueIsList {
+		if value.Kind() == reflect.Slice && value.IsNil() {
+			return false
+		}
+		for i := 0; i < value.Len(); i++ {
+			if filterCompare(filter, value.Index(i), filterIsRemainderOfKey) {
+				return true
+			}
+		}
+		return false
+	}
+
+	switch filterKind {
 	case reflect.String:
-		if value.Kind() != reflect.String || value.String() != filter.String() {
+		if valueKind != reflect.String || value.String() != filter.String() {
 			return false
 		}
 	case reflect.Bool:
-		if value.Kind() != reflect.Bool || value.Bool() != filter.Bool() {
+		if valueKind != reflect.Bool || value.Bool() != filter.Bool() {
 			return false
 		}
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
@@ -326,20 +351,55 @@ func filterCompare(filter, value reflect.Value) bool {
 		}
 	case reflect.Map:
 		assertMapHasStringKeys(filter.Type())
-		return filterMatchesValue(filter, value)
-	default:
-		filterValue := filter.Interface()
-		if filterObjectID, ok := filterValue.(primitive.ObjectID); ok {
-			goFieldValue, ok := value.Interface().(primitive.ObjectID)
-			if !ok {
-				return false
-			}
-			if goFieldValue != filterObjectID {
-				return false
-			}
-		} else {
-			panic(fmt.Sprintf("Unimplemented value filter type: %T, value: %#v", filterValue, filterValue))
+		if filterKind != reflect.Map || filter.IsNil() {
+			return false
 		}
+
+		if valueIsList {
+			if value.Kind() == reflect.Slice && value.IsNil() {
+				return false
+			}
+
+			if filterIsRemainderOfKey {
+				// Check if the remainder of the key is a list index
+				filterRanger := filter.MapRange()
+				filterRanger.Next()
+				filterKey := strings.SplitN(filterRanger.Key().String(), ".", 2)
+				filterValue := filterRanger.Value()
+				if filterValue.Kind() == reflect.Interface {
+					filterValue = filterValue.Elem()
+				}
+
+				index, err := strconv.Atoi(filterKey[0])
+				if err == nil {
+					// This is a query like:
+					// {'foo.1': "bar"}
+					if index >= value.Len() || index < 0 {
+						return false
+					}
+
+					filter = filterValue
+					if len(filterKey) == 2 {
+						filter = reflect.ValueOf(primitive.M{filterKey[1]: filterValue.Interface()})
+					}
+					return filterCompare(filterValue, value.Index(index), len(filterKey) == 2)
+				}
+			}
+
+			for i := 0; i < value.Len(); i++ {
+				if filterMatchesValue(filter, value.Index(i), value) {
+					return true
+				}
+			}
+			return false
+		}
+
+		return filterMatchesValue(filter, value, value)
+	default:
+		fmt.Println(filterKind)
+		valueInterf := value.Interface()
+		filterInterf := filter.Interface()
+		panic(fmt.Sprintf("Unimplemented value: %T %#v, filter: %T %#v", valueInterf, valueInterf, filterInterf, filterInterf))
 	}
 
 	return true
