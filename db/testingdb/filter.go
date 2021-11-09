@@ -39,9 +39,12 @@ func (f *filter) matches(value interface{}) bool {
 
 var timeType = reflect.TypeOf(time.Time{})
 
-func filterMatchesValue(filterMap reflect.Value, value, listParentOrValue reflect.Value) bool {
+func filterMatchesValue(filterMap reflect.Value, value, valueParrentInCaseOfListEntryOrValue reflect.Value) bool {
 	for value.Kind() == reflect.Interface && !value.IsNil() {
 		value = value.Elem()
+	}
+	for valueParrentInCaseOfListEntryOrValue.Kind() == reflect.Interface && !valueParrentInCaseOfListEntryOrValue.IsNil() {
+		valueParrentInCaseOfListEntryOrValue = valueParrentInCaseOfListEntryOrValue.Elem()
 	}
 
 	valueFieldsMap, valueIsStruct := mapStruct(value.Type())
@@ -135,7 +138,7 @@ filtersLoop:
 						continue
 					}
 					assertMapHasStringKeys(orEntry.Type())
-					if filterMatchesValue(orEntry, listParentOrValue, listParentOrValue) {
+					if filterMatchesValue(orEntry, valueParrentInCaseOfListEntryOrValue, valueParrentInCaseOfListEntryOrValue) {
 						foundOk = true
 						break
 					}
@@ -155,7 +158,7 @@ filtersLoop:
 						continue
 					}
 					assertMapHasStringKeys(andEntry.Type())
-					if !filterMatchesValue(andEntry, listParentOrValue, listParentOrValue) {
+					if !filterMatchesValue(andEntry, valueParrentInCaseOfListEntryOrValue, valueParrentInCaseOfListEntryOrValue) {
 						return false
 					}
 				}
@@ -170,13 +173,15 @@ filtersLoop:
 					panic("$size should have a number as argument")
 				}
 
-				if listParentOrValue.Kind() != reflect.Slice && listParentOrValue.Kind() != reflect.Array {
+				if valueParrentInCaseOfListEntryOrValue.Kind() != reflect.Slice &&
+					valueParrentInCaseOfListEntryOrValue.Kind() != reflect.Array {
 					return false
 				}
-				if listParentOrValue.Kind() == reflect.Slice && listParentOrValue.IsNil() {
+				if valueParrentInCaseOfListEntryOrValue.Kind() == reflect.Slice &&
+					valueParrentInCaseOfListEntryOrValue.IsNil() {
 					return false
 				}
-				if listParentOrValue.Len() != expectedSize {
+				if valueParrentInCaseOfListEntryOrValue.Len() != expectedSize {
 					return false
 				}
 			case "$type":
@@ -203,7 +208,7 @@ filtersLoop:
 					panic("$type should have a string or number as argument")
 				}
 
-				valKind := listParentOrValue.Kind()
+				valKind := valueParrentInCaseOfListEntryOrValue.Kind()
 				switch expectedType {
 				case "decimal", "double":
 					if valKind != reflect.Float64 && valKind != reflect.Float32 {
@@ -222,7 +227,7 @@ filtersLoop:
 					}
 				case "object":
 					if valKind == reflect.Map {
-						if listParentOrValue.IsNil() {
+						if valueParrentInCaseOfListEntryOrValue.IsNil() {
 							return false
 						}
 					} else if valKind != reflect.Struct {
@@ -232,7 +237,8 @@ filtersLoop:
 					if valKind != reflect.Slice && valKind != reflect.Array {
 						return false
 					}
-					if listParentOrValue.Kind() == reflect.Slice && listParentOrValue.IsNil() {
+					if valueParrentInCaseOfListEntryOrValue.Kind() == reflect.Slice &&
+						valueParrentInCaseOfListEntryOrValue.IsNil() {
 						return false
 					}
 				case "bool":
@@ -242,7 +248,7 @@ filtersLoop:
 				case "null":
 					switch valKind {
 					case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice:
-						if !listParentOrValue.IsNil() {
+						if !valueParrentInCaseOfListEntryOrValue.IsNil() {
 							return false
 						}
 					default:
