@@ -139,7 +139,6 @@ func ErrorRes(c *fiber.Ctx, status int, err error) error {
 type GetStatusResponse struct {
 	Status     bool   `json:"status"`
 	AppVersion string `json:"appVersion"`
-	Seed       string `json:"seed"`
 }
 
 func getStatus(appVersion string) routeBuilder.R {
