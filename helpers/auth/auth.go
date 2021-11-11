@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"strings"
 	"sync"
 	"time"
 
@@ -74,7 +75,7 @@ func (h *Helper) Valid(authorizationHeader string) (*models.APIKey, error) {
 		return nil, ErrAuthHeaderInvalidFormat
 	}
 
-	keyAsSha512 := authorizationHeader[endID+1:]
+	keyAsSha512 := strings.ToLower(authorizationHeader[endID+1:])
 
 	keyCacheEntryInterf, ok := h.cache.Load(id)
 	if ok {
