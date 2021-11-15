@@ -14,6 +14,7 @@ import (
 	"github.com/valyala/fasthttp"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"jaytaylor.com/html2text"
 )
 
 // Profile contains all the information about a search profile
@@ -166,6 +167,8 @@ func (d *ProfileSendEmailData) SendEmail(profile Profile, htmlBody, pdfBytes []b
 	e.To = []string{d.Email}
 	e.Subject = "Nieuwe match voor " + profile.Name
 	e.HTML = htmlBody
+	text, _ := html2text.FromString(string(htmlBody), html2text.Options{})
+	e.Text = []byte(text)
 
 	_, err := e.Attach(bytes.NewBuffer(pdfBytes), "match.pdf", "application/pdf")
 	if err != nil {
