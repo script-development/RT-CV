@@ -82,7 +82,7 @@ var routeScraperScanCV = routeBuilder.R{
 		profiles := matcherProfilesCache.Profiles
 		if profiles == nil || matcherProfilesCache.InsertionTime.Add(time.Hour).Before(time.Now()) {
 			// Update the cache
-			profiles, err = models.GetActiveProfilesWithOnMatch(dbConn)
+			profiles, err = models.GetActualActiveProfiles(dbConn)
 			if err != nil {
 				return err
 			}

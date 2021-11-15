@@ -26,12 +26,12 @@ type Profile struct {
 	MustDesiredProfession bool                `json:"mustDesiredProfession" bson:"mustDesiredProfession"`
 	DesiredProfessions    []ProfileProfession `json:"desiredProfessions" bson:"desiredProfessions"`
 
-	YearsSinceWork        *int `json:"yearsSinceWork" bson:"yearsSinceWork"`
-	MustExpProfession     bool `json:"mustExpProfession" bson:"mustExpProfession"`
-	ProfessionExperienced []ProfileProfession
+	YearsSinceWork        *int                `json:"yearsSinceWork" bson:"yearsSinceWork"`
+	MustExpProfession     bool                `json:"mustExpProfession" bson:"mustExpProfession"`
+	ProfessionExperienced []ProfileProfession `json:"professionExperienced" bson:"professionExperienced"`
 
-	MustDriversLicense bool `json:"mustDriversLicense" bson:"mustDriversLicense"`
-	DriversLicenses    []ProfileDriversLicense
+	MustDriversLicense bool                    `json:"mustDriversLicense" bson:"mustDriversLicense"`
+	DriversLicenses    []ProfileDriversLicense `json:"driversLicenses" bson:"driversLicenses"`
 
 	MustEducationFinished bool               `json:"mustEducationFinished" bson:"mustEducationFinished"`
 	MustEducation         bool               `json:"mustEducation" bson:"mustEducation"`
@@ -52,14 +52,30 @@ func (*Profile) CollectionName() string {
 	return "profiles"
 }
 
-// GetActiveProfilesWithOnMatch returns all active profiles with a destination to send the match if no match is found
-func GetActiveProfilesWithOnMatch(conn db.Connection) ([]Profile, error) {
+// GetActualActiveProfiles returns that we can actually use
+// Matches are not really helpfull if no desiredProfessions, professionExperienced, driversLicenses or educations is set
+// Matches without an onMatch property are useless as we can't send the match anywhere
+func GetActualActiveProfiles(conn db.Connection) ([]Profile, error) {
+	isArrayWContent := bson.M{"$not": bson.M{"$size": 0}, "$type": "array"}
+
 	profiles := []Profile{}
 	filter := bson.M{
 		"active": true,
-		"$or": []bson.M{
-			{"onMatch.sendMail": bson.M{"$not": bson.M{"$size": 0}, "$type": "array"}},
-			{"onMatch.httpCall": bson.M{"$not": bson.M{"$size": 0}, "$type": "array"}},
+		"$and": []bson.M{
+			{
+				"$or": []bson.M{
+					{"desiredProfessions": isArrayWContent},
+					{"professionExperienced": isArrayWContent},
+					{"driversLicenses": isArrayWContent},
+					{"educations": isArrayWContent},
+				},
+			},
+			{
+				"$or": []bson.M{
+					{"onMatch.sendMail": isArrayWContent},
+					{"onMatch.httpCall": isArrayWContent},
+				},
+			},
 		},
 	}
 	err := conn.Find(&Profile{}, &profiles, filter)
