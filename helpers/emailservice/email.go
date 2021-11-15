@@ -75,14 +75,25 @@ func Setup(conf EmailServerConfiguration, onMailSend func(err error)) error {
 	for i := 0; i < poolSize; i++ {
 		go func(from string) {
 			for e := range ch {
-				log.Infof("sending mail to %s", e.To)
-				e.From = from
-				err := p.Send(e, 10*time.Second)
-				if onMailSend != nil {
-					onMailSend(err)
-				}
-				if err != nil {
-					log.WithError(err).Error("Error sending email")
+				retryCount := 0
+				for retryCount < 4 {
+					if retryCount > 0 {
+						log.Infof("retrying sending mail to %v", e.To)
+					} else {
+						log.Infof("sending mail to %s", e.To)
+					}
+					e.From = from
+					err := p.Send(e, 10*time.Second)
+					if onMailSend != nil {
+						onMailSend(err)
+					}
+
+					if err != nil {
+						log.WithError(err).Error("sending email")
+						retryCount++
+					} else {
+						break
+					}
 				}
 			}
 		}(conf.From)
