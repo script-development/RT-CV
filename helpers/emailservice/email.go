@@ -82,18 +82,18 @@ func Setup(conf EmailServerConfiguration, onMailSend func(err error)) error {
 					} else {
 						log.Infof("sending mail to %s", e.To)
 					}
+
 					e.From = from
 					err := p.Send(e, 10*time.Second)
 					if onMailSend != nil {
 						onMailSend(err)
 					}
 
-					if err != nil {
-						log.WithError(err).Error("sending email")
-						retryCount++
-					} else {
+					if err == nil {
 						break
 					}
+					log.WithError(err).Error("sending email")
+					retryCount++
 				}
 			}
 		}(conf.From)
