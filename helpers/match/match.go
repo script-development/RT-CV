@@ -248,6 +248,7 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 
 		// check profession experienced
 		matchedAProfessionExperienced := false
+		matchedProfileName := ""
 		checkedForProfessionExperienced := len(profile.ProfessionExperienced) > 0
 		if checkedForProfessionExperienced {
 		professionExperiencedProfileLoop:
@@ -265,13 +266,14 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 
 					if profName == profileName {
 						matchedAProfessionExperienced = true
+						matchedProfileName = profileProfession.Name
 						break professionExperiencedProfileLoop
 					}
 				}
 			}
 
 			if matchedAProfessionExperienced {
-				match.Matches.ProfessionExperienced = true
+				match.Matches.ProfessionExperienced = &matchedProfileName
 			} else if profile.MustExpProfession {
 				continue
 			}

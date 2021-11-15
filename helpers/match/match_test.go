@@ -338,18 +338,18 @@ func TestGetMatchSentence(t *testing.T) {
 		Education:             &education,
 		Course:                &course,
 		DesiredProfession:     &profession,
-		ProfessionExperienced: true,
+		ProfessionExperienced: &profession,
 		DriversLicense:        true,
 		ZipCode:               &zipCode,
 	}).GetMatchSentence()
 	expectedResult := "domain naam *.example.com" +
 		", 3 jaren sinds laatste werk ervaaring" +
 		", 3 jaren sinds laatste opleiding" +
-		", opleiding" +
-		", cursus" +
-		", gewenste werkveld" +
-		", gewenst beroep" +
-		", rijbewijs" +
+		", opleiding beeing smart" +
+		", cursus gangsters for dummies" +
+		", gewenste werkveld gangster" +
+		", gewerkt als gangster" +
+		", gewenste rijbewijs" +
 		" en postcode in range 2000 - 5000"
 	Equal(t, expectedResult, sentence)
 }

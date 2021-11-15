@@ -113,6 +113,7 @@ var werkDotNL = "werk.nl"
 var yearsSinceEducation = 2
 var matchedEducation = "MBO 4 ict"
 var matchedCourse = "Typecursus"
+var professionExperienced = "Dancer"
 
 var (
 	// mockMatch1 contains a example match between profile 1 and a cv
@@ -121,7 +122,7 @@ var (
 		ProfileID:             Profile1.ID,
 		KeyID:                 Key1.ID,
 		When:                  jsonHelpers.RFC3339Nano(time.Now().Add(-(time.Minute * 15))),
-		ProfessionExperienced: true,
+		ProfessionExperienced: &professionExperienced,
 		YearsSinceEducation:   &yearsSinceEducation,
 		Education:             &matchedEducation,
 		Course:                &matchedCourse,
