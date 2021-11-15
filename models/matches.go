@@ -37,7 +37,7 @@ type Match struct {
 	Course *string `bson:",omitempty" json:"course"`
 	// The profile desired profession match that was found
 	DesiredProfession     *string              `bson:",omitempty" json:"desiredProfession"`
-	ProfessionExperienced bool                 `bson:",omitempty" json:"professionExperienced"`
+	ProfessionExperienced *string              `bson:",omitempty" json:"professionExperienced"`
 	DriversLicense        bool                 `bson:",omitempty" json:"driversLicense"`
 	ZipCode               *ProfileDutchZipcode `bson:",omitempty" json:"zipCode"`
 }
@@ -50,46 +50,50 @@ func (*Match) CollectionName() string {
 // GetMatchSentence returns a
 func (m *Match) GetMatchSentence() string {
 	sentences := []string{}
+	addReason := func(reason string) {
+		sentences = append(sentences, reason)
+	}
+
 	if m.Domain != nil {
-		sentences = append(sentences, "domain naam "+*m.Domain)
+		addReason("domain naam " + *m.Domain)
 	}
 	if m.YearsSinceWork != nil {
 		switch *m.YearsSinceWork {
 		case 0:
-			sentences = append(sentences, "minder dan 1 jaar geleden sinds laatste werk ervaaring")
+			addReason("minder dan 1 jaar geleden sinds laatste werk ervaaring")
 		case 1:
-			sentences = append(sentences, "1 jaar sinds laatste werk ervaaring")
+			addReason("1 jaar sinds laatste werk ervaaring")
 		default:
-			sentences = append(sentences, strconv.Itoa(*m.YearsSinceWork)+" jaren sinds laatste werk ervaaring")
+			addReason(strconv.Itoa(*m.YearsSinceWork) + " jaren sinds laatste werk ervaaring")
 		}
 	}
 	if m.YearsSinceEducation != nil {
 		switch *m.YearsSinceEducation {
 		case 0:
-			sentences = append(sentences, "minder dan 1 jaar sinds laatste opleiding")
+			addReason("minder dan 1 jaar sinds laatste opleiding")
 		case 1:
-			sentences = append(sentences, "1 jaar sinds laatste opleiding")
+			addReason("1 jaar sinds laatste opleiding")
 		default:
-			sentences = append(sentences, strconv.Itoa(*m.YearsSinceEducation)+" jaren sinds laatste opleiding")
+			addReason(strconv.Itoa(*m.YearsSinceEducation) + " jaren sinds laatste opleiding")
 		}
 	}
 	if m.Education != nil {
-		sentences = append(sentences, "opleiding")
+		addReason("opleiding " + *m.Education)
 	}
 	if m.Course != nil {
-		sentences = append(sentences, "cursus")
+		addReason("cursus " + *m.Course)
 	}
 	if m.DesiredProfession != nil {
-		sentences = append(sentences, "gewenste werkveld")
+		addReason("gewenste werkveld " + *m.DesiredProfession)
 	}
-	if m.ProfessionExperienced {
-		sentences = append(sentences, "gewenst beroep")
+	if m.ProfessionExperienced != nil {
+		addReason("gewerkt als " + *m.ProfessionExperienced)
 	}
 	if m.DriversLicense {
-		sentences = append(sentences, "rijbewijs")
+		addReason("gewenste rijbewijs")
 	}
 	if m.ZipCode != nil {
-		sentences = append(sentences, fmt.Sprintf("postcode in range %d - %d", m.ZipCode.From, m.ZipCode.To))
+		addReason(fmt.Sprintf("postcode in range %d - %d", m.ZipCode.From, m.ZipCode.To))
 	}
 
 	switch len(sentences) {
