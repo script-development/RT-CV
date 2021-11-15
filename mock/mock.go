@@ -61,7 +61,6 @@ var (
 		MustEducationFinished: true,
 		MustDriversLicense:    true,
 		Domains:               []string{"werk.nl"},
-		ListProfile:           true,
 		YearsSinceEducation:   1,
 		DesiredProfessions: []models.ProfileProfession{{
 			Name: "Rapper",
@@ -96,7 +95,6 @@ var (
 		MustEducationFinished: false,
 		MustDriversLicense:    false,
 		Domains:               []string{"werk.nl"},
-		ListProfile:           false,
 		YearsSinceEducation:   0,
 		DesiredProfessions:    nil,
 		ProfessionExperienced: nil,
