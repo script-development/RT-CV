@@ -75,9 +75,38 @@ Build the project using
 docker build -t rtcv:latest .
 ```
 
-Run the project using
-_Note that you probably want to change the environment variables_
+Quickly run the project using docker
 
 ```sh
 docker run -it --rm -e USE_TESTING_DB=true -p 4000:4000 rtcv:latest
 ```
+
+<details><summary>Run the full project in docker</summary><br/>
+
+```sh
+# create a docker network so RT-CV and mongodb can communicate without exposing ports
+docker network create f2f
+
+# run the mongodb database
+docker run \
+    -d \
+    -v /data/db:/data/db \
+    --network f2f \
+    mongo:5.0
+
+
+# create an env file for the RT-CV app
+# you can also use -e for every env variable but there might be a lot so this is easier
+cp .env.example .env
+vim .env
+
+# run RT-CV
+docker run \
+  -d \
+  --network f2f \
+  --env-file $(pwd)/.env \
+  -p 127.0.0.1:4000:4000 \
+  rtcv:latest
+```
+
+</details>
