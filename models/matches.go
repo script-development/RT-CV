@@ -54,9 +54,6 @@ func (m *Match) GetMatchSentence() string {
 		sentences = append(sentences, reason)
 	}
 
-	if m.Domain != nil {
-		addReason("domain naam " + *m.Domain)
-	}
 	if m.YearsSinceWork != nil {
 		switch *m.YearsSinceWork {
 		case 0:

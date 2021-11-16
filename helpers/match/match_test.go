@@ -342,8 +342,7 @@ func TestGetMatchSentence(t *testing.T) {
 		DriversLicense:        true,
 		ZipCode:               &zipCode,
 	}).GetMatchSentence()
-	expectedResult := "domain naam *.example.com" +
-		", 3 jaren sinds laatste werk ervaaring" +
+	expectedResult := "3 jaren sinds laatste werk ervaaring" +
 		", 3 jaren sinds laatste opleiding" +
 		", opleiding beeing smart" +
 		", cursus gangsters for dummies" +
