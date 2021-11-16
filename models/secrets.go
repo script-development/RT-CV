@@ -9,6 +9,7 @@ import (
 	"github.com/script-development/RT-CV/helpers/crypto"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // SecretValueStructure tells what the structure of the encrypted data is
@@ -67,6 +68,14 @@ type Secret struct {
 // CollectionName returns the collection name of a secret
 func (*Secret) CollectionName() string {
 	return "secrets"
+}
+
+// Indexes implements db.Entry
+func (*Secret) Indexes() []mongo.IndexModel {
+	return []mongo.IndexModel{
+		{Keys: bson.M{"key": 1}},
+		{Keys: bson.M{"keyId": 1}},
+	}
 }
 
 // CreateSecret creates a secret

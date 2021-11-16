@@ -50,3 +50,11 @@ type ParsedCVReference struct {
 func (*ParsedCVReference) CollectionName() string {
 	return "parsedCvReferences"
 }
+
+// Indexes implements db.Entry
+func (*ParsedCVReference) Indexes() []mongo.IndexModel {
+	return []mongo.IndexModel{
+		{Keys: bson.M{"referenceNumber": 1}},
+		{Keys: bson.M{"keyId": 1}},
+	}
+}
