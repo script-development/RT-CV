@@ -7,17 +7,20 @@ import (
 
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/jsonHelpers"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // Match contains information about a match
 // We add omitempty to a lot of fields as it saves a lot of space in the database
 type Match struct {
-	db.M      `bson:",inline"`
-	RequestID primitive.ObjectID      `json:"requestId" bson:"requestId"` // Maybe we should remove this one it adds minimal extra value
-	ProfileID primitive.ObjectID      `json:"profileId" bson:"profileId"`
-	KeyID     primitive.ObjectID      `json:"keyId" bson:"keyId"`
-	When      jsonHelpers.RFC3339Nano `json:"when"`
+	db.M        `bson:",inline"`
+	RequestID   primitive.ObjectID      `json:"requestId" bson:"requestId"` // Maybe we should remove this one it adds minimal extra value
+	ProfileID   primitive.ObjectID      `json:"profileId" bson:"profileId"`
+	KeyID       primitive.ObjectID      `json:"keyId" bson:"keyId"`
+	When        jsonHelpers.RFC3339Nano `json:"when"`
+	ReferenceNr string                  `json:"referenceNr" bson:"referenceNr"`
 
 	// Is this a debug match
 	// This is currently only true if the match was made using the /tryMatcher dashboard page
@@ -45,6 +48,17 @@ type Match struct {
 // CollectionName returns the collection name of the Profile
 func (*Match) CollectionName() string {
 	return "matches"
+}
+
+// Indexes implements db.Entry
+func (*Match) Indexes() []mongo.IndexModel {
+	return []mongo.IndexModel{
+		{Keys: bson.M{"profileId": 1}},
+		{Keys: bson.M{"keyId": 1}},
+		{Keys: bson.M{"when": 1}},
+		{Keys: bson.M{"when": -1}},
+		{Keys: bson.M{"referenceNr": 1}},
+	}
 }
 
 // GetMatchSentence returns a

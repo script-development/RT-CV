@@ -156,6 +156,7 @@ func processMatches(args processMatchesArgs) {
 				args.matchedProfiles[idx].Matches.RequestID = args.requestID
 				args.matchedProfiles[idx].Matches.KeyID = args.keyID
 				args.matchedProfiles[idx].Matches.Debug = args.debug
+				args.matchedProfiles[idx].Matches.ReferenceNr = args.cv.ReferenceNumber
 
 				analyticsData[idx] = &args.matchedProfiles[idx].Matches
 			}

@@ -14,6 +14,7 @@ import (
 	"github.com/valyala/fasthttp"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"jaytaylor.com/html2text"
 )
 
@@ -51,6 +52,20 @@ type Profile struct {
 // CollectionName returns the collection name of the Profile
 func (*Profile) CollectionName() string {
 	return "profiles"
+}
+
+// Indexes implements db.Entry
+func (*Profile) Indexes() []mongo.IndexModel {
+	return []mongo.IndexModel{
+		{Keys: bson.M{"active": 1}},
+		{Keys: bson.M{"desiredProfessions": 1}},
+		{Keys: bson.M{"professionExperienced": 1}},
+		{Keys: bson.M{"driversLicenses": 1}},
+		{Keys: bson.M{"educations": 1}},
+		{Keys: bson.M{"zipCodes": 1}},
+		{Keys: bson.M{"onMatch.sendMail": 1}},
+		{Keys: bson.M{"onMatch.httpCall": 1}},
+	}
 }
 
 // GetActualActiveProfiles returns that we can actually use

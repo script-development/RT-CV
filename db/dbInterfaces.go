@@ -3,6 +3,7 @@ package db
 import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // FindOptions are options for the find operator in Connection
@@ -53,6 +54,7 @@ type Entry interface {
 	SetID(primitive.ObjectID)
 	CollectionName() string
 	DefaultFindFilters() bson.M
+	Indexes() []mongo.IndexModel
 }
 
 // M is a struct that adds an _id field and implements from dbInterfaces.Entry:
@@ -82,5 +84,10 @@ func (m *M) SetID(id primitive.ObjectID) {
 
 // DefaultFindFilters implements Entry
 func (*M) DefaultFindFilters() bson.M {
+	return nil
+}
+
+// Indexes implements Entry
+func (*M) Indexes() []mongo.IndexModel {
 	return nil
 }

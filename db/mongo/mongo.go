@@ -162,12 +162,18 @@ func (c *Connection) RegisterEntries(entries ...db.Entry) {
 	for _, name := range names {
 		namesMap[name] = true
 	}
+
 	for _, entry := range entries {
 		collectionName := entry.CollectionName()
 
 		if !namesMap[collectionName] {
 			log.Infof("Creating collection %s", collectionName)
 			c.db.CreateCollection(dbHelpers.Ctx(), collectionName)
+		}
+
+		indexes := entry.Indexes()
+		if len(indexes) > 0 {
+			c.db.Collection(collectionName).Indexes().CreateMany(context.Background(), indexes)
 		}
 	}
 
