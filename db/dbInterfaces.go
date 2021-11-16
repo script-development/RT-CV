@@ -50,10 +50,22 @@ type Connection interface {
 //     return "users"
 // }
 type Entry interface {
+	// Get the _id field of the entry
 	GetID() primitive.ObjectID
+
+	// Set the _id field of the entry
 	SetID(primitive.ObjectID)
+
+	// CollectionName should yield the collection name for the entre
 	CollectionName() string
+
+	// DefaultFindFilters can return a default filter used in find queries
+	// If nil is returned this is not used
 	DefaultFindFilters() bson.M
+
+	// Indexes returns the indexes for the entry
+	// If nil is returned no more indexes will be set
+	// Note that by default the there is always an index of the _id field
 	Indexes() []mongo.IndexModel
 }
 
