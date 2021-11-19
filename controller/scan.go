@@ -101,6 +101,8 @@ var routeScraperScanCV = routeBuilder.R{
 		// Note that this might cause issues with slow servers when you spam the server with CV requests the go routines
 		// below will not complete in time before the next request stats and thus stacking goroutines filling up the server resources
 		// that could lead to 100% cpu usage or a out of memory panic
+		//
+		// TODO spawning a go routine seems slow
 		go processMatches(processMatchesArgs{
 			debug:           body.Debug,
 			matchedProfiles: matchedProfiles,
