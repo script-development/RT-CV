@@ -31,6 +31,14 @@ func Routes(app *fiber.App, appVersion string, dbConn db.Connection, testing boo
 
 		b.Group(`/scraper`, func(b *routeBuilder.Router) {
 			b.Post(`/scanCV`, routeScraperScanCV)
+			b.Group(`/scannedReferenceNrs`, func(b *routeBuilder.Router) {
+				b.Get(``, scannedReferenceNrs)
+				b.Group(`/since`, func(b *routeBuilder.Router) {
+					b.Get(`/hours/:hours`, scannedReferenceNrs)
+					b.Get(`/days/:days`, scannedReferenceNrs)
+					b.Get(`/weeks/:weeks`, scannedReferenceNrs)
+				})
+			})
 		}, requiresAuth(models.APIKeyRoleScraper|models.APIKeyRoleDashboard))
 
 		secretsRoutes := func(b *routeBuilder.Router) {

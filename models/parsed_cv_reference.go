@@ -24,18 +24,12 @@ func ReferenceNrAlreadyParsed(conn db.Connection, keyID primitive.ObjectID, refe
 
 // InsertParsedCVReference inserts a new ParsedCVReference into the database
 func InsertParsedCVReference(conn db.Connection, keyID primitive.ObjectID, referenceNr string) error {
-	newEntry := &ParsedCVReference{
+	return conn.Insert(&ParsedCVReference{
 		M:               db.NewM(),
 		ReferenceNumber: referenceNr,
 		InsertionDate:   jsonHelpers.RFC3339Nano(time.Now()),
 		KeyID:           keyID,
-	}
-	err := conn.Insert(newEntry)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	})
 }
 
 // ParsedCVReference is a entry in the database that is used to detect duplicates in uploaded CVs
