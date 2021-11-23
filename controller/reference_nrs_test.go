@@ -16,23 +16,23 @@ import (
 func TestScannedReferenceNrs(t *testing.T) {
 	router := newTestingRouter(t)
 
-	newParsedCvRef := func(nr string, insertionTime time.Time) *models.ParsedCVReference {
-		return &models.ParsedCVReference{
-			M:               db.NewM(),
-			ReferenceNumber: nr,
-			InsertionDate:   jsonHelpers.RFC3339Nano(insertionTime),
-			KeyID:           mock.Key1.ID,
+	newMatch := func(nr string, insertionTime time.Time) *models.Match {
+		return &models.Match{
+			M:           db.NewM(),
+			ReferenceNr: nr,
+			When:        jsonHelpers.RFC3339Nano(insertionTime),
+			KeyID:       mock.Key1.ID,
 		}
 	}
 
 	err := router.db.UnsafeInsert(
-		newParsedCvRef("1", time.Now().Add(-(time.Minute*30))),
-		newParsedCvRef("2", time.Now().Add(-(time.Minute*90))),
-		newParsedCvRef("3", time.Now().AddDate(0, 0, -2)),
-		newParsedCvRef("4", time.Now().AddDate(0, 0, -4)),
-		newParsedCvRef("5", time.Now().AddDate(0, 0, -8)),  // 1 week + 1 day
-		newParsedCvRef("6", time.Now().AddDate(0, 0, -15)), // 2 weeks + 1 day
-		newParsedCvRef("7", time.Now().AddDate(0, 0, -21)), // 3 weeks + 1 day
+		newMatch("1", time.Now().Add(-(time.Minute*30))),
+		newMatch("2", time.Now().Add(-(time.Minute*90))),
+		newMatch("3", time.Now().AddDate(0, 0, -2)),
+		newMatch("4", time.Now().AddDate(0, 0, -4)),
+		newMatch("5", time.Now().AddDate(0, 0, -8)),  // 1 week + 1 day
+		newMatch("6", time.Now().AddDate(0, 0, -15)), // 2 weeks + 1 day
+		newMatch("7", time.Now().AddDate(0, 0, -21)), // 3 weeks + 1 day
 	)
 	NoError(t, err)
 

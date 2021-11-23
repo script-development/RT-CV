@@ -9,7 +9,6 @@ import (
 	"github.com/script-development/RT-CV/controller/ctx"
 	"github.com/script-development/RT-CV/helpers/routeBuilder"
 	"github.com/script-development/RT-CV/models"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 var scannedReferenceNrs = routeBuilder.R{
@@ -23,7 +22,9 @@ var scannedReferenceNrs = routeBuilder.R{
 		dbConn := ctx.GetDbConn(c)
 		key := ctx.GetKey(c)
 
-		query := bson.M{"keyId": key.ID}
+		matches := []models.Match{}
+		var err error
+		now := time.Now()
 
 		switch {
 		case hours != "":
@@ -34,7 +35,7 @@ var scannedReferenceNrs = routeBuilder.R{
 			if hoursInt <= 0 {
 				return errors.New("hours argument must be greater than 0")
 			}
-			query["insertionDate"] = bson.M{"$gt": time.Now().Add(-(time.Hour * time.Duration(hoursInt)))}
+			matches, err = models.GetMatchesSince(dbConn, now.Add(-(time.Hour * time.Duration(hoursInt))), &key.ID)
 		case days != "":
 			daysInt, err := strconv.Atoi(days)
 			if err != nil {
@@ -43,7 +44,7 @@ var scannedReferenceNrs = routeBuilder.R{
 			if daysInt <= 0 {
 				return errors.New("days argument must be greater than 0")
 			}
-			query["insertionDate"] = bson.M{"$gt": time.Now().AddDate(0, 0, -daysInt)}
+			matches, err = models.GetMatchesSince(dbConn, now.AddDate(0, 0, -daysInt), &key.ID)
 		case weeks != "":
 			weeksInt, err := strconv.Atoi(weeks)
 			if err != nil {
@@ -52,18 +53,32 @@ var scannedReferenceNrs = routeBuilder.R{
 			if weeksInt <= 0 {
 				return errors.New("weeks argument must be greater than 0")
 			}
-			query["insertionDate"] = bson.M{"$gt": time.Now().AddDate(0, 0, -(7 * weeksInt))}
+			matches, err = models.GetMatchesSince(dbConn, now.AddDate(0, 0, -(7*weeksInt)), &key.ID)
+		default:
+			matches, err = models.GetMatches(dbConn, &key.ID)
 		}
-
-		dbReferenceNrs := []models.ParsedCVReference{}
-		err := dbConn.Find(&models.ParsedCVReference{}, &dbReferenceNrs, query)
 		if err != nil {
 			return err
 		}
 
-		res := make([]string, len(dbReferenceNrs))
-		for idx, ref := range dbReferenceNrs {
-			res[idx] = ref.ReferenceNumber
+		res := []string{}
+	outerLoop:
+		for idx, ref := range matches {
+			refNr := ref.ReferenceNr
+			if idx == 0 {
+				res = append(res, refNr)
+				continue
+			}
+
+			// Check for duplicated reference numbers
+			for idx := len(res) - 1; idx >= 0; idx-- {
+				if res[idx] == refNr {
+					// This reference nr is already in the respnose list
+					continue outerLoop
+				}
+			}
+
+			res = append(res, refNr)
 		}
 
 		return c.JSON(res)

@@ -62,20 +62,6 @@ var routeScraperScanCV = routeBuilder.R{
 			)
 		}
 
-		// Check if we have scanned this cv earlier
-		// If so return an error
-		alreadyParsed, err := models.ReferenceNrAlreadyParsed(dbConn, key.ID, body.CV.ReferenceNumber)
-		if alreadyParsed {
-			return ErrorRes(
-				c,
-				fiber.StatusBadRequest,
-				errors.New("a CV with this referenceNumber was previousely uploaded and parsed"),
-			)
-		}
-		if err != nil {
-			logger.WithError(err).Error("unable detect if reference number was already matched")
-		}
-
 		// Get the profiles we can use for matching
 		// If they are not cached yet or the cache it outdated, set the cache
 		matcherProfilesCache := ctx.GetMatcherProfilesCache(c)
@@ -99,10 +85,11 @@ var routeScraperScanCV = routeBuilder.R{
 		// The below is inside a goroutine to prevent blocking the fiber request
 		//
 		// Note that this might cause issues with slow servers when you spam the server with CV requests the go routines
-		// below will not complete in time before the next request stats and thus stacking goroutines filling up the server resources
-		// that could lead to 100% cpu usage or a out of memory panic
+		// below will not complete in time before the next request stats and thus stacking goroutines filling up the
+		// server's resources that could lead to 100% cpu usage or a out of memory panic
 		//
-		// TODO spawning a go routine seems slow
+		// Also spawning a go routine seems slow
+		// maybe a pool of matchers would be the solution tough it will need to be good documented as it complicates things
 		go processMatches(processMatchesArgs{
 			debug:           body.Debug,
 			matchedProfiles: matchedProfiles,
@@ -131,8 +118,7 @@ type processMatchesArgs struct {
 
 // processMatches processes the matches made to a CV
 // - notify the dashboard /events page about the new match
-// - label the cv reference as scanned
-// - upload analytics data
+// - safe the matches of this reference number for analytics and for detecting duplicates
 // - send emails with the matches or send http requests
 func processMatches(args processMatchesArgs) {
 	err := dashboardListeners.publish("recived_cv", &args.requestID, args.cv)
@@ -140,53 +126,72 @@ func processMatches(args processMatchesArgs) {
 		args.logger.WithError(err).Error("unable to save CV reference to database")
 	}
 
-	err = models.InsertParsedCVReference(args.dbConn, args.keyID, args.cv.ReferenceNumber)
+	if len(args.matchedProfiles) == 0 {
+		return
+	}
+
+	// Get earlier matches on this reference number
+	earlierMatches, err := models.GetMatchesOnReferenceNr(args.dbConn, args.cv.ReferenceNumber, &args.keyID)
 	if err != nil {
-		args.logger.WithError(err).Error("unable to save CV reference to database")
+		args.logger.WithError(err).Error("unable to execute query to get earlier made matches to this reference number")
+		earlierMatches = []models.Match{}
 	}
 
-	foundMatches := len(args.matchedProfiles) != 0
+	// Remove matches that where already made earlier
+	// We loop in reverse so we can remove items from the slice
+	for idx := len(args.matchedProfiles) - 1; idx >= 0; idx-- {
+		for _, earlierMatche := range earlierMatches {
+			if args.matchedProfiles[idx].Profile.ID == earlierMatche.ProfileID {
+				args.matchedProfiles = append(args.matchedProfiles[:idx], args.matchedProfiles[idx+1:]...)
+				break
+			}
+		}
+	}
 
-	// Insert analytics data
-	if foundMatches {
-		err = dashboardListeners.publish("recived_cv_matches", &args.requestID, args.matchedProfiles)
+	// Re-check the amount of matched profiles as we might have filtered out at the step above
+	if len(args.matchedProfiles) == 0 {
+		return
+	}
+
+	err = dashboardListeners.publish("recived_cv_matches", &args.requestID, args.matchedProfiles)
+	if err != nil {
+		args.logger.WithError(err).Error("unable to publish recived_cv_matches event")
+	} else {
+		analyticsData := make([]db.Entry, len(args.matchedProfiles))
+		for idx := range args.matchedProfiles {
+			args.matchedProfiles[idx].Matches.RequestID = args.requestID
+			args.matchedProfiles[idx].Matches.KeyID = args.keyID
+			args.matchedProfiles[idx].Matches.Debug = args.debug
+			args.matchedProfiles[idx].Matches.ReferenceNr = args.cv.ReferenceNumber
+
+			analyticsData[idx] = &args.matchedProfiles[idx].Matches
+		}
+
+		err := args.dbConn.Insert(analyticsData...)
 		if err != nil {
-			args.logger.WithError(err).Error("unable to publish recived_cv_matches event")
-		} else {
-			analyticsData := make([]db.Entry, len(args.matchedProfiles))
-			for idx := range args.matchedProfiles {
-				args.matchedProfiles[idx].Matches.RequestID = args.requestID
-				args.matchedProfiles[idx].Matches.KeyID = args.keyID
-				args.matchedProfiles[idx].Matches.Debug = args.debug
-				args.matchedProfiles[idx].Matches.ReferenceNr = args.cv.ReferenceNumber
-
-				analyticsData[idx] = &args.matchedProfiles[idx].Matches
-			}
-
-			err := args.dbConn.Insert(analyticsData...)
-			if err != nil {
-				args.logger.WithField("analytics_entries_count", len(analyticsData)).WithError(err).Error("analytics data insertion failed")
-			}
+			args.logger.WithField("analytics_entries_count", len(analyticsData)).WithError(err).Error("analytics data insertion failed")
 		}
 	}
 
-	if !args.debug && foundMatches {
-		var pdfBytes []byte
-		for _, aMatch := range args.matchedProfiles {
-			if len(aMatch.Profile.OnMatch.SendMail) > 0 && pdfBytes == nil {
-				// Only once and if we really need it create the email attachment pdf as this takes quite a bit of time
-				//
-				// MAYBE TODO:
-				// Generate a pdf with placeholder values and replace the value inside the output pdf.
-				// If that's possible we can speedup the pdf creation by a shitload
-				pdfBytes, err = args.cv.GetPDF()
-				if err != nil {
-					log.WithError(err).Error("mail attachment creation error")
-					return
-				}
-			}
+	if args.debug {
+		return
+	}
 
-			aMatch.HandleMatch(args.cv, pdfBytes)
+	var pdfBytes []byte
+	for _, aMatch := range args.matchedProfiles {
+		if len(aMatch.Profile.OnMatch.SendMail) > 0 && pdfBytes == nil {
+			// Only once and if we really need it create the email attachment pdf as this takes quite a bit of time
+			//
+			// MAYBE TODO:
+			// Generate a pdf with placeholder values and replace the value inside the output pdf.
+			// If that's possible we can speedup the pdf creation by a shitload
+			pdfBytes, err = args.cv.GetPDF()
+			if err != nil {
+				log.WithError(err).Error("mail attachment creation error")
+				return
+			}
 		}
+
+		aMatch.HandleMatch(args.cv, pdfBytes)
 	}
 }

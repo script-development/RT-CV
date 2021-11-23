@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/jsonHelpers"
@@ -59,6 +60,42 @@ func (*Match) Indexes() []mongo.IndexModel {
 		{Keys: bson.M{"when": -1}},
 		{Keys: bson.M{"referenceNr": 1}},
 	}
+}
+
+// GetMatches returns all matches for a specific key
+// If keyID is nil, all matches for all keys are returned
+func GetMatches(dbConn db.Connection, keyID *primitive.ObjectID) ([]Match, error) {
+	results := []Match{}
+	if keyID != nil {
+		err := dbConn.Find(&Match{}, &results, primitive.M{"keyId": keyID})
+		return results, err
+	}
+	err := dbConn.Find(&Match{}, &results, primitive.M{})
+	return results, err
+}
+
+// GetMatchesOnReferenceNr returns all matches that have been done on a ReferenceNr
+func GetMatchesOnReferenceNr(dbConn db.Connection, referenceNr string, keyID *primitive.ObjectID) ([]Match, error) {
+	query := bson.M{"referenceNr": referenceNr}
+	if keyID != nil {
+		query["keyId"] = keyID
+	}
+
+	results := []Match{}
+	err := dbConn.Find(&Match{}, &results, query)
+	return results, err
+}
+
+// GetMatchesSince returns all matches that have been done since a certain date+time
+func GetMatchesSince(dbConn db.Connection, since time.Time, keyID *primitive.ObjectID) ([]Match, error) {
+	query := bson.M{"when": bson.M{"$gt": since}}
+	if keyID != nil {
+		query["keyId"] = keyID
+	}
+
+	results := []Match{}
+	err := dbConn.Find(&Match{}, &results, query)
+	return results, err
 }
 
 // GetMatchSentence returns a
