@@ -25,7 +25,7 @@ We intent to make this API GDPR compliant.
 Requirements:
 
 - GoLang 1.15+
-- Nodejs 14+
+- Nodejs 15+
 
 ```bash
 cd dashboard
