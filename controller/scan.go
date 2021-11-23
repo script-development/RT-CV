@@ -2,6 +2,7 @@ package controller
 
 import (
 	"errors"
+	"sync"
 	"time"
 
 	"github.com/apex/log"
@@ -82,15 +83,7 @@ var routeScraperScanCV = routeBuilder.R{
 		// Try to match a profile to a CV
 		matchedProfiles := match.Match(key.Domains, profiles, body.CV)
 
-		// The below is inside a goroutine to prevent blocking the fiber request
-		//
-		// Note that this might cause issues with slow servers when you spam the server with CV requests the go routines
-		// below will not complete in time before the next request stats and thus stacking goroutines filling up the
-		// server's resources that could lead to 100% cpu usage or a out of memory panic
-		//
-		// Also spawning a go routine seems slow
-		// maybe a pool of matchers would be the solution tough it will need to be good documented as it complicates things
-		go ProcessMatches{
+		MatchesProcess.AppendMatchesToProcess(ProcessMatches{
 			Debug:           body.Debug,
 			MatchedProfiles: matchedProfiles,
 			CV:              body.CV,
@@ -98,13 +91,57 @@ var routeScraperScanCV = routeBuilder.R{
 			DBConn:          dbConn,
 			KeyID:           key.ID,
 			RequestID:       requestID,
-		}.Process()
+		})
 
 		if body.Debug {
 			return c.JSON(RouteScraperScanCVRes{Success: true, Matches: matchedProfiles})
 		}
 		return c.JSON(RouteScraperScanCVRes{Success: true})
 	},
+}
+
+// MatchesProcessor is a struct that contains a list of matches to be processed in the background
+//
+// To register a match to be processed call (*MatchesProcessor).AppendMatchesToProcess
+// After calling the above (*MatchesProcessor).processMatches should automatically pick up the match and handle it
+type MatchesProcessor struct {
+	list    []ProcessMatches
+	c       *sync.Cond
+	started bool
+}
+
+// MatchesProcess holts the process matches that should be processed in the background
+var MatchesProcess = &MatchesProcessor{
+	list:    []ProcessMatches{},
+	c:       sync.NewCond(&sync.Mutex{}),
+	started: false,
+}
+
+// AppendMatchesToProcess adds a list of matches to be processed by (*MatchesProcessor).processMatches
+func (p *MatchesProcessor) AppendMatchesToProcess(args ProcessMatches) {
+	p.c.L.Lock()
+	p.list = append(p.list, args)
+	p.c.Signal()
+	if !p.started {
+		p.started = true
+		go p.processMatches()
+	}
+	p.c.L.Unlock()
+}
+
+// processMatches is a process that should be running in the background that process matches
+func (p *MatchesProcessor) processMatches() {
+	for {
+		p.c.L.Lock()
+		if len(p.list) == 0 {
+			// Once the list is empty wait for a signal for the list to fill up again
+			p.c.Wait()
+		}
+		matchToProcess := p.list[0]
+		p.list = p.list[1:]
+		p.c.L.Unlock()
+		matchToProcess.Process()
+	}
 }
 
 // ProcessMatches contains the content for processing a match
