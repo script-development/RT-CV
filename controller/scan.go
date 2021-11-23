@@ -90,15 +90,15 @@ var routeScraperScanCV = routeBuilder.R{
 		//
 		// Also spawning a go routine seems slow
 		// maybe a pool of matchers would be the solution tough it will need to be good documented as it complicates things
-		go processMatches(processMatchesArgs{
-			debug:           body.Debug,
-			matchedProfiles: matchedProfiles,
-			cv:              body.CV,
-			logger:          *logger,
-			dbConn:          dbConn,
-			keyID:           key.ID,
-			requestID:       requestID,
-		})
+		go ProcessMatches{
+			Debug:           body.Debug,
+			MatchedProfiles: matchedProfiles,
+			CV:              body.CV,
+			Logger:          *logger,
+			DBConn:          dbConn,
+			KeyID:           key.ID,
+			RequestID:       requestID,
+		}.Process()
 
 		if body.Debug {
 			return c.JSON(RouteScraperScanCVRes{Success: true, Matches: matchedProfiles})
@@ -107,91 +107,91 @@ var routeScraperScanCV = routeBuilder.R{
 	},
 }
 
-type processMatchesArgs struct {
-	debug            bool
-	matchedProfiles  []match.FoundMatch
-	cv               models.CV
-	logger           log.Entry
-	dbConn           db.Connection
-	keyID, requestID primitive.ObjectID
+// ProcessMatches contains the content for processing a match
+type ProcessMatches struct {
+	Debug            bool
+	MatchedProfiles  []match.FoundMatch
+	CV               models.CV
+	Logger           log.Entry
+	DBConn           db.Connection
+	KeyID, RequestID primitive.ObjectID
 }
 
-// processMatches processes the matches made to a CV
+// Process processes the matches made to a CV
 // - notify the dashboard /events page about the new match
 // - safe the matches of this reference number for analytics and for detecting duplicates
 // - send emails with the matches or send http requests
-func processMatches(args processMatchesArgs) {
-	err := dashboardListeners.publish("recived_cv", &args.requestID, args.cv)
+func (args ProcessMatches) Process() {
+	err := dashboardListeners.publish("recived_cv", &args.RequestID, args.CV)
 	if err != nil {
-		args.logger.WithError(err).Error("unable to save CV reference to database")
+		args.Logger.WithError(err).Error("unable to save CV reference to database")
 	}
 
-	if len(args.matchedProfiles) == 0 {
+	if len(args.MatchedProfiles) == 0 {
 		return
 	}
 
 	// Get earlier matches on this reference number
-	earlierMatches, err := models.GetMatchesOnReferenceNr(args.dbConn, args.cv.ReferenceNumber, &args.keyID)
+	earlierMatches, err := models.GetMatchesOnReferenceNr(args.DBConn, args.CV.ReferenceNumber, &args.KeyID)
 	if err != nil {
-		args.logger.WithError(err).Error("unable to execute query to get earlier made matches to this reference number")
+		args.Logger.WithError(err).Error("unable to execute query to get earlier made matches to this reference number")
 		earlierMatches = []models.Match{}
 	}
 
 	// Remove matches that where already made earlier
 	// We loop in reverse so we can remove items from the slice
-	for idx := len(args.matchedProfiles) - 1; idx >= 0; idx-- {
+	for idx := len(args.MatchedProfiles) - 1; idx >= 0; idx-- {
 		for _, earlierMatche := range earlierMatches {
-			if args.matchedProfiles[idx].Profile.ID == earlierMatche.ProfileID {
-				args.matchedProfiles = append(args.matchedProfiles[:idx], args.matchedProfiles[idx+1:]...)
+			if args.MatchedProfiles[idx].Profile.ID == earlierMatche.ProfileID {
+				args.MatchedProfiles = append(args.MatchedProfiles[:idx], args.MatchedProfiles[idx+1:]...)
 				break
 			}
 		}
 	}
 
 	// Re-check the amount of matched profiles as we might have filtered out at the step above
-	if len(args.matchedProfiles) == 0 {
+	if len(args.MatchedProfiles) == 0 {
 		return
 	}
 
-	err = dashboardListeners.publish("recived_cv_matches", &args.requestID, args.matchedProfiles)
+	err = dashboardListeners.publish("recived_cv_matches", &args.RequestID, args.MatchedProfiles)
 	if err != nil {
-		args.logger.WithError(err).Error("unable to publish recived_cv_matches event")
-	} else {
-		analyticsData := make([]db.Entry, len(args.matchedProfiles))
-		for idx := range args.matchedProfiles {
-			args.matchedProfiles[idx].Matches.RequestID = args.requestID
-			args.matchedProfiles[idx].Matches.KeyID = args.keyID
-			args.matchedProfiles[idx].Matches.Debug = args.debug
-			args.matchedProfiles[idx].Matches.ReferenceNr = args.cv.ReferenceNumber
-
-			analyticsData[idx] = &args.matchedProfiles[idx].Matches
-		}
-
-		err := args.dbConn.Insert(analyticsData...)
-		if err != nil {
-			args.logger.WithField("analytics_entries_count", len(analyticsData)).WithError(err).Error("analytics data insertion failed")
-		}
+		args.Logger.WithError(err).Error("unable to publish recived_cv_matches event")
 	}
 
-	if args.debug {
+	analyticsData := make([]db.Entry, len(args.MatchedProfiles))
+	for idx := range args.MatchedProfiles {
+		args.MatchedProfiles[idx].Matches.RequestID = args.RequestID
+		args.MatchedProfiles[idx].Matches.KeyID = args.KeyID
+		args.MatchedProfiles[idx].Matches.Debug = args.Debug
+		args.MatchedProfiles[idx].Matches.ReferenceNr = args.CV.ReferenceNumber
+
+		analyticsData[idx] = &args.MatchedProfiles[idx].Matches
+	}
+	err = args.DBConn.Insert(analyticsData...)
+	if err != nil {
+		args.Logger.WithField("analytics_entries_count", len(analyticsData)).WithError(err).Error("analytics data insertion failed")
+	}
+
+	if args.Debug {
 		return
 	}
 
 	var pdfBytes []byte
-	for _, aMatch := range args.matchedProfiles {
+	for _, aMatch := range args.MatchedProfiles {
 		if len(aMatch.Profile.OnMatch.SendMail) > 0 && pdfBytes == nil {
 			// Only once and if we really need it create the email attachment pdf as this takes quite a bit of time
 			//
 			// MAYBE TODO:
 			// Generate a pdf with placeholder values and replace the value inside the output pdf.
 			// If that's possible we can speedup the pdf creation by a shitload
-			pdfBytes, err = args.cv.GetPDF()
+			pdfBytes, err = args.CV.GetPDF()
 			if err != nil {
 				log.WithError(err).Error("mail attachment creation error")
 				return
 			}
 		}
 
-		aMatch.HandleMatch(args.cv, pdfBytes)
+		aMatch.HandleMatch(args.CV, pdfBytes)
 	}
 }
