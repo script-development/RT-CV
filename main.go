@@ -1,7 +1,12 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"os"
+	"os/signal"
+	"runtime/pprof"
+	"syscall"
 
 	"github.com/apex/log"
 	"github.com/gofiber/fiber/v2"
@@ -24,8 +29,35 @@ import (
 var AppVersion = "LOCAL"
 
 func main() {
+	doProfile := false
+	flag.BoolVar(&doProfile, "profile", false, "start profiling")
+	flag.Parse()
+
 	// Seed the random package so generated values are "actually" random
 	random.Seed()
+
+	if doProfile {
+		f, err := os.Create("cpu.profile")
+		if err != nil {
+			log.WithField("error", err).Fatal("could not create cpu profile")
+		}
+
+		err = pprof.StartCPUProfile(f)
+		if err != nil {
+			log.WithField("error", err).Fatal("could not start CPU profile")
+		}
+
+		exitSignal := make(chan os.Signal, 1)
+		signal.Notify(exitSignal, syscall.SIGINT, syscall.SIGTERM)
+		go func() {
+			<-exitSignal
+			pprof.StopCPUProfile()
+			f.Close()
+			fmt.Println("saved cpu profile to cpu.profile")
+			fmt.Println("the profile can be inspected using: go tool pprof -http localhost:3333 cpu.profile")
+			os.Exit(0)
+		}()
+	}
 
 	// Loading the .env if available
 	_, err := os.Stat(".env")

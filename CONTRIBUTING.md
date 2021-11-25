@@ -24,3 +24,17 @@ go install github.com/mgechev/revive@latest
 
 This video explains well what a NoSQL database is (MongoDB is a NoSQL database): [youtu.be/v_hR4K4auoQ](https://youtu.be/v_hR4K4auoQ) _(What is a NoSQL Database? How is Cloud Firestore structured? | Get to know Cloud Firestore #1)_
 _Note that some information is cloud firestore specific in that video but it should give you an overall idea on what NoSQL is_
+
+## Debug performance issues
+
+A profile of the program can be created by starting the program using
+
+```sh
+go run . -profile
+```
+
+After that you can inspect the profile in the browser using
+
+```
+go tool pprof -http localhost:3333 cpu.profile
+```
