@@ -40,12 +40,14 @@ func ValidDomain(domain string, allowWildcard bool) error {
 	return nil
 }
 
-// ValidDomainList returns if a domain from the domains list is invalid
-func ValidDomainList(domains []string, allowWildcard bool) error {
-	for idx, domain := range domains {
+// ValidDomainListAndFormat formats the domains list and check if there are invalid domain names
+func ValidDomainListAndFormat(domains *[]string, allowWildcard bool) error {
+	for idx, domain := range *domains {
+		domain = strings.TrimSpace(strings.ToLower(domain))
 		if ValidDomain(domain, allowWildcard) != nil {
 			return fmt.Errorf("domain %d is invalid", idx)
 		}
+		(*domains)[idx] = domain
 	}
 	return nil
 }

@@ -2,6 +2,7 @@ package controller
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/script-development/RT-CV/controller/ctx"
@@ -56,9 +57,12 @@ var routeCreateKey = routeBuilder.R{
 		} else if len(body.Domains) < 1 {
 			return errors.New("there should at least be one domain")
 		} else {
-			err := validation.ValidDomainList(body.Domains, true)
+			err := validation.ValidDomainListAndFormat(&body.Domains, true)
 			if err != nil {
 				return err
+			}
+			for idx, domain := range body.Domains {
+				body.Domains[idx] = strings.ToLower(domain)
 			}
 			newAPIKey.Domains = body.Domains
 		}
@@ -143,9 +147,12 @@ var routeUpdateKey = routeBuilder.R{
 			if len(body.Domains) < 1 {
 				return errors.New("there should at least be one domain")
 			}
-			err := validation.ValidDomainList(body.Domains, true)
+			err := validation.ValidDomainListAndFormat(&body.Domains, true)
 			if err != nil {
 				return err
+			}
+			for idx, domain := range body.Domains {
+				body.Domains[idx] = strings.ToLower(domain)
 			}
 			apiKey.Domains = body.Domains
 		}

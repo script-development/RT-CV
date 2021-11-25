@@ -11,6 +11,7 @@ import (
 	"github.com/jordan-wright/email"
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/emailservice"
+	"github.com/script-development/RT-CV/helpers/validation"
 	"github.com/valyala/fasthttp"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -230,6 +231,13 @@ func (p *Profile) ValidateCreateNewProfile() error {
 
 	if p.Name == "" {
 		return errors.New("name must be set")
+	}
+
+	if len(p.Domains) > 0 {
+		err := validation.ValidDomainListAndFormat(&p.Domains, true)
+		if err != nil {
+			return fmt.Errorf("domains are invalid: %s", err.Error())
+		}
 	}
 
 	if len(p.OnMatch.SendMail) == 0 && len(p.OnMatch.HTTPCall) == 0 {

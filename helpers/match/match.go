@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unsafe"
 
 	"github.com/apex/log"
 	"github.com/script-development/RT-CV/db"
@@ -11,6 +12,39 @@ import (
 	"github.com/script-development/RT-CV/helpers/wordvalidator"
 	"github.com/script-development/RT-CV/models"
 )
+
+func normalizeString(inStr string) string {
+	inBytes := []byte(inStr)
+
+	for idx := len(inBytes) - 1; idx >= 0; idx-- {
+		c := inBytes[idx]
+		switch c {
+		case '\n', '\r', '\t', ' ':
+			if idx == len(inBytes)-1 {
+				// Trim the space like characters around the input
+				inBytes = inBytes[:idx]
+			} else if idx != 0 && (inBytes[idx-1] == '\n' || inBytes[idx-1] == '\r' || inBytes[idx-1] == '\t' || inBytes[idx-1] == ' ') {
+				// The character to the left is also a whitespace character, so we can remove this char
+				// By doing this we remove the duplicated spaces
+				inBytes = append(inBytes[:idx], inBytes[idx+1:]...)
+			} else if c != ' ' {
+				inBytes[idx] = ' '
+			} else if idx == 0 {
+				// The first character is a space, trim the front
+				// We don't have to worry if the next character where spaces because
+				// they would be already removed by a previous if else check
+				inBytes = inBytes[1:]
+			}
+		default:
+			if c >= 'A' && c <= 'Z' {
+				inBytes[idx] += 'a' - 'A'
+			}
+		}
+	}
+
+	// Convert the inBytes to a string without copying the data
+	return *(*string)(unsafe.Pointer(&inBytes))
+}
 
 // FoundMatch contains a match and why something is matched
 type FoundMatch struct {
@@ -22,21 +56,9 @@ type FoundMatch struct {
 func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMatch {
 	res := []FoundMatch{}
 
-	normalizeString := func(in string) string {
-		in = strings.ReplaceAll(in, "\t", " ")
-		in = strings.ReplaceAll(in, "\n", " ")
-
-		// Replace double all spaces with normal spaces
-		// note that when you have a string with a non even amount of spaces we need to run the replace twice
-		in = strings.ReplaceAll(in, "  ", " ")
-		in = strings.ReplaceAll(in, "  ", " ")
-
-		return strings.ToLower(strings.TrimSpace(in))
-	}
-
 	formattedDomains := make([][]string, len(domains))
 	for idx, domain := range domains {
-		formattedDomains[idx] = strings.Split(normalizeString(domain), ".")
+		formattedDomains[idx] = strings.Split(domain, ".")
 	}
 
 	now := time.Now()
@@ -72,7 +94,7 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 					foundMatch = true
 				}
 
-				domainParts := strings.Split(normalizeString(domain), ".")
+				domainParts := strings.Split(domain, ".")
 				domainPartsLen := len(domainParts)
 
 				for formattedDomainsIdx, formattedDomain := range formattedDomains {
