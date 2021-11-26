@@ -9,25 +9,6 @@ import (
 	. "github.com/stretchr/testify/assert"
 )
 
-func TestNormalizeString(t *testing.T) {
-	testCases := []struct {
-		name   string
-		input  string
-		expect string
-	}{
-		{"normalized inputs should not change", "abc", "abc"},
-		{"should be converted to lowercase", "ABC", "abc"},
-		{"spaces should be trimmed", "  ABC  ", "abc"},
-		{"duplicated spaces should reduced to 1 space", "A  B   C", "a b c"},
-		{"new line and tab characters should be replace by a space", "A\nB\tC", "a b c"},
-	}
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			Equal(t, testCase.expect, normalizeString(testCase.input))
-		})
-	}
-}
-
 func MustMatchSingle(t *testing.T, p models.Profile, cv models.CV) {
 	p.Domains = []string{"werk.nl"}
 	p.Active = true
