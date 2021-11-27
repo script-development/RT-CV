@@ -1,8 +1,11 @@
 package fuzzystrmatcher
 
 import (
+	"os"
+	"runtime/pprof"
 	"testing"
 
+	"github.com/apex/log"
 	. "github.com/stretchr/testify/assert"
 )
 
@@ -32,7 +35,6 @@ func TestMatch(t *testing.T) {
 		matchWith   string
 		shouldMatch bool
 	}{
-		{"a", "a", true},
 		{"banana", "banana", true},
 		{"banana", "banan", true},
 		{"banana", "banaana", true},
@@ -47,17 +49,83 @@ func TestMatch(t *testing.T) {
 			true,
 		},
 
-		{"a", "b", false},
-		{"some thing", "thing", false},
+		{"somewhere over the rainbow", "somewhere", false},
 		{"banana", "apple", false},
 	}
 
 	for _, testCase := range testCases {
-		parsedInput := Compile([]string{testCase.input})
+		parsedInput := Compile(testCase.input)
 		if testCase.shouldMatch {
-			True(t, parsedInput.Match([]string{testCase.matchWith}), "Expected %s to match %v", testCase.input, testCase.matchWith)
+			True(t, parsedInput.Match(testCase.matchWith), `Expected "%s" to match "%v"`, testCase.input, testCase.matchWith)
 		} else {
-			False(t, parsedInput.Match([]string{testCase.matchWith}), "Expected %s to not match %v", testCase.input, testCase.matchWith)
+			False(t, parsedInput.Match(testCase.matchWith), `Expected "%s" to not match "%v"`, testCase.input, testCase.matchWith)
 		}
+	}
+
+	matcher := Compile(
+		"I love trees",
+		"bananas are the best fruit",
+		"banana",
+	)
+
+	matchesWith := []struct {
+		input   string
+		matches bool
+	}{
+		{"nothing", false},
+		{"i love trees", true},
+		{"bananas are the best fruit", true},
+		{"banana", true},
+		{"do you also love trees? i do.", true},
+		{"on a sunday afternoon i like to eat a banana", true},
+	}
+
+	for _, testCase := range matchesWith {
+		if testCase.matches {
+			True(t, matcher.Match(testCase.input))
+		} else {
+			False(t, matcher.Match(testCase.input))
+		}
+	}
+}
+
+func BenchmarkMatch(b *testing.B) {
+	f, err := os.Create("cpu.profile")
+	if err != nil {
+		log.WithField("error", err).Fatal("could not create cpu profile")
+	}
+
+	err = pprof.StartCPUProfile(f)
+	if err != nil {
+		log.WithField("error", err).Fatal("could not start CPU profile")
+	}
+
+	defer func() {
+		pprof.StopCPUProfile()
+		f.Close()
+	}()
+
+	matcher := Compile(
+		"I love trees",
+		"bananas are the best fruit",
+		"banana",
+	)
+
+	matchesWith := []string{
+		"nothing",
+		"i love trees",
+		"bananas are the best fruit",
+		"banana",
+		"do you also love trees? i do.",
+		"on a sunday afternoon i like to eat a banana",
+	}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		for _, v := range matchesWith {
+			matcher.Match(v)
+		}
+		matcher.Match(matchesWith...)
 	}
 }

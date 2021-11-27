@@ -14,21 +14,23 @@ import (
 type Matcher struct {
 	empty                   bool
 	minLen                  int
-	minWords                int
+	minWordLen              int
+	minWordLenWithSpellErr  int
 	options                 []matcherOption
 	wordHasher              hash.Hash64
 	model                   *fuzzy.Model
 	allOptionWordsWithCount map[uint64]bool
+	ignoredWordsCacheMap    map[uint64]uint64
 }
 
 type matcherOption struct {
-	minWordLen int
+	minWords int
 	// key = word hash, value = used by the match method to determin if a match was made
 	wordsHashes []uint64
 }
 
 // Compile creates a new Matcher for the input string
-func Compile(ins []string) *Matcher {
+func Compile(ins ...string) *Matcher {
 	if len(ins) == 0 {
 		return &Matcher{
 			empty: true,
@@ -36,12 +38,13 @@ func Compile(ins []string) *Matcher {
 	}
 
 	m := &Matcher{
-		minWords:                999,
 		minLen:                  999,
+		minWordLen:              999,
 		options:                 []matcherOption{},
 		wordHasher:              fnv.New64(),
 		model:                   fuzzy.NewModel(),
 		allOptionWordsWithCount: map[uint64]bool{},
+		ignoredWordsCacheMap:    map[uint64]uint64{},
 	}
 	m.model.SetThreshold(1)
 	m.model.SetDepth(2)
@@ -51,24 +54,23 @@ func Compile(ins []string) *Matcher {
 	for _, in := range ins {
 		normalizedIn := NormalizeString(in)
 
-		minWordLen := 999
 		wordHashes := []uint64{}
-		minWordsCount := 0
+		wordsCount := 0
 		sentenceLen := 0
 
 	outerLoop:
 		for _, word := range strings.Split(normalizedIn, " ") {
-			for _, blackListedWord := range blackListedWords {
+			for _, blackListedWord := range allBlackListedWords {
 				if word == blackListedWord {
 					continue outerLoop
 				}
 			}
 			wordsToTrain[word] = true
 			wordLen := len(word)
-			if wordLen < minWordLen {
-				minWordLen = wordLen
+			if wordLen < m.minWordLen {
+				m.minWordLen = wordLen
 			}
-			minWordsCount++
+			wordsCount++
 			sentenceLen += wordLen + 1
 
 			m.wordHasher.Reset()
@@ -80,13 +82,9 @@ func Compile(ins []string) *Matcher {
 		}
 
 		m.options = append(m.options, matcherOption{
-			minWordLen:  minWordLen,
+			minWords:    wordsCount,
 			wordsHashes: wordHashes,
 		})
-
-		if minWordsCount < m.minWords {
-			m.minWords = minWordsCount
-		}
 
 		inMinLen := (sentenceLen - 1) / 4 * 3
 		if inMinLen < m.minLen {
@@ -94,6 +92,7 @@ func Compile(ins []string) *Matcher {
 		}
 	}
 
+	m.minWordLenWithSpellErr = m.minWordLen / 5 * 4
 	wordsToTrainList := []string{}
 	for word := range wordsToTrain {
 		wordsToTrainList = append(wordsToTrainList, word)
@@ -105,9 +104,23 @@ func Compile(ins []string) *Matcher {
 
 // Match matches the input against the compiled value
 // The input is expected to be normalized already using fuzzystrmatcher.NormalizeString(..)
-func (m *Matcher) Match(in []string) bool {
+func (m *Matcher) Match(in ...string) bool {
 	if m.empty {
 		return false
+	}
+
+	// Cleanup the ignoredWordsCacheMap
+	if len(m.ignoredWordsCacheMap) > 10.000 {
+		removeCount := 0
+		for key, hitCount := range m.ignoredWordsCacheMap {
+			if hitCount < 10 {
+				delete(m.ignoredWordsCacheMap, key)
+				removeCount++
+				if removeCount == 2000 {
+					break
+				}
+			}
+		}
 	}
 
 	for _, inputStr := range in {
@@ -131,25 +144,38 @@ func (m *Matcher) Match(in []string) bool {
 				continue
 			}
 			startOfLastWord = idx + 1
-			suggestion := m.model.SpellCheck(b2s(word))
-			if len(suggestion) != 0 {
-				word = s2b(suggestion)
+			if len(word) < m.minWordLenWithSpellErr {
+				continue
 			}
 			m.wordHasher.Reset()
 			m.wordHasher.Write(word)
 			hashedWord := m.wordHasher.Sum64()
 			if _, ok := m.allOptionWordsWithCount[hashedWord]; ok {
 				m.allOptionWordsWithCount[hashedWord] = true
+			} else if len(word) > 4 && m.ignoredWordsCacheMap[hashedWord] == 0 {
+				// Only do a spell check once we check if the word didn't appear in the m.allOptionWordsWithCount
+				// Also skip spell checking if the word is smaller than 5 characters
+				suggestion := m.model.SpellCheck(b2s(word))
+				if len(suggestion) != 0 {
+					m.wordHasher.Reset()
+					m.wordHasher.Write(s2b(suggestion))
+					hashedWord = m.wordHasher.Sum64()
+					if _, ok := m.allOptionWordsWithCount[hashedWord]; ok {
+						m.allOptionWordsWithCount[hashedWord] = true
+					}
+				} else {
+					m.ignoredWordsCacheMap[hashedWord]++
+				}
 			}
 			wordsCount++
 		}
 
-		if m.minWords > wordsCount {
-			return false
-		}
-
 	optionsLoop:
 		for _, option := range m.options {
+			if option.minWords > wordsCount {
+				continue
+			}
+
 			for _, wordHash := range option.wordsHashes {
 				if !m.allOptionWordsWithCount[wordHash] {
 					continue optionsLoop
@@ -227,99 +253,6 @@ func NormalizeString(inStr string) string {
 
 	// Convert the inBytes to a string without copying the data
 	return b2s(inBytes)
-}
-
-// Common dutch word that do not really add anything to the core of what we try to match
-var blackListedWords = []string{
-	"ik",
-	"je",
-	"het",
-	"de",
-	"is",
-	"dat",
-	"een",
-	"niet",
-	"en",
-	"wat",
-	"van",
-	"we",
-	"in",
-	"ze",
-	"op",
-	"te",
-	"hij",
-	"zijn",
-	"er",
-	"maar",
-	"me",
-	"die",
-	"heb",
-	"voor",
-	"met",
-	"als",
-	"ben",
-	"was",
-	"mijn",
-	"u",
-	"dit",
-	"aan",
-	"om",
-	"hier",
-	"naar",
-	"dan",
-	"jij",
-	"zo",
-	"weet",
-	"ja",
-	"kan",
-	"geen",
-	"nog",
-	"wel",
-	"wil",
-	"moet",
-	"goed",
-	"hem",
-	"hebben",
-	"nee",
-	"heeft",
-	"waar",
-	"nu",
-	"hoe",
-	"ga",
-	"kom",
-	"uit",
-	"gaan",
-	"bent",
-	"haar",
-	"doen",
-	"ook",
-	"mij",
-	"over",
-	"of",
-	"daar",
-	"zou",
-	"al",
-	"jullie",
-	"zal",
-	"bij",
-	"ons",
-	"gaat",
-	"hebt",
-	"meer",
-	"waarom",
-	"iets",
-	"deze",
-	"laat",
-	"had",
-	"doe",
-	"moeten",
-	"wie",
-	"jou",
-	"alles",
-	"denk",
-	"kunnen",
-	"eens",
-	"echt",
 }
 
 // b2s converts a byte slice to a string without copying
