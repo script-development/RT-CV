@@ -21,16 +21,18 @@ type Matcher struct {
 	model                   *fuzzy.Model
 	allOptionWordsWithCount map[uint64]bool
 	ignoredWordsCacheMap    map[uint64]uint64
+	cacheCleanup            bool
 }
 
 type matcherOption struct {
+	inIdx    int
 	minWords int
 	// key = word hash, value = used by the match method to determin if a match was made
 	wordsHashes []uint64
 }
 
 // Compile creates a new Matcher for the input string
-func Compile(ins ...string) *Matcher {
+func Compile(cacheCleanup bool, ins ...string) *Matcher {
 	if len(ins) == 0 {
 		return &Matcher{
 			empty: true,
@@ -45,6 +47,7 @@ func Compile(ins ...string) *Matcher {
 		model:                   fuzzy.NewModel(),
 		allOptionWordsWithCount: map[uint64]bool{},
 		ignoredWordsCacheMap:    map[uint64]uint64{},
+		cacheCleanup:            cacheCleanup,
 	}
 	m.model.SetThreshold(1)
 	m.model.SetDepth(2)
@@ -110,7 +113,7 @@ func (m *Matcher) Match(in ...string) bool {
 	}
 
 	// Cleanup the ignoredWordsCacheMap
-	if len(m.ignoredWordsCacheMap) > 10.000 {
+	if m.cacheCleanup && len(m.ignoredWordsCacheMap) > 10.000 {
 		removeCount := 0
 		for key, hitCount := range m.ignoredWordsCacheMap {
 			if hitCount < 10 {

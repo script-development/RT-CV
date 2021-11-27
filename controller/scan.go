@@ -67,12 +67,16 @@ var routeScraperScanCV = routeBuilder.R{
 		// If they are not cached yet or the cache it outdated, set the cache
 		matcherProfilesCache := ctx.GetMatcherProfilesCache(c)
 		profiles := matcherProfilesCache.Profiles
-		if profiles == nil || matcherProfilesCache.InsertionTime.Add(time.Hour).Before(time.Now()) {
+		if profiles == nil || matcherProfilesCache.InsertionTime.Add(time.Hour*24).Before(time.Now()) {
 			logger.Info("updating the profiles cache")
 			// Update the cache
-			profiles, err = models.GetActualActiveProfiles(dbConn)
+			profilesFromDB, err := models.GetActualActiveProfiles(dbConn)
 			if err != nil {
 				return err
+			}
+			profiles = make([]*models.Profile, len(profilesFromDB))
+			for idx := range profilesFromDB {
+				profiles[idx] = &profilesFromDB[idx]
 			}
 			*matcherProfilesCache = ctx.MatcherProfilesCache{
 				Profiles:      profiles,

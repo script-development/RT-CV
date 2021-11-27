@@ -118,7 +118,7 @@ func SetDbConn(ctx context.Context, value db.Connection) context.Context {
 // MatcherProfilesCache contains the matcher profiles cache
 type MatcherProfilesCache struct {
 	InsertionTime time.Time
-	Profiles      []models.Profile
+	Profiles      []*models.Profile
 }
 
 // GetMatcherProfilesCache returns the cached profiles used by the matcher

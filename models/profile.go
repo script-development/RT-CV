@@ -11,6 +11,7 @@ import (
 	"github.com/jordan-wright/email"
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/emailservice"
+	"github.com/script-development/RT-CV/helpers/fuzzystrmatcher"
 	"github.com/script-development/RT-CV/helpers/validation"
 	"github.com/valyala/fasthttp"
 	"go.mongodb.org/mongo-driver/bson"
@@ -48,6 +49,9 @@ type Profile struct {
 
 	// OldID is used to keep track of converted old profiles
 	OldID *uint64 `bson:"_old_id" json:"-"`
+
+	// Set by the matcher
+	EducationFuzzyMatcher *fuzzystrmatcher.Matcher `bson:"-" json:"-"`
 }
 
 // CollectionName returns the collection name of the Profile

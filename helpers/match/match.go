@@ -20,7 +20,7 @@ type FoundMatch struct {
 }
 
 // Match tries to match a profile to a CV
-func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMatch {
+func Match(domains []string, profiles []*models.Profile, cv models.CV) []FoundMatch {
 	res := []FoundMatch{}
 
 	formattedDomains := make([][]string, len(domains))
@@ -48,13 +48,10 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 			continue
 		}
 
-		match := FoundMatch{
-			Profile: profile,
-			Matches: models.Match{
-				M:         db.NewM(),
-				ProfileID: profile.ID,
-				When:      jsonHelpers.RFC3339Nano(time.Now()),
-			},
+		match := models.Match{
+			M:         db.NewM(),
+			ProfileID: profile.ID,
+			When:      jsonHelpers.RFC3339Nano(time.Now()),
 		}
 
 		// Check domain
@@ -64,7 +61,7 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 				if domain == "*" {
 					// This is a match all domain name
 					// We can just match the first formatted domain name
-					match.Matches.Domain = &domains[0]
+					match.Domain = &domains[0]
 					foundMatch = true
 				}
 
@@ -74,7 +71,7 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 				for formattedDomainsIdx, formattedDomain := range formattedDomains {
 					if len(formattedDomain) == 1 && formattedDomain[0] == "*" {
 						// This is match all domain name *
-						match.Matches.Domain = &domains[formattedDomainsIdx]
+						match.Domain = &domains[formattedDomainsIdx]
 						foundMatch = true
 						break
 					}
@@ -98,7 +95,7 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 					}
 
 					if matched {
-						match.Matches.Domain = &domains[formattedDomainsIdx]
+						match.Domain = &domains[formattedDomainsIdx]
 						foundMatch = true
 						break
 					}
@@ -145,13 +142,22 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 			}
 
 			yearsSinceEducation := time.Now().Year() - lastEducativeYear.Year()
-			match.Matches.YearsSinceEducation = &yearsSinceEducation
+			match.YearsSinceEducation = &yearsSinceEducation
 		}
 
 		// Check education and courses
 		matchedAnEducationOrCourse := false
 		checkedForEducationOrCourse := len(profile.Educations) > 0
 		if checkedForEducationOrCourse {
+			if (len(cv.Educations) > 0 || len(cv.Courses) > 0) && profile.EducationFuzzyMatcher == nil {
+				// The fuzzy matcher is not yet setup, lets set it up here
+				educationNames := make([]string, len(profile.Educations))
+				for idx, education := range profile.Educations {
+					educationNames[idx] = education.Name
+				}
+				profile.EducationFuzzyMatcher = fuzzystrmatcher.Compile(false, educationNames...)
+			}
+
 			if len(cv.Educations) > 0 {
 			educationLoop:
 				for profileEducationIdx, profileEducation := range profile.Educations {
@@ -184,7 +190,7 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 							continue
 						}
 
-						match.Matches.Education = &profile.Educations[profileEducationIdx].Name
+						match.Education = &profile.Educations[profileEducationIdx].Name
 						matchedAnEducationOrCourse = true
 						break educationLoop
 					}
@@ -208,7 +214,7 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 							continue
 						}
 
-						match.Matches.Course = &profile.Educations[profileCourseIdx].Name
+						match.Course = &profile.Educations[profileCourseIdx].Name
 						matchedAnEducationOrCourse = true
 						break coursesLoop
 					}
@@ -246,7 +252,7 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 
 				for _, cvName := range normalizedCVPreferredJobsCache {
 					if cvName == profileName {
-						match.Matches.DesiredProfession = &profile.DesiredProfessions[profileProfessionIdx].Name
+						match.DesiredProfession = &profile.DesiredProfessions[profileProfessionIdx].Name
 						matchedADesiredProfession = true
 						break professionLoop
 					}
@@ -293,7 +299,7 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 			}
 
 			if matchedAProfessionExperienced {
-				match.Matches.ProfessionExperienced = &matchedProfileName
+				match.ProfessionExperienced = &matchedProfileName
 			} else if profile.MustExpProfession {
 				continue
 			}
@@ -321,7 +327,7 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 			}
 
 			yearsSinceLastWork := now.Year() - lastWorkYear
-			match.Matches.YearsSinceWork = &yearsSinceLastWork
+			match.YearsSinceWork = &yearsSinceLastWork
 		}
 
 		// Check drivers license
@@ -356,7 +362,7 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 			}
 
 			if matchedADriversLicense {
-				match.Matches.DriversLicense = true
+				match.DriversLicense = true
 			} else if profile.MustDriversLicense {
 				// CV doesn't have any matching drivers license
 				continue
@@ -388,7 +394,7 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 			cvZipInRange := false
 			for idx, zipcode := range profile.Zipcodes {
 				if zipcode.IsWithinCithAndArea(cvZipNrUint16) {
-					match.Matches.ZipCode = &profile.Zipcodes[idx]
+					match.ZipCode = &profile.Zipcodes[idx]
 					cvZipInRange = true
 					break
 				}
@@ -400,7 +406,10 @@ func Match(domains []string, profiles []models.Profile, cv models.CV) []FoundMat
 			}
 		}
 
-		res = append(res, match)
+		res = append(res, FoundMatch{
+			Profile: *profile,
+			Matches: match,
+		})
 	}
 
 	return res

@@ -54,7 +54,7 @@ func TestMatch(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		parsedInput := Compile(testCase.input)
+		parsedInput := Compile(false, testCase.input)
 		if testCase.shouldMatch {
 			True(t, parsedInput.Match(testCase.matchWith), `Expected "%s" to match "%v"`, testCase.input, testCase.matchWith)
 		} else {
@@ -62,7 +62,7 @@ func TestMatch(t *testing.T) {
 		}
 	}
 
-	matcher := Compile(
+	matcher := Compile(false,
 		"I love trees",
 		"bananas are the best fruit",
 		"banana",
@@ -102,10 +102,10 @@ func BenchmarkMatch(b *testing.B) {
 
 	defer func() {
 		pprof.StopCPUProfile()
-		f.Close()
+		_ = f.Close()
 	}()
 
-	matcher := Compile(
+	matcher := Compile(false,
 		"I love trees",
 		"bananas are the best fruit",
 		"banana",
