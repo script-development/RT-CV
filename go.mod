@@ -13,7 +13,7 @@ require (
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/joho/godotenv v1.4.0
 	github.com/jordan-wright/email v4.0.1-0.20210109023952-943e75fe5223+incompatible
-	github.com/mjarkk/fuzzy-matcher v1.0.0
+	github.com/mjarkk/fuzzy-matcher v1.0.2
 	github.com/mjarkk/jsonschema v0.0.0-20211029075542-4c01223c0963
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
