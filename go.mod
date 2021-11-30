@@ -13,15 +13,16 @@ require (
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/joho/godotenv v1.4.0
 	github.com/jordan-wright/email v4.0.1-0.20210109023952-943e75fe5223+incompatible
+	github.com/mjarkk/fuzzy-matcher v1.0.0
 	github.com/mjarkk/jsonschema v0.0.0-20211029075542-4c01223c0963
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
-	github.com/sajari/fuzzy v1.0.0 // indirect
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/pretty v1.2.0 // indirect
+	github.com/tj/assert v0.0.3
 	github.com/valyala/fasthttp v1.31.0
 	go.mongodb.org/mongo-driver v1.7.4
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20211107104306-e0b2ad06fe42 // indirect
-	jaytaylor.com/html2text v0.0.0-20211105163654-bc68cce691ba // indirect
+	jaytaylor.com/html2text v0.0.0-20211105163654-bc68cce691ba
 )

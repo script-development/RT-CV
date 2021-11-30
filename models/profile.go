@@ -9,9 +9,9 @@ import (
 	"regexp"
 
 	"github.com/jordan-wright/email"
+	fuzzymatcher "github.com/mjarkk/fuzzy-matcher"
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/emailservice"
-	"github.com/script-development/RT-CV/helpers/fuzzystrmatcher"
 	"github.com/script-development/RT-CV/helpers/validation"
 	"github.com/valyala/fasthttp"
 	"go.mongodb.org/mongo-driver/bson"
@@ -51,7 +51,7 @@ type Profile struct {
 	OldID *uint64 `bson:"_old_id" json:"-"`
 
 	// Set by the matcher
-	EducationFuzzyMatcher *fuzzystrmatcher.Matcher `bson:"-" json:"-"`
+	EducationFuzzyMatcher *fuzzymatcher.Matcher `bson:"-" json:"-"`
 }
 
 // CollectionName returns the collection name of the Profile
