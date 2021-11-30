@@ -105,6 +105,8 @@ github.com/mattn/go-runewidth v0.0.9/go.mod h1:H031xJmbD/WCDINGzjvQ9THkh0rPKHF+m
 github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b/go.mod h1:01TrycV0kFyexm33Z7vhZRXopbI8J3TDReVlkTgMUxE=
 github.com/mjarkk/fuzzy-matcher v1.0.2 h1:6B/nVw/0SRc1EusU6vCp8KDND/E8jWQ/r0oB8RL+lsQ=
 github.com/mjarkk/fuzzy-matcher v1.0.2/go.mod h1:UzNWg8CAeuqbbrz+B/YamOMCLHR2KVc4wKh8DhU0QJU=
+github.com/mjarkk/fuzzy-matcher v1.0.3 h1:tc69JvgkX0otbdSbXHuKj0KlFWeMyqnAhzV8KIQgg24=
+github.com/mjarkk/fuzzy-matcher v1.0.3/go.mod h1:UzNWg8CAeuqbbrz+B/YamOMCLHR2KVc4wKh8DhU0QJU=
 github.com/mjarkk/jsonschema v0.0.0-20211029075542-4c01223c0963 h1:o5kE651aE+8/Zyl3VUhUJGEn9HUO+707Ra8fXaYQt6M=
 github.com/mjarkk/jsonschema v0.0.0-20211029075542-4c01223c0963/go.mod h1:mec2y2M8N5CP+akxyw/Aiq+6ecrAswSFYbblXvAusyI=
 github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe/go.mod h1:wL8QJuTMNUDYhXwkmfOly8iTdp5TEcJFWZD2D7SIkUc=
