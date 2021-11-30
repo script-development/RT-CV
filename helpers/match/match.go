@@ -31,9 +31,7 @@ func Match(domains []string, profiles []*models.Profile, cv models.CV) []FoundMa
 	now := time.Now()
 
 	var (
-		// normalizedCVEducationCache      []string
 		normalizedCVPreferredJobsCache  []string
-		normalizedCVWrkExpProfnameCache []string
 		normalizedCVDriversLicenseCache []string
 	)
 
@@ -151,11 +149,11 @@ func Match(domains []string, profiles []*models.Profile, cv models.CV) []FoundMa
 		if checkedForEducationOrCourse {
 			if (len(cv.Educations) > 0 || len(cv.Courses) > 0) && profile.EducationFuzzyMatcher == nil {
 				// The fuzzy matcher is not yet setup, lets set it up here
-				educationNames := make([]string, len(profile.Educations))
+				names := make([]string, len(profile.Educations))
 				for idx, education := range profile.Educations {
-					educationNames[idx] = education.Name
+					names[idx] = education.Name
 				}
-				profile.EducationFuzzyMatcher = fuzzymatcher.NewMatcher(educationNames...)
+				profile.EducationFuzzyMatcher = fuzzymatcher.NewMatcher(names...)
 			}
 
 			if len(cv.Educations) > 0 {
@@ -245,31 +243,26 @@ func Match(domains []string, profiles []*models.Profile, cv models.CV) []FoundMa
 		matchedProfileName := ""
 		checkedForProfessionExperienced := len(profile.ProfessionExperienced) > 0
 		if checkedForProfessionExperienced {
-		professionExperiencedProfileLoop:
-			for _, profileProfession := range profile.ProfessionExperienced {
-				profileName := wordvalidator.NormalizeString(profileProfession.Name)
-				if len(profileName) == 0 {
+			for _, workExp := range cv.WorkExperiences {
+				if profile.ProfessionExperiencedFuzzyMatcher == nil {
+					// The fuzzy matcher is not yet setup, lets set it up here
+					names := make([]string, len(profile.ProfessionExperienced))
+					for idx, profile := range profile.ProfessionExperienced {
+						names[idx] = profile.Name
+					}
+
+					profile.ProfessionExperiencedFuzzyMatcher = fuzzymatcher.NewMatcher(names...)
+				}
+
+				if len(workExp.Profession) == 0 {
 					continue
 				}
 
-				// Cache the normalized names once we need it so we don't have to do duplicated work
-				if normalizedCVWrkExpProfnameCache == nil {
-					normalizedCVWrkExpProfnameCache = []string{}
-					for _, cvWorkExp := range cv.WorkExperiences {
-						normalizedName := wordvalidator.NormalizeString(cvWorkExp.Profession)
-						if len(normalizedName) == 0 {
-							continue
-						}
-						normalizedCVWrkExpProfnameCache = append(normalizedCVWrkExpProfnameCache, normalizedName)
-					}
-				}
-
-				for _, profName := range normalizedCVWrkExpProfnameCache {
-					if profName == profileName {
-						matchedAProfessionExperienced = true
-						matchedProfileName = profileProfession.Name
-						break professionExperiencedProfileLoop
-					}
+				match := profile.ProfessionExperiencedFuzzyMatcher.Match(workExp.Profession)
+				if match != -1 {
+					matchedAProfessionExperienced = true
+					matchedProfileName = profile.ProfessionExperienced[match].Name
+					break
 				}
 			}
 

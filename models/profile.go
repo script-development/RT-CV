@@ -51,7 +51,8 @@ type Profile struct {
 	OldID *uint64 `bson:"_old_id" json:"-"`
 
 	// Set by the matcher
-	EducationFuzzyMatcher *fuzzymatcher.Matcher `bson:"-" json:"-"`
+	EducationFuzzyMatcher             *fuzzymatcher.Matcher `bson:"-" json:"-"`
+	ProfessionExperiencedFuzzyMatcher *fuzzymatcher.Matcher `bson:"-" json:"-"`
 }
 
 // CollectionName returns the collection name of the Profile
