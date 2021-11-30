@@ -9,6 +9,7 @@ import (
 	"regexp"
 
 	"github.com/jordan-wright/email"
+	fuzzymatcher "github.com/mjarkk/fuzzy-matcher"
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/emailservice"
 	"github.com/script-development/RT-CV/helpers/validation"
@@ -48,6 +49,10 @@ type Profile struct {
 
 	// OldID is used to keep track of converted old profiles
 	OldID *uint64 `bson:"_old_id" json:"-"`
+
+	// Set by the matcher
+	EducationFuzzyMatcher             *fuzzymatcher.Matcher `bson:"-" json:"-"`
+	ProfessionExperiencedFuzzyMatcher *fuzzymatcher.Matcher `bson:"-" json:"-"`
 }
 
 // CollectionName returns the collection name of the Profile

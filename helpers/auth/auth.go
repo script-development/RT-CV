@@ -26,9 +26,9 @@ type Helper struct {
 }
 
 type cachedKey struct {
-	LastRefreshed time.Time
-	KeyAsSha512   string
-	key           models.APIKey
+	validTil                           time.Time
+	KeyAsSha512Lower, KeyAsSha512Upper string
+	key                                *models.APIKey
 }
 
 // NewHelper returns a new instance of AuthHelper
@@ -75,17 +75,16 @@ func (h *Helper) Valid(authorizationHeader string) (*models.APIKey, error) {
 		return nil, ErrAuthHeaderInvalidFormat
 	}
 
-	keyAsSha512 := strings.ToLower(authorizationHeader[endID+1:])
-
+	keyAsSha512 := authorizationHeader[endID+1:]
 	keyCacheEntryInterf, ok := h.cache.Load(id)
 	if ok {
 		keyCacheEntry := keyCacheEntryInterf.(cachedKey)
-		if time.Now().Before(keyCacheEntry.LastRefreshed.Add(time.Hour * 12)) {
-			// Yay a cache entry for this key exists and is still valid
-			if keyCacheEntry.KeyAsSha512 != keyAsSha512 {
-				return nil, ErrAuthHeaderInvalid
+		if time.Now().Before(keyCacheEntry.validTil) {
+			// Yay a cache entry for this key exists and it's still valid
+			if keyCacheEntry.KeyAsSha512Lower == keyAsSha512 || keyCacheEntry.KeyAsSha512Upper == keyAsSha512 {
+				return keyCacheEntry.key, nil
 			}
-			return &keyCacheEntry.key, nil
+			return nil, ErrAuthHeaderInvalid
 		}
 		// Cache entry outdated
 		h.RemoveKeyCache(id)
@@ -103,15 +102,18 @@ func (h *Helper) Valid(authorizationHeader string) (*models.APIKey, error) {
 		return nil, err
 	}
 
-	hashedKey := crypto.HashSha512String(key.Key)
+	hashedKey := strings.ToLower(crypto.HashSha512String(key.Key))
+	hashedKeyUpper := strings.ToUpper(hashedKey)
+
 	h.cache.Store(id, cachedKey{
-		LastRefreshed: time.Now(),
-		KeyAsSha512:   hashedKey,
-		key:           key,
+		validTil:         time.Now().Add(time.Hour * 12),
+		KeyAsSha512Lower: strings.ToLower(hashedKey),
+		KeyAsSha512Upper: hashedKeyUpper,
+		key:              &key,
 	})
 
-	if keyAsSha512 != hashedKey {
-		return nil, ErrAuthHeaderInvalid
+	if keyAsSha512 == hashedKey || keyAsSha512 == hashedKeyUpper {
+		return &key, nil
 	}
-	return &key, nil
+	return nil, ErrAuthHeaderInvalid
 }

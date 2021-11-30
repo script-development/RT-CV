@@ -4,7 +4,28 @@ import (
 	"testing"
 
 	"github.com/script-development/RT-CV/helpers/wordvalidator"
+	"github.com/tj/assert"
 )
+
+func TestNormalizeString(t *testing.T) {
+	testCases := []struct {
+		name   string
+		input  string
+		expect string
+	}{
+		{"normalized inputs should not change", "abc", "abc"},
+		{"should be converted to lowercase", "ABC", "abc"},
+		{"spaces should be trimmed", "  ABC  ", "abc"},
+		{"duplicated spaces should reduced to 1 space", "A  B   C", "a b c"},
+		{"new line and tab characters should be replace by a space", "A\nB\tC", "a b c"},
+		{"special characters should be removed", "a+b-c(d)", "abcd"},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.expect, wordvalidator.NormalizeString(testCase.input))
+		})
+	}
+}
 
 type Profession struct {
 	Name           string
