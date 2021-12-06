@@ -168,12 +168,18 @@ func (c *Connection) RegisterEntries(entries ...db.Entry) {
 
 		if !namesMap[collectionName] {
 			log.Infof("Creating collection %s", collectionName)
-			c.db.CreateCollection(dbHelpers.Ctx(), collectionName)
+			err = c.db.CreateCollection(dbHelpers.Ctx(), collectionName)
+			if err != nil {
+				log.Fatal(err.Error())
+			}
 		}
 
 		indexes := entry.Indexes()
 		if len(indexes) > 0 {
-			c.db.Collection(collectionName).Indexes().CreateMany(context.Background(), indexes)
+			_, err = c.db.Collection(collectionName).Indexes().CreateMany(context.Background(), indexes)
+			if err != nil {
+				log.Fatal(err.Error())
+			}
 		}
 	}
 
