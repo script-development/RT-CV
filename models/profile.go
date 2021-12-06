@@ -50,9 +50,14 @@ type Profile struct {
 	// OldID is used to keep track of converted old profiles
 	OldID *uint64 `bson:"_old_id" json:"-"`
 
-	// Set by the matcher
+	// Variables set by the matching process only when they needed
+	// These are mainly used for caching so we don't have to calculate values twice
+	// There values where detected using the -profile flag, see main.go for more info
 	EducationFuzzyMatcher             *fuzzymatcher.Matcher `bson:"-" json:"-"`
 	ProfessionExperiencedFuzzyMatcher *fuzzymatcher.Matcher `bson:"-" json:"-"`
+	DesiredProfessionsFuzzyMatcher    *fuzzymatcher.Matcher `bson:"-" json:"-"`
+	DomainPartsCache                  [][]string            `bson:"-" json:"-"`
+	NormalizedDriversLicensesCache    []string              `bson:"-" json:"-"`
 }
 
 // CollectionName returns the collection name of the Profile

@@ -30,10 +30,7 @@ func Match(domains []string, profiles []*models.Profile, cv models.CV) []FoundMa
 
 	now := time.Now()
 
-	var (
-		normalizedCVPreferredJobsCache  []string
-		normalizedCVDriversLicenseCache []string
-	)
+	var normalizedCVDriversLicenseCache []string
 
 	for _, profile := range profiles {
 		if !profile.Active {
@@ -55,7 +52,13 @@ func Match(domains []string, profiles []*models.Profile, cv models.CV) []FoundMa
 		// Check domain
 		if len(profile.Domains) > 0 && len(domains) > 0 {
 			foundMatch := false
-			for _, domain := range profile.Domains {
+			if profile.DomainPartsCache == nil {
+				profile.DomainPartsCache = make([][]string, len(profile.Domains))
+				for idx, domain := range profile.Domains {
+					profile.DomainPartsCache[idx] = strings.Split(domain, ".")
+				}
+			}
+			for domainIdx, domain := range profile.Domains {
 				if domain == "*" {
 					// This is a match all domain name
 					// We can just match the first formatted domain name
@@ -63,7 +66,7 @@ func Match(domains []string, profiles []*models.Profile, cv models.CV) []FoundMa
 					foundMatch = true
 				}
 
-				domainParts := strings.Split(domain, ".")
+				domainParts := profile.DomainPartsCache[domainIdx]
 				domainPartsLen := len(domainParts)
 
 				for formattedDomainsIdx, formattedDomain := range formattedDomains {
@@ -204,31 +207,24 @@ func Match(domains []string, profiles []*models.Profile, cv models.CV) []FoundMa
 		matchedADesiredProfession := false
 		checkedForDesiredProfession := len(profile.DesiredProfessions) > 0
 		if checkedForDesiredProfession {
-		professionLoop:
-			for profileProfessionIdx, profileProfession := range profile.DesiredProfessions {
-				profileName := wordvalidator.NormalizeString(profileProfession.Name)
-				if len(profileName) == 0 {
+			if profile.DesiredProfessionsFuzzyMatcher == nil {
+				profileProfessionNames := make([]string, len(profile.DesiredProfessions))
+				for idx, p := range profile.DesiredProfessions {
+					profileProfessionNames[idx] = p.Name
+				}
+				profile.DesiredProfessionsFuzzyMatcher = fuzzymatcher.NewMatcher(profileProfessionNames...)
+			}
+
+			for _, cvPreferredJob := range cv.PreferredJobs {
+				if len(cvPreferredJob) == 0 {
 					continue
 				}
 
-				// Cache the normalized names once we need it so we don't have to do duplicated work
-				if normalizedCVPreferredJobsCache == nil {
-					normalizedCVPreferredJobsCache = []string{}
-					for _, cvPreferredJob := range cv.PreferredJobs {
-						normalizedName := wordvalidator.NormalizeString(cvPreferredJob)
-						if len(normalizedName) == 0 {
-							continue
-						}
-						normalizedCVPreferredJobsCache = append(normalizedCVPreferredJobsCache, normalizedName)
-					}
-				}
-
-				for _, cvName := range normalizedCVPreferredJobsCache {
-					if cvName == profileName {
-						match.DesiredProfession = &profile.DesiredProfessions[profileProfessionIdx].Name
-						matchedADesiredProfession = true
-						break professionLoop
-					}
+				matchedDesiredProfession := profile.DesiredProfessionsFuzzyMatcher.Match(cvPreferredJob)
+				if matchedDesiredProfession != -1 {
+					match.DesiredProfession = &profile.DesiredProfessions[matchedDesiredProfession].Name
+					matchedADesiredProfession = true
+					break
 				}
 			}
 
@@ -239,10 +235,10 @@ func Match(domains []string, profiles []*models.Profile, cv models.CV) []FoundMa
 		}
 
 		// check profession experienced
-		matchedAProfessionExperienced := false
-		matchedProfileName := ""
+		matchedAProfile := false
 		checkedForProfessionExperienced := len(profile.ProfessionExperienced) > 0
 		if checkedForProfessionExperienced {
+			matchedProfileIdx := -1
 			for _, workExp := range cv.WorkExperiences {
 				if profile.ProfessionExperiencedFuzzyMatcher == nil {
 					// The fuzzy matcher is not yet setup, lets set it up here
@@ -260,22 +256,23 @@ func Match(domains []string, profiles []*models.Profile, cv models.CV) []FoundMa
 
 				match := profile.ProfessionExperiencedFuzzyMatcher.Match(workExp.Profession)
 				if match != -1 {
-					matchedAProfessionExperienced = true
-					matchedProfileName = profile.ProfessionExperienced[match].Name
+					matchedProfileIdx = match
 					break
 				}
 			}
 
-			if matchedAProfessionExperienced {
-				match.ProfessionExperienced = &matchedProfileName
+			if matchedProfileIdx != -1 {
+				matchedAProfile = true
+				match.ProfessionExperienced = &profile.ProfessionExperienced[matchedProfileIdx].Name
 			} else if profile.MustExpProfession {
 				continue
 			}
 		}
 
 		// Check years since work
-		yearsSinceWork := profile.YearsSinceWork
-		if yearsSinceWork != nil && *yearsSinceWork > 0 {
+		if profile.YearsSinceWork != nil && *profile.YearsSinceWork > 0 {
+			profileMustYearsSinceWork := *profile.YearsSinceWork
+			nowYear := now.Year()
 			lastWorkYear := 0
 
 			for _, cvWorkExp := range cv.WorkExperiences {
@@ -289,12 +286,17 @@ func Match(domains []string, profiles []*models.Profile, cv models.CV) []FoundMa
 				}
 			}
 
-			if now.Year()-*yearsSinceWork > lastWorkYear {
+			// Sanity check
+			if lastWorkYear > nowYear {
+				lastWorkYear = nowYear
+			}
+
+			yearsSinceLastWork := nowYear - lastWorkYear
+			if yearsSinceLastWork > profileMustYearsSinceWork {
 				// To long ago since last work
 				continue
 			}
 
-			yearsSinceLastWork := now.Year() - lastWorkYear
 			match.YearsSinceWork = &yearsSinceLastWork
 		}
 
@@ -302,13 +304,19 @@ func Match(domains []string, profiles []*models.Profile, cv models.CV) []FoundMa
 		matchedADriversLicense := false
 		checkedForDriversLicense := len(profile.DriversLicenses) > 0
 		if checkedForDriversLicense {
-		driversLicensesLoop:
-			for _, profileDriversLicense := range profile.DriversLicenses {
-				profileName := wordvalidator.NormalizeString(profileDriversLicense.Name)
-				if len(profileName) == 0 {
-					continue
+			if profile.NormalizedDriversLicensesCache == nil {
+				profile.NormalizedDriversLicensesCache = []string{}
+				for _, l := range profile.DriversLicenses {
+					normalizedDriversLicense := wordvalidator.NormalizeString(l.Name)
+					if len(normalizedDriversLicense) == 0 {
+						continue
+					}
+					profile.NormalizedDriversLicensesCache = append(profile.NormalizedDriversLicensesCache, normalizedDriversLicense)
 				}
+			}
 
+		driversLicensesLoop:
+			for _, normalizedDriversLicense := range profile.NormalizedDriversLicensesCache {
 				// Cache the normalized names once we need it so we don't have to do duplicated work
 				if normalizedCVDriversLicenseCache == nil {
 					normalizedCVDriversLicenseCache = []string{}
@@ -321,8 +329,8 @@ func Match(domains []string, profiles []*models.Profile, cv models.CV) []FoundMa
 					}
 				}
 
-				for _, cvName := range normalizedCVDriversLicenseCache {
-					if profileName == cvName {
+				for _, normalizedCVDriversLicense := range normalizedCVDriversLicenseCache {
+					if normalizedDriversLicense == normalizedCVDriversLicense {
 						matchedADriversLicense = true
 						break driversLicensesLoop
 					}
@@ -337,9 +345,9 @@ func Match(domains []string, profiles []*models.Profile, cv models.CV) []FoundMa
 			}
 		}
 
+		// Check if at least one of the matches is true
 		if checkedForEducationOrCourse || checkedForDesiredProfession || checkedForDriversLicense || checkedForProfessionExperienced {
-			// Check if at least one of the matches is true
-			if !matchedAnEducationOrCourse && !matchedADesiredProfession && !matchedADriversLicense && !matchedAProfessionExperienced {
+			if !matchedAnEducationOrCourse && !matchedADesiredProfession && !matchedADriversLicense && !matchedAProfile {
 				continue
 			}
 		}
