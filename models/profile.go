@@ -232,7 +232,8 @@ func (d *ProfileHTTPCallData) MakeRequest(profile Profile, match Match) {
 	resp := fasthttp.AcquireResponse()
 	defer fasthttp.ReleaseResponse(resp)
 
-	fasthttp.Do(req, resp)
+	// We don't care about the error returned here as it's not our task to keep the endpoint running
+	var _ = fasthttp.Do(req, resp)
 }
 
 // ValidateCreateNewProfile validates a new profile to create
