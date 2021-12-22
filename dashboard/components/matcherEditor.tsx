@@ -1,6 +1,6 @@
 import Monokai from 'monaco-themes/themes/Monokai.json'
 import React, { MutableRefObject, useState, useEffect, useRef } from 'react'
-import { CircularProgress, IconButton } from '@material-ui/core'
+import { CircularProgress, IconButton, useTheme } from '@material-ui/core'
 import PlayArrow from '@material-ui/icons/PlayArrow'
 import { fetcher } from '../src/auth'
 import { parse } from 'jsonc-parser'
@@ -25,6 +25,7 @@ interface MatcherEditorProps {
 }
 
 export default function MatcherEditor({ expose, height, top }: MatcherEditorProps) {
+    const theme = useTheme()
     const [cvSchema, setCvSchema] = useState(undefined)
     const [inputValue, setInputValue] = useState(`{\n\t// Press ctrl + space to start hacking\n\t\n}`)
     const [outputValue, setOutputValue] = useState(`// press the play button to see the api result`)
@@ -76,7 +77,7 @@ export default function MatcherEditor({ expose, height, top }: MatcherEditorProp
             const startTime = performance.now()
             const res = await fetcher.post('/api/v1/scraper/scanCV', requestValue)
             const endTime = performance.now()
-            outputEditorRef.current.setValue(`// api call took ${Math.round(endTime - startTime)} milliseconds with ${res.length} results\n${JSON.stringify(res, null, '\t')}`)
+            outputEditorRef.current.setValue(`// api call took ${Math.round(endTime - startTime)} milliseconds with ${res.matches.length} results\n${JSON.stringify(res, null, '\t')}`)
         } finally {
             setLoading(false)
         }
@@ -107,7 +108,7 @@ export default function MatcherEditor({ expose, height, top }: MatcherEditorProp
                     : ''
                 }
             </div>
-            <div className="separator">
+            <div className="separator" style={{ backgroundColor: theme.palette.background.default }}>
                 <div className="playButtonContainer">
                     <IconButton
                         onClick={execute}
