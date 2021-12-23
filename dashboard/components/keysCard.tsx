@@ -92,7 +92,7 @@ export default function KeysCard() {
                                 </Tooltip>
                                 {key.id}
                             </h4>
-                            <p>{key.domains.join(', ')}</p>
+                            <p className="domains">{key.domains.join(', ')}</p>
                         </div>
                     </AccordionSummary>
                     <AccordionDetails>
@@ -120,7 +120,7 @@ export default function KeysCard() {
                 .accordionSummary {
 					display: flex;
 					justify-content: space-between;
-					width: 100%;
+                    width: 100%;
 				}
 				.accordionSummary .status {
 					display: inline-block;
@@ -130,6 +130,13 @@ export default function KeysCard() {
 					color: black;
 					border-radius: 10px;
 				}
+                .accordionSummary .domains {
+                    flex-shrink: 1;
+                    max-width: 230px;
+                    overflow: hidden;
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
+                }
             `}</style>
         </Card>
     )
