@@ -36,6 +36,10 @@ type Connection interface {
 
 	// DeleteByID deletes an entry from the database
 	DeleteByID(data Entry) error
+
+	// Count counts the number of documents in the database for the specific filter
+	// If filter is nil the number of all the documents is returned
+	Count(entry Entry, filter bson.M) (uint64, error)
 }
 
 // Entry are the functions required to put/get things in/from the database

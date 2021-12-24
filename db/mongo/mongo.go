@@ -146,6 +146,18 @@ func (c *Connection) DeleteByID(e db.Entry) error {
 	return err
 }
 
+// Count counts documents in a collection
+func (c *Connection) Count(entry db.Entry, filter bson.M) (uint64, error) {
+	if filter == nil {
+		filter = bson.M{}
+	}
+	count, err := c.collection(entry).CountDocuments(dbHelpers.Ctx(), filter)
+	if err != nil {
+		return 0, err
+	}
+	return uint64(count), nil
+}
+
 func (c *Connection) collection(entry db.Entry) *mongo.Collection {
 	return c.db.Collection(entry.CollectionName())
 }

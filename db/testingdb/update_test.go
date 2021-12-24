@@ -15,8 +15,9 @@ func TestUpdate(t *testing.T) {
 	// Insert dummy data
 	err := testDB.Insert(mockData)
 	NoError(t, err)
-	documentsCount := testDB.Count(mockData)
-	Equal(t, 1, documentsCount)
+	documentsCount, err := testDB.Count(mockData, nil)
+	NoError(t, err)
+	Equal(t, uint64(1), documentsCount)
 
 	// Create a new mockuser so we don't update the value behind the pointer
 	// what might cause a fake positive when checking the updated data in the database

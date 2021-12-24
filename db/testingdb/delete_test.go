@@ -15,18 +15,18 @@ func TestDelete(t *testing.T) {
 	// Insert dummy data
 	err := testDB.Insert(mockData)
 	NoError(t, err)
-	documentsCount := testDB.Count(mockData)
-	Equal(t, 1, documentsCount)
+	documentsCount, _ := testDB.Count(mockData, nil)
+	Equal(t, uint64(1), documentsCount)
 
 	// Delete entry and check if the collection is now empty
 	err = testDB.DeleteByID(mockData)
 	NoError(t, err)
-	documentsCount = testDB.Count(mockData)
-	Equal(t, 0, documentsCount)
+	documentsCount, _ = testDB.Count(mockData, nil)
+	Equal(t, uint64(0), documentsCount)
 
 	// Should result in no panics/errors if there is nothing to delete
 	err = testDB.DeleteByID(mockData)
 	NoError(t, err)
-	documentsCount = testDB.Count(mockData)
-	Equal(t, 0, documentsCount)
+	documentsCount, _ = testDB.Count(mockData, nil)
+	Equal(t, uint64(0), documentsCount)
 }
