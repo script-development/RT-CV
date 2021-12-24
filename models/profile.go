@@ -79,14 +79,9 @@ func (*Profile) Indexes() []mongo.IndexModel {
 	}
 }
 
-// GetActualActiveProfiles returns that we can actually use
-// Matches are not really helpfull if no desiredProfessions, professionExperienced, driversLicenses or educations is set
-// Matches without an onMatch property are useless as we can't send the match anywhere
-func GetActualActiveProfiles(conn db.Connection) ([]Profile, error) {
+func actualActiveProfilesFilter() bson.M {
 	isArrayWContent := bson.M{"$not": bson.M{"$size": 0}, "$type": "array"}
-
-	profiles := []Profile{}
-	filter := bson.M{
+	return bson.M{
 		"active": true,
 		"$and": []bson.M{
 			{
@@ -105,8 +100,20 @@ func GetActualActiveProfiles(conn db.Connection) ([]Profile, error) {
 			},
 		},
 	}
-	err := conn.Find(&Profile{}, &profiles, filter)
+}
+
+// GetActualActiveProfiles returns that we can actually use
+// Matches are not really helpfull if no desiredProfessions, professionExperienced, driversLicenses or educations is set
+// Matches without an onMatch property are useless as we can't send the match anywhere
+func GetActualActiveProfiles(conn db.Connection) ([]Profile, error) {
+	profiles := []Profile{}
+	err := conn.Find(&Profile{}, &profiles, actualActiveProfilesFilter())
 	return profiles, err
+}
+
+// GetActualActiveProfilesCount does the same as GetActualActiveProfiles but only returns the number of found profiles
+func GetActualActiveProfilesCount(conn db.Connection) (uint64, error) {
+	return conn.Count(&Profile{}, actualActiveProfilesFilter())
 }
 
 // GetProfiles returns all profiles from the database
@@ -114,6 +121,11 @@ func GetProfiles(conn db.Connection) ([]Profile, error) {
 	profiles := []Profile{}
 	err := conn.Find(&Profile{}, &profiles, nil)
 	return profiles, err
+}
+
+// GetProfilesCount returns the amount of profiles in the database
+func GetProfilesCount(conn db.Connection) (uint64, error) {
+	return conn.Count(&Profile{}, nil)
 }
 
 // GetProfile returns a profile by id

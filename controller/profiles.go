@@ -24,30 +24,30 @@ var routeAllProfiles = routeBuilder.R{
 // RouteGetProfilesCountRes is the response for routeGetProfilesCount
 type RouteGetProfilesCountRes struct {
 	// Total is the total number of profiles
-	Total int `json:"total"`
+	Total uint64 `json:"total"`
 	// Usable is the number of profiles that can be used for matching
-	Usable int `json:"usable"`
+	Usable uint64 `json:"usable"`
 }
 
 var routeGetProfilesCount = routeBuilder.R{
 	Description: "get the number of profiles stored in the database",
 	Res:         RouteGetProfilesCountRes{},
 	Fn: func(c *fiber.Ctx) error {
-		profiles, err := models.GetProfiles(ctx.GetDbConn(c))
+		db := ctx.GetDbConn(c)
+
+		profilesCount, err := models.GetProfilesCount(db)
 		if err != nil {
 			return err
 		}
 
-		usableProfiles := 0
-		for _, profile := range profiles {
-			if profile.Active && (len(profile.OnMatch.SendMail) != 0 || len(profile.OnMatch.HTTPCall) != 0) {
-				usableProfiles++
-			}
+		usableProfilesCount, err := models.GetActualActiveProfilesCount(db)
+		if err != nil {
+			return err
 		}
 
 		res := RouteGetProfilesCountRes{
-			Total:  len(profiles),
-			Usable: usableProfiles,
+			Total:  profilesCount,
+			Usable: usableProfilesCount,
 		}
 		return c.JSON(res)
 	},

@@ -89,5 +89,5 @@ func TestRouteGetProfilesCount(t *testing.T) {
 
 	// Get all profiles
 	_, res := app.MakeRequest(routeBuilder.Get, `/api/v1/profiles/count`, TestReqOpts{})
-	Equal(t, `{"total":2,"usable":2}`, string(res))
+	Equal(t, `{"total":2,"usable":1}`, string(res))
 }
