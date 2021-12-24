@@ -2,10 +2,12 @@ package models
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -100,17 +102,21 @@ func (ll LanguageLevel) Valid() bool {
 	return ll >= LanguageLevelUnknown && ll <= LanguageLevelExcellent
 }
 
+func (ll LanguageLevel) asjson() json.RawMessage {
+	return []byte(strconv.FormatUint(uint64(ll), 10))
+}
+
 // JSONSchemaDescribe implements schema.Describe
 func (LanguageLevel) JSONSchemaDescribe() jsonschema.Property {
 	return jsonschema.Property{
 		Title:       "Language level",
 		Description: langLevelDescription,
 		Type:        jsonschema.PropertyTypeNumber,
-		Enum: []interface{}{
-			LanguageLevelUnknown,
-			LanguageLevelReasonable,
-			LanguageLevelGood,
-			LanguageLevelExcellent,
+		Enum: []json.RawMessage{
+			LanguageLevelUnknown.asjson(),
+			LanguageLevelReasonable.asjson(),
+			LanguageLevelGood.asjson(),
+			LanguageLevelExcellent.asjson(),
 		},
 	}
 }

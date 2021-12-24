@@ -23,9 +23,9 @@ func (RFC3339Nano) JSONSchemaDescribe() jsonschema.Property {
 		Description: "This field is a RFC3339 (nano) time string, " +
 			"RFC3339 is basicly an extension of ISO 8601 so that should also be fine here",
 		Type: jsonschema.PropertyTypeString,
-		Examples: []interface{}{
-			"2019-10-12T07:20:50.52Z",
-			"2019-10-12T14:20:50.52+07:00",
+		Examples: []json.RawMessage{
+			[]byte("2019-10-12T07:20:50.52Z"),
+			[]byte("2019-10-12T14:20:50.52+07:00"),
 		},
 		MinLength: &minLen,
 	}

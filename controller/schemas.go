@@ -36,6 +36,7 @@ var routeGetCvSchema = routeBuilder.R{
 			return err
 		}
 		resSchema.Defs = defs
+
 		return c.JSON(resSchema)
 	},
 }
