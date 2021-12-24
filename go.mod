@@ -9,7 +9,6 @@ require (
 	github.com/apex/log v1.9.0
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/gofiber/fiber/v2 v2.22.0
-	github.com/gofiber/websocket/v2 v2.0.13
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/joho/godotenv v1.4.0
 	github.com/jordan-wright/email v4.0.1-0.20210109023952-943e75fe5223+incompatible

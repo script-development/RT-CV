@@ -163,11 +163,6 @@ type ProcessMatches struct {
 // - safe the matches of this reference number for analytics and for detecting duplicates
 // - send emails with the matches or send http requests
 func (args ProcessMatches) Process() {
-	err := dashboardListeners.publish("recived_cv", &args.RequestID, args.CV)
-	if err != nil {
-		args.Logger.WithError(err).Error("unable to save CV reference to database")
-	}
-
 	if len(args.MatchedProfiles) == 0 {
 		return
 	}
@@ -193,11 +188,6 @@ func (args ProcessMatches) Process() {
 	// Re-check the amount of matched profiles as we might have filtered out at the step above
 	if len(args.MatchedProfiles) == 0 {
 		return
-	}
-
-	err = dashboardListeners.publish("recived_cv_matches", &args.RequestID, args.MatchedProfiles)
-	if err != nil {
-		args.Logger.WithError(err).Error("unable to publish recived_cv_matches event")
 	}
 
 	analyticsData := make([]db.Entry, len(args.MatchedProfiles))

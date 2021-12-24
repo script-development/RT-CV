@@ -23,9 +23,6 @@ export default function Home() {
 					<Link href="/docs">
 						<Button style={ButtonStyle} color="primary" variant="outlined" startIcon={<Icon>menu_book</Icon>}>API docs</Button>
 					</Link>
-					<Link href="/events">
-						<Button style={ButtonStyle} color="primary" variant="outlined" startIcon={<Icon>radio_button_checked</Icon>}>Live events</Button>
-					</Link>
 				</div>
 
 				<KeysCard />

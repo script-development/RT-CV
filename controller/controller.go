@@ -93,11 +93,6 @@ func Routes(app *fiber.App, appVersion string, dbConn db.Connection, testing boo
 				b.Delete(``, routeDeleteKey)
 			}, middlewareBindKey())
 		}, requiresAuth(models.APIKeyRoleDashboard))
-
-		// Cannot send authenticate headers with the default javascript websocket client
-		// Thats why we have 2 routes 1 for authenticating with the header and 1 for authenticating with the url
-		b.Get(`/events/ws`, routeControlEventsWS, requiresAuth(models.APIKeyRoleDashboard))
-		b.Get(`/events/ws/:authorization`, routeControlEventsWS, requiresAuth(models.APIKeyRoleDashboard))
 	}, InsertData(dbConn))
 
 	_, err := os.Stat("./dashboard/out")
@@ -117,7 +112,6 @@ func Routes(app *fiber.App, appVersion string, dbConn db.Connection, testing boo
 		b.Static("login", "./dashboard/out/login.html", staticOpts)
 		b.Static("tryMatcher", "./dashboard/out/tryMatcher.html", staticOpts)
 		b.Static("docs", "./dashboard/out/docs.html", staticOpts)
-		b.Static("events", "./dashboard/out/events.html", staticOpts)
 		b.Static("_next", "./dashboard/out/_next", staticOpts)
 		b.Static("favicon.ico", "./dashboard/out/favicon.ico", staticOpts)
 		app.Use(func(c *fiber.Ctx) error {
