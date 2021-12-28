@@ -131,98 +131,120 @@ func readbackup(fileReader io.Reader, masterKey string, restoreMethod func(colle
 	return nil
 }
 
-// CreateBackupFile creates a backup file from the database contents
-//
-// !!WHAT YOU NEED TO DO!!:
-//  - Close the returned file even on error
-//  - Remove the returned file even on error
-func CreateBackupFile(genericConn db.Connection, masterKey string) (*os.File, error) {
+func createBackupWriter(masterKey string, createBackupMethod func(io.Writer) error) (*os.File, error) {
 	backupFile, err := os.Create("./backup.gz.aes")
 	if err != nil {
-		return backupFile, err
+		return nil, err
 	}
 
-	conn, ok := genericConn.(*Connection)
-	if !ok {
-		return backupFile, errors.New("DB Connection is not a Mongo DB connection")
-	}
-
-	names, err := conn.db.ListCollectionNames(dbHelpers.Ctx(), bson.M{})
-	if err != nil {
-		return backupFile, err
+	closeAndDeleteFile := func() {
+		backupFile.Close()
+		os.Remove(backupFile.Name())
 	}
 
 	encryptionWriter, err := crypto.NewEncryptWriter([]byte(masterKey), backupFile)
 	if err != nil {
-		return backupFile, err
+		closeAndDeleteFile()
+		return nil, err
 	}
 
 	zw, err := gzip.NewWriterLevel(encryptionWriter, 5)
 	if err != nil {
 		encryptionWriter.Close()
-		return backupFile, err
+		closeAndDeleteFile()
+		return nil, err
 	}
 
-	for _, name := range names {
-		ctx := dbHelpers.Ctx()
-		cursor, err := conn.db.Collection(name).Find(ctx, bson.M{})
-		if err != nil {
-			zw.Close()
-			encryptionWriter.Close()
-			return backupFile, err
-		}
-		first := true
-		for cursor.Next(ctx) {
-			document := make(bson.Raw, len(cursor.Current))
-			copy(document, cursor.Current)
-			if first {
-				// Only write the name of the collection once we are sure
-				collectionNameData := append(numbers.UintToBytes(uint64(len(name)), 16), []byte(name)...)
-				zw.Write(collectionNameData)
+	err = createBackupMethod(zw)
 
-				first = false
-			} else {
-				// Write the is last document byte
-				// In this case there is a next document so we write a false / 0
-				zw.Write([]byte{0})
-			}
-
-			zw.Write(numbers.UintToBytes(uint64(len(document)), 64))
-			zw.Write(document)
-		}
-		if !first {
-			// Write the last document byte
-			// Only write the last document identifier if there where actually documents in this collection
-			zw.Write([]byte{1})
-		}
-		cursor.Close(ctx)
-	}
-
-	err1 := zw.Close()
-	err2 := encryptionWriter.Close()
-	if err1 != nil {
-		return backupFile, err1
-	}
-	if err2 != nil {
-		return backupFile, err2
+	// Close writers
+	zw.Close()
+	encryptionWriter.Close()
+	if err != nil {
+		closeAndDeleteFile()
+		return nil, err
 	}
 
 	err = backupFile.Sync()
 	if err != nil {
-		return backupFile, err
+		closeAndDeleteFile()
+		return nil, err
 	}
 
 	_, err = backupFile.Seek(0, 0)
 	if err != nil {
-		return backupFile, err
+		closeAndDeleteFile()
+		return nil, err
 	}
 
-	log.Info("validating generated backup file")
+	return backupFile, nil
+}
+
+// CreateBackupFile creates a backup file from the database contents
+//
+// YOU NEED TO CLOSE THE RETURNED FILE
+func CreateBackupFile(genericConn db.Connection, masterKey string) (*os.File, error) {
+	backupFile, err := createBackupWriter(masterKey, func(w io.Writer) error {
+		conn, ok := genericConn.(*Connection)
+		if !ok {
+			return errors.New("DB Connection is not a Mongo DB connection")
+		}
+
+		names, err := conn.db.ListCollectionNames(dbHelpers.Ctx(), bson.M{})
+		if err != nil {
+			return err
+		}
+
+		for _, name := range names {
+			ctx := dbHelpers.Ctx()
+			cursor, err := conn.db.Collection(name).Find(ctx, bson.M{})
+			if err != nil {
+				return err
+			}
+			first := true
+			for cursor.Next(ctx) {
+				document := make(bson.Raw, len(cursor.Current))
+				copy(document, cursor.Current)
+				if first {
+					// Only write the name of the collection once we are sure
+					collectionNameData := append(numbers.UintToBytes(uint64(len(name)), 16), []byte(name)...)
+					w.Write(collectionNameData)
+
+					first = false
+				} else {
+					// Write the is last document byte
+					// In this case there is a next document so we write a false / 0
+					w.Write([]byte{0})
+				}
+
+				w.Write(numbers.UintToBytes(uint64(len(document)), 64))
+				w.Write(document)
+			}
+			if !first {
+				// Write the last document byte
+				// Only write the last document identifier if there where actually documents in this collection
+				w.Write([]byte{1})
+			}
+			cursor.Close(ctx)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	log.Info("validating generated backup file..")
 
 	// Validate the generated data
 	err = readbackup(backupFile, masterKey, nil)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to validate backup data: %s", err)
+	}
+
+	_, err = backupFile.Seek(0, 0)
+	if err != nil {
+		return nil, err
 	}
 
 	return backupFile, nil
