@@ -17,7 +17,7 @@ func NormalizeKey(key []byte) []byte {
 }
 
 // Encrypt encrypts data using AES-256 with the key provided
-// Key must at least 16 chars
+// Key must have a minimum of 16 chars
 func Encrypt(data, key []byte) ([]byte, error) {
 	if len(key) < 16 {
 		return nil, errors.New("an encryption keys needs to be at least 16 chars")
@@ -42,11 +42,7 @@ func Encrypt(data, key []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	encryptedValue, err := gcm.Seal(data[:0], nonce, data, nil), nil
-	if err != nil {
-		return nil, err
-	}
-
+	encryptedValue := gcm.Seal(data[:0], nonce, data, nil)
 	return append(nonce, encryptedValue...), nil
 }
 
