@@ -175,22 +175,20 @@ func CreateBackupFile(genericConn db.Connection, masterKey string) (*os.File, er
 		for cursor.Next(ctx) {
 			document := make(bson.Raw, len(cursor.Current))
 			copy(document, cursor.Current)
-			for i := 0; i < 10; i++ {
-				if first {
-					// Only write the name of the collection once we are sure
-					collectionNameData := append(numbers.UintToBytes(uint64(len(name)), 16), []byte(name)...)
-					zw.Write(collectionNameData)
+			if first {
+				// Only write the name of the collection once we are sure
+				collectionNameData := append(numbers.UintToBytes(uint64(len(name)), 16), []byte(name)...)
+				zw.Write(collectionNameData)
 
-					first = false
-				} else {
-					// Write the is last document byte
-					// In this case there is a next document so we write a false / 0
-					zw.Write([]byte{0})
-				}
-
-				zw.Write(numbers.UintToBytes(uint64(len(document)), 64))
-				zw.Write(document)
+				first = false
+			} else {
+				// Write the is last document byte
+				// In this case there is a next document so we write a false / 0
+				zw.Write([]byte{0})
 			}
+
+			zw.Write(numbers.UintToBytes(uint64(len(document)), 64))
+			zw.Write(document)
 		}
 		if !first {
 			// Write the last document byte
