@@ -197,3 +197,8 @@ func (c *Connection) RegisterEntries(entries ...db.Entry) {
 
 	log.Info("Database collection check succeeded")
 }
+
+// GetDB returns the underlying mongo database connection
+func (c *Connection) GetDB() *mongo.Database {
+	return c.db
+}

@@ -22,6 +22,7 @@ type Connection interface {
 	RegisterEntries(entries ...Entry)
 
 	// FindOne finds one entry inside the database
+	// Returns err == mongo.ErrNoDocuments if no documents where found
 	FindOne(result Entry, filters bson.M, opts ...FindOptions) error
 
 	// Find finds multiple entries in the database

@@ -18,6 +18,7 @@ import (
 	"github.com/script-development/RT-CV/controller"
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/db/mongo"
+	"github.com/script-development/RT-CV/db/mongo/backup"
 	"github.com/script-development/RT-CV/helpers/emailservice"
 	"github.com/script-development/RT-CV/helpers/random"
 	"github.com/script-development/RT-CV/mock"
@@ -90,28 +91,12 @@ func main() {
 
 	// Initialize the database
 	var dbConn db.Connection
-	useTestingDB := strings.ToLower(os.Getenv("USE_TESTING_DB"))
-	if useTestingDB == "true" {
+	useTestingDB := strings.ToLower(os.Getenv("USE_TESTING_DB")) == "true"
+	if useTestingDB {
 		dbConn = mock.NewMockDB()
 		log.WithField("id", mock.DashboardKey.ID.Hex()).WithField("key", mock.DashboardKey.Key).Info("Mock dashboard key")
 	} else {
 		dbConn = mongo.ConnectToDB()
-
-		if strings.ToLower(os.Getenv("MONGODB_BACKUP_ENABLED")) == "true" {
-			backupKey := os.Getenv("MONGODB_BACKUP_KEY")
-			if len(backupKey) < 16 {
-				msg := "encryption key is too short, make sure you have set the MONGODB_BACKUP_KEY env variable"
-				log.Fatalf("Error initializing backup: " + msg)
-			}
-			log.Info("start backup creation")
-			backupFile, err := mongo.CreateBackupFile(dbConn, backupKey)
-			defer backupFile.Close()
-			if err != nil {
-				log.WithError(err).Error("Failed to create backup of database")
-				os.Exit(1)
-			}
-			log.Infof("created backup file with name %s", backupFile.Name())
-		}
 	}
 
 	dbConn.RegisterEntries(
@@ -119,7 +104,12 @@ func main() {
 		&models.Profile{},
 		&models.Secret{},
 		&models.Match{},
+		&models.Backup{},
 	)
+
+	if !useTestingDB && strings.ToLower(os.Getenv("MONGODB_BACKUP_ENABLED")) == "true" {
+		backup.StartsSchedule(dbConn, os.Getenv("MONGODB_BACKUP_KEY"))
+	}
 
 	models.CheckDashboardKeyExists(dbConn)
 
