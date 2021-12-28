@@ -1,6 +1,8 @@
 Dockerfile
 .env
 RT-CV*
+cpu.profile
+/backup.*
 
 dashboard/.next
 dashboard/out
