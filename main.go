@@ -38,6 +38,9 @@ func main() {
 	flag.BoolVar(&forceBackup, "forceBackup", false, "force a creating a backup")
 	flag.StringVar(&restoreBackup, "restoreBackup", "", "select a backup file to restore into the database")
 	flag.Parse()
+	if restoreBackup == "" {
+		restoreBackup = os.Getenv("RESTORE_BACKUP")
+	}
 
 	// Seed the random package so generated values are "actually" random
 	random.Seed()
