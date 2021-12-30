@@ -2,13 +2,12 @@ package backup
 
 import (
 	"compress/gzip"
-	"errors"
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/apex/log"
-	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/db/dbHelpers"
 	"github.com/script-development/RT-CV/db/mongo"
 	"github.com/script-development/RT-CV/helpers/crypto"
@@ -44,13 +43,9 @@ The {collection data} is as follows, every document is added like this:
 // CreateBackupFile creates a backup file from the database contents
 //
 // YOU NEED TO CLOSE THE RETURNED FILE
-func CreateBackupFile(genericConn db.Connection, masterKey string) (*os.File, error) {
+func CreateBackupFile(dbConn *mongo.Connection, masterKey string) (*os.File, error) {
 	backupFile, err := createBackupWriter(masterKey, func(w io.Writer) error {
-		conn, ok := genericConn.(*mongo.Connection)
-		if !ok {
-			return errors.New("DB Connection is not a Mongo DB connection")
-		}
-		db := conn.GetDB()
+		db := dbConn.GetDB()
 
 		names, err := db.ListCollectionNames(dbHelpers.Ctx(), bson.M{})
 		if err != nil {
@@ -58,6 +53,11 @@ func CreateBackupFile(genericConn db.Connection, masterKey string) (*os.File, er
 		}
 
 		for _, name := range names {
+			if strings.HasSuffix(name, "_RESTORE_TEMP") {
+				// Do not backup the restore temp collections
+				continue
+			}
+
 			ctx := dbHelpers.Ctx()
 			cursor, err := db.Collection(name).Find(ctx, bson.M{})
 			if err != nil {
@@ -112,7 +112,7 @@ func CreateBackupFile(genericConn db.Connection, masterKey string) (*os.File, er
 		return nil, err
 	}
 
-	err = models.SetLastBackupToNow(genericConn)
+	err = models.SetLastBackupToNow(dbConn)
 	if err != nil {
 		backupFile.Close()
 		os.Remove(backupFile.Name())

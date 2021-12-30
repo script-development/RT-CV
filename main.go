@@ -32,7 +32,11 @@ var AppVersion = "LOCAL"
 
 func main() {
 	doProfile := false
+	forceBackup := false
+	restoreBackup := ""
 	flag.BoolVar(&doProfile, "profile", false, "start profiling")
+	flag.BoolVar(&forceBackup, "forceBackup", false, "force a creating a backup")
+	flag.StringVar(&restoreBackup, "restoreBackup", "", "select a backup file to restore into the database")
 	flag.Parse()
 
 	// Seed the random package so generated values are "actually" random
@@ -95,8 +99,15 @@ func main() {
 	if useTestingDB {
 		dbConn = mock.NewMockDB()
 		log.WithField("id", mock.DashboardKey.ID.Hex()).WithField("key", mock.DashboardKey.Key).Info("Mock dashboard key")
+		if restoreBackup != "" {
+			log.Fatal("Restoring a backup is not supported in the testing database")
+		}
 	} else {
 		dbConn = mongo.ConnectToDB()
+		if restoreBackup != "" {
+			backup.Restore(dbConn, restoreBackup, backup.StartScheduleOptionsFromEnv())
+			os.Exit(0)
+		}
 	}
 
 	dbConn.RegisterEntries(
@@ -107,16 +118,13 @@ func main() {
 		&models.Backup{},
 	)
 
-	if !useTestingDB && strings.ToLower(os.Getenv("MONGODB_BACKUP_ENABLED")) == "true" {
-		options := backup.StartScheduleOptions{
-			BackupEncryptionKey: os.Getenv("MONGODB_BACKUP_KEY"),
-			S3Endpoint:          os.Getenv("BACKUP_S3_ENDPOINT"),
-			S3AccessKeyID:       os.Getenv("BACKUP_S3_ACCESS_KEY_ID"),
-			S3SecretAccessKey:   os.Getenv("BACKUP_S3_SECRET_ACCESS_KEY"),
-			S3Bucket:            os.Getenv("BACKUP_S3_BUCKET"),
-			S3UseSSL:            strings.ToLower(os.Getenv("BACKUP_S3_USE_SSL")) == "true",
+	backupEnabled := strings.ToLower(os.Getenv("MONGODB_BACKUP_ENABLED")) == "true"
+	if backupEnabled {
+		if useTestingDB {
+			log.Warn("Backup is not supported in testing mode")
+		} else {
+			backup.StartsSchedule(dbConn, backup.StartScheduleOptionsFromEnv(), forceBackup)
 		}
-		backup.StartsSchedule(dbConn, options)
 	}
 
 	models.CheckDashboardKeyExists(dbConn)
