@@ -108,7 +108,15 @@ func main() {
 	)
 
 	if !useTestingDB && strings.ToLower(os.Getenv("MONGODB_BACKUP_ENABLED")) == "true" {
-		backup.StartsSchedule(dbConn, os.Getenv("MONGODB_BACKUP_KEY"))
+		options := backup.StartScheduleOptions{
+			BackupEncryptionKey: os.Getenv("MONGODB_BACKUP_KEY"),
+			S3Endpoint:          os.Getenv("BACKUP_S3_ENDPOINT"),
+			S3AccessKeyID:       os.Getenv("BACKUP_S3_ACCESS_KEY_ID"),
+			S3SecretAccessKey:   os.Getenv("BACKUP_S3_SECRET_ACCESS_KEY"),
+			S3Bucket:            os.Getenv("BACKUP_S3_BUCKET"),
+			S3UseSSL:            strings.ToLower(os.Getenv("BACKUP_S3_USE_SSL")) == "true",
+		}
+		backup.StartsSchedule(dbConn, options)
 	}
 
 	models.CheckDashboardKeyExists(dbConn)
