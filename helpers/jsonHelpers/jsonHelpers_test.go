@@ -41,3 +41,29 @@ func TestRFC3339Nano(t *testing.T) {
 	err = bson.Unmarshal(bytes, &parsedTestStruct)
 	NoError(t, err)
 }
+
+func TestPhoneNumber(t *testing.T) {
+	tests := []struct {
+		input       string
+		expects     PhoneNumber
+		expectsJSON string
+	}{
+		{"+49123456789", PhoneNumber{HasCountryPrefix: true, Number: 49123456789}, "+49123456789"},
+		{"+49 123 456 789", PhoneNumber{HasCountryPrefix: true, Number: 49123456789}, "+49123456789"},
+		{"+49 - 123 - 456 - 789", PhoneNumber{HasCountryPrefix: true, Number: 49123456789}, "+49123456789"},
+		{"0612345678", PhoneNumber{IsLocal: true, Number: 612345678}, "0612345678"},
+		{"06 1234 5678", PhoneNumber{IsLocal: true, Number: 612345678}, "0612345678"},
+		{"06 + 1234 + 5678", PhoneNumber{IsLocal: true, Number: 612345678}, "0612345678"},
+	}
+
+	for _, testCase := range tests {
+		var phoneNumber PhoneNumber
+		err := json.Unmarshal([]byte(`"`+testCase.input+`"`), &phoneNumber)
+		NoError(t, err)
+		Equal(t, testCase.expects, phoneNumber)
+
+		marshaled, err := json.Marshal(phoneNumber)
+		NoError(t, err)
+		Equal(t, `"`+testCase.expectsJSON+`"`, string(marshaled))
+	}
+}

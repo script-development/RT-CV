@@ -154,7 +154,7 @@ type PersonalDetails struct {
 	Zip               string                   `json:"zip,omitempty" jsonSchema:"notRequired"`
 	City              string                   `json:"city,omitempty" jsonSchema:"notRequired"`
 	Country           string                   `json:"country,omitempty" jsonSchema:"notRequired"`
-	PhoneNumber       string                   `json:"phoneNumber,omitempty" jsonSchema:"notRequired"`
+	PhoneNumber       *jsonHelpers.PhoneNumber `json:"phoneNumber,omitempty" jsonSchema:"notRequired"`
 	Email             string                   `json:"email,omitempty" jsonSchema:"notRequired"`
 }
 
@@ -301,19 +301,23 @@ func (cv *CV) GetPDF() ([]byte, error) {
 
 // Validate validates the cv and returns an error if it's not valid
 func (cv *CV) Validate() error {
+	// TODO: Needs more validation
+
 	if cv.ReferenceNumber == "" {
 		return errors.New("referenceNumber must be set")
 	}
 
 	now := time.Now()
-	if cv.CreatedAt != nil && cv.CreatedAt.Time().After(now) {
+	tomorrow := now.Add(time.Hour * 24)
+
+	if cv.CreatedAt != nil && cv.CreatedAt.Time().After(tomorrow) {
 		return errors.New("createdAt can't be in the future")
 	}
-	if cv.LastChanged != nil && cv.LastChanged.Time().After(now) {
+	if cv.LastChanged != nil && cv.LastChanged.Time().After(tomorrow) {
 		return errors.New("lastChanged can't be in the future")
 	}
-	if cv.PersonalDetails.DateOfBirth != nil && cv.PersonalDetails.DateOfBirth.Time().After(now) {
-		return errors.New("dateOfBirth can't be in the future")
+	if cv.PersonalDetails.DateOfBirth != nil && cv.PersonalDetails.DateOfBirth.Time().After(now.AddDate(-13, 0, 0)) {
+		return errors.New("you need to be at least 13 years old to work")
 	}
 
 	for idx, lang := range cv.Languages {

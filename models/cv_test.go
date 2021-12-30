@@ -108,7 +108,7 @@ func getExampleCV() *CV {
 			Zip:               "9999AB",
 			City:              "Groningen",
 			Country:           "Netherlands",
-			PhoneNumber:       "06-11223344",
+			PhoneNumber:       &jsonHelpers.PhoneNumber{IsLocal: true, Number: 611223344},
 			Email:             "dr.p.steen@smart-people.com",
 		},
 	}
@@ -133,7 +133,7 @@ func TestGetEmailHTML(t *testing.T) {
 	Contains(t, html, matchTest)
 	Contains(t, html, cv.PersonalDetails.FirstName+" "+cv.PersonalDetails.SurName)
 	Contains(t, html, cv.PersonalDetails.Email)
-	Contains(t, html, cv.PersonalDetails.PhoneNumber)
+	Contains(t, html, cv.PersonalDetails.PhoneNumber.String())
 	Contains(t, html, profile.Name)
 	Contains(t, html, cv.ReferenceNumber)
 	Contains(t, html, profile.ID.Hex())
@@ -154,7 +154,7 @@ func TestGetEmailAttachmentHTML(t *testing.T) {
 	Contains(t, html, cv.PersonalDetails.StreetName+" "+cv.PersonalDetails.HouseNumber+" "+cv.PersonalDetails.HouseNumberSuffix)
 	Contains(t, html, cv.PersonalDetails.Zip+" "+cv.PersonalDetails.City)
 	Contains(t, html, cv.PersonalDetails.Email)
-	Contains(t, html, cv.PersonalDetails.PhoneNumber)
+	Contains(t, html, cv.PersonalDetails.PhoneNumber.String())
 	Contains(t, html, cv.PersonalPresentation)
 
 	Contains(t, html, cv.WorkExperiences[0].Profession)
