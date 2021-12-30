@@ -198,9 +198,8 @@ func TestGetEmailAttachmentPDF(t *testing.T) {
 func TestSendMail(t *testing.T) {
 	tryLoadEmailEnv()
 
-	emailHost := os.Getenv("EMAIL_HOST")
-	emailFrom := os.Getenv("EMAIL_FROM")
-	if emailHost == "" || emailFrom == "" {
+	emailConf := emailservice.EmailServerConfigurationFromEnv()
+	if emailConf.Host == "" || emailConf.From == "" {
 		t.Skip("Missing email server env variables to test sending emails")
 	}
 
@@ -209,14 +208,7 @@ func TestSendMail(t *testing.T) {
 
 	// Initialize the mail service
 	err := emailservice.Setup(
-		emailservice.EmailServerConfiguration{
-			Identity: os.Getenv("EMAIL_IDENTITY"),
-			Username: os.Getenv("EMAIL_USER"),
-			Password: os.Getenv("EMAIL_PASSWORD"),
-			Host:     emailHost,
-			Port:     os.Getenv("EMAIL_PORT"),
-			From:     emailFrom,
-		},
+		emailConf,
 		func(err error) {
 			NoError(t, err)
 			wg.Done()

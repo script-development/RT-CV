@@ -80,17 +80,7 @@ func main() {
 	}
 
 	// Initialize the mail service
-	err = emailservice.Setup(
-		emailservice.EmailServerConfiguration{
-			Identity: os.Getenv("EMAIL_IDENTITY"),
-			Username: os.Getenv("EMAIL_USER"),
-			Password: os.Getenv("EMAIL_PASSWORD"),
-			Host:     os.Getenv("EMAIL_HOST"),
-			Port:     os.Getenv("EMAIL_PORT"),
-			From:     os.Getenv("EMAIL_FROM"),
-		},
-		nil,
-	)
+	err = emailservice.Setup(emailservice.EmailServerConfigurationFromEnv(), nil)
 	if err != nil {
 		log.WithError(err).Error("Error initializing email service")
 		os.Exit(1)

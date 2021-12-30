@@ -3,6 +3,7 @@ package emailservice
 import (
 	"errors"
 	"net/smtp"
+	"os"
 	"strconv"
 	"time"
 
@@ -33,6 +34,18 @@ type EmailServerConfiguration struct {
 
 	// The email address to send emails from
 	From string
+}
+
+// EmailServerConfigurationFromEnv generates the EmailServerConfiguration from the environment variables
+func EmailServerConfigurationFromEnv() EmailServerConfiguration {
+	return EmailServerConfiguration{
+		Identity: os.Getenv("EMAIL_IDENTITY"),
+		Username: os.Getenv("EMAIL_USER"),
+		Password: os.Getenv("EMAIL_PASSWORD"),
+		Host:     os.Getenv("EMAIL_HOST"),
+		Port:     os.Getenv("EMAIL_PORT"),
+		From:     os.Getenv("EMAIL_FROM"),
+	}
 }
 
 // ErrNoConf = email service not configured
