@@ -67,3 +67,20 @@ func TestPhoneNumber(t *testing.T) {
 		Equal(t, `"`+testCase.expectsJSON+`"`, string(marshaled))
 	}
 }
+
+func TestDriversLicense(t *testing.T) {
+	otherLicenses := map[string]bool{}
+	for _, license := range DriversLicenses {
+		licenseString := license.String()
+		NotEmpty(t, licenseString)
+		otherExists := otherLicenses[licenseString]
+		if otherExists {
+			t.Errorf("Duplicate license %s", licenseString)
+		}
+		otherLicenses[licenseString] = true
+
+		licenseAsJSON, err := json.Marshal(license)
+		NoError(t, err)
+		Equal(t, `"`+licenseString+`"`, string(licenseAsJSON))
+	}
+}

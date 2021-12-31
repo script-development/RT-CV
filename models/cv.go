@@ -19,20 +19,20 @@ import (
 // CV contains all information that belongs to a curriculum vitae
 // TODO check the json removed fields if we actually should use them
 type CV struct {
-	Title                string                   `json:"-"` // Not supported yet
-	ReferenceNumber      string                   `json:"referenceNumber"`
-	CreatedAt            *jsonHelpers.RFC3339Nano `json:"-"` // Not supported yet
-	LastChanged          *jsonHelpers.RFC3339Nano `json:"-"` // Not supported yet
-	Educations           []Education              `json:"educations,omitempty"`
-	Courses              []Course                 `json:"courses,omitempty"`
-	WorkExperiences      []WorkExperience         `json:"workExperiences,omitempty"`
-	PreferredJobs        []string                 `json:"preferredJobs,omitempty"`
-	Languages            []Language               `json:"languages,omitempty"`
-	Competences          []Competence             `json:"-"` // Not supported yet
-	Interests            []Interest               `json:"-"` // Not supported yet
-	PersonalDetails      PersonalDetails          `json:"personalDetails" jsonSchema:"notRequired"`
-	PersonalPresentation string                   `json:"-"` // Not supported yet
-	DriversLicenses      []string                 `json:"driversLicenses,omitempty"`
+	Title                string                       `json:"-"` // Not supported yet
+	ReferenceNumber      string                       `json:"referenceNumber"`
+	CreatedAt            *jsonHelpers.RFC3339Nano     `json:"-"` // Not supported yet
+	LastChanged          *jsonHelpers.RFC3339Nano     `json:"-"` // Not supported yet
+	Educations           []Education                  `json:"educations,omitempty"`
+	Courses              []Course                     `json:"courses,omitempty"`
+	WorkExperiences      []WorkExperience             `json:"workExperiences,omitempty"`
+	PreferredJobs        []string                     `json:"preferredJobs,omitempty"`
+	Languages            []Language                   `json:"languages,omitempty"`
+	Competences          []Competence                 `json:"-"` // Not supported yet
+	Interests            []Interest                   `json:"-"` // Not supported yet
+	PersonalDetails      PersonalDetails              `json:"personalDetails" jsonSchema:"notRequired"`
+	PersonalPresentation string                       `json:"-"` // Not supported yet
+	DriversLicenses      []jsonHelpers.DriversLicense `json:"driversLicenses,omitempty"`
 }
 
 // Education is something a user has followed

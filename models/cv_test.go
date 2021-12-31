@@ -93,8 +93,9 @@ func getExampleCV() *CV {
 			Description: "Interest description",
 		}},
 		PersonalPresentation: "Sir",
-		DriversLicenses:      []string{"AAA"},
-
+		DriversLicenses: []jsonHelpers.DriversLicense{
+			jsonHelpers.NewDriversLicense("AAA"),
+		},
 		PersonalDetails: PersonalDetails{
 			Initials:          "P.S.",
 			FirstName:         "D.R. Pietter",
@@ -175,7 +176,7 @@ func TestGetEmailAttachmentHTML(t *testing.T) {
 	Contains(t, html, cv.Languages[0].LevelSpoken.String())
 	Contains(t, html, cv.Languages[0].LevelWritten.String())
 
-	Contains(t, html, cv.DriversLicenses[0])
+	Contains(t, html, cv.DriversLicenses[0].String())
 
 	Contains(t, html, cv.Interests[0].Name)
 	Contains(t, html, cv.Interests[0].Description)

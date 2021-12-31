@@ -297,7 +297,7 @@ func TestMatchDriversLicense(t *testing.T) {
 			MustDriversLicense: true,
 			DriversLicenses:    []models.ProfileDriversLicense{{Name: "A"}},
 		},
-		models.CV{DriversLicenses: []string{"A"}},
+		models.CV{DriversLicenses: []jsonHelpers.DriversLicense{jsonHelpers.NewDriversLicense("A")}},
 	)
 
 	// No drivers license match
@@ -307,7 +307,7 @@ func TestMatchDriversLicense(t *testing.T) {
 			MustDriversLicense: true,
 			DriversLicenses:    []models.ProfileDriversLicense{{Name: "A"}},
 		},
-		models.CV{DriversLicenses: []string{"B"}},
+		models.CV{DriversLicenses: []jsonHelpers.DriversLicense{jsonHelpers.NewDriversLicense("B")}},
 	)
 }
 

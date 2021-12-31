@@ -1,6 +1,7 @@
 package jsonHelpers
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"strconv"
@@ -121,7 +122,7 @@ func (n PhoneNumber) String() string {
 
 // JSONSchemaDescribe implements jsonschema.Describe
 func (PhoneNumber) JSONSchemaDescribe() jsonschema.Property {
-	minLen := uint(10)
+	minLen := uint(3)
 	return jsonschema.Property{
 		Title:       "Phone number",
 		Description: "This field can contain any phone number",
@@ -212,4 +213,127 @@ func (n *PhoneNumber) UnmarshalJSON(b []byte) error {
 	}
 
 	return nil
+}
+
+// DriversLicense contains a European drivers license
+//
+// Why a 4 byte array?
+//  - Fixed byte arrays are much faster than strings
+//  - The drivers license code is never longer than 4 bytes
+type DriversLicense [4]byte
+
+// NewDriversLicense creates a DriversLicense from a string
+func NewDriversLicense(name string) DriversLicense {
+	resp := DriversLicense{0, 0, 0, 0}
+	copy(resp[:], name)
+	return resp
+}
+
+// DriversLicenses contains all the EU drivers licenses
+// List obtained from https://en.wikipedia.org/wiki/European_driving_licence
+var DriversLicenses = []DriversLicense{
+	NewDriversLicense("AM"),
+	NewDriversLicense("A1"),
+	NewDriversLicense("A2"),
+	NewDriversLicense("A"),
+	NewDriversLicense("B"),
+	NewDriversLicense("BE"),
+	NewDriversLicense("B1"),
+	NewDriversLicense("C1"),
+	NewDriversLicense("C1E"),
+	NewDriversLicense("C"),
+	NewDriversLicense("CE"),
+	NewDriversLicense("D1"),
+	NewDriversLicense("D1E"),
+	NewDriversLicense("D"),
+	NewDriversLicense("DE"),
+	NewDriversLicense("LK"),
+	NewDriversLicense("S"),
+	NewDriversLicense("BF17"),
+	NewDriversLicense("L17"),
+	NewDriversLicense("TR"),
+	NewDriversLicense("TROL"),
+	NewDriversLicense("H"),
+	NewDriversLicense("TRAM"),
+	NewDriversLicense("V"),
+	NewDriversLicense("F"),
+	NewDriversLicense("T"),
+	NewDriversLicense("TM"),
+	NewDriversLicense("K"),
+	NewDriversLicense("L"),
+	NewDriversLicense("G"),
+	NewDriversLicense("W"),
+}
+
+// Strings converts a drivers license identifier into a string
+func (dl DriversLicense) String() string {
+	return string(bytes.TrimRightFunc(dl[:], func(r rune) bool { return r == 0 }))
+}
+
+// JSONSchemaDescribe implements jsonschema.Describe
+func (DriversLicense) JSONSchemaDescribe() jsonschema.Property {
+	return jsonschema.Property{
+		Title:       "EU Drivers license",
+		Description: "Describes a EU drivers license, for more information see https://en.wikipedia.org/wiki/European_driving_licence",
+		Type:        jsonschema.PropertyTypeString,
+		Enum: func() []json.RawMessage {
+			var enums []json.RawMessage
+			for _, v := range DriversLicenses {
+				enums = append(enums, json.RawMessage(v.String()))
+			}
+			return enums
+		}(),
+	}
+}
+
+// MarshalJSON transforms a drivers license into a json string
+func (dl DriversLicense) MarshalJSON() ([]byte, error) {
+	return []byte(`"` + dl.String() + `"`), nil
+}
+
+// ErrInvalidDriversLicense is returned when a drivers license is invalid
+var ErrInvalidDriversLicense = errors.New("invalid drivers license")
+
+// UnmarshalJSON transforms reads a string and converts it into a drivers license
+func (dl *DriversLicense) UnmarshalJSON(b []byte) error {
+	if len(b) < 3 || len(b) > 6 {
+		// Drivers license needs to be at least 1 charcater and max 4
+		// Note that b includes the quotes so we need to account for that in the length check
+		return ErrInvalidDriversLicense
+	}
+	if b[0] != '"' || b[len(b)-1] != '"' {
+		return errors.New("expected a string but got something else")
+	}
+
+	key := [4]byte{0, 0, 0, 0}
+	copy(key[:], b[1:len(b)-1])
+
+	// search for a matching drivers license
+	for _, entry := range DriversLicenses {
+		if entry == key {
+			*dl = entry
+			return nil
+		}
+	}
+
+	// Maybe there where lowercase letters, lets correct them and search again for a matching drivers license
+	for i := 0; i < 4; i++ {
+		c := key[i]
+		if c >= 'a' && c <= 'z' {
+			// Convert to uppercase
+			key[i] = c - 'a' - 'A'
+		}
+	}
+
+	// search for a matching drivers license
+	for _, entry := range DriversLicenses {
+		if entry == key {
+			*dl = entry
+			return nil
+		}
+	}
+
+	// :( we did not find a matching drivers license
+
+	return ErrInvalidDriversLicense
 }

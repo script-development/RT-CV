@@ -9,7 +9,6 @@ import (
 	fuzzymatcher "github.com/mjarkk/fuzzy-matcher"
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/jsonHelpers"
-	"github.com/script-development/RT-CV/helpers/wordvalidator"
 	"github.com/script-development/RT-CV/models"
 )
 
@@ -29,8 +28,6 @@ func Match(domains []string, profiles []*models.Profile, cv models.CV) []FoundMa
 	}
 
 	now := time.Now()
-
-	var normalizedCVDriversLicenseCache []string
 
 	for _, profile := range profiles {
 		if !profile.Active {
@@ -305,32 +302,23 @@ func Match(domains []string, profiles []*models.Profile, cv models.CV) []FoundMa
 		checkedForDriversLicense := len(profile.DriversLicenses) > 0
 		if checkedForDriversLicense {
 			if profile.NormalizedDriversLicensesCache == nil {
-				profile.NormalizedDriversLicensesCache = []string{}
+				profile.NormalizedDriversLicensesCache = []jsonHelpers.DriversLicense{}
 				for _, l := range profile.DriversLicenses {
-					normalizedDriversLicense := wordvalidator.NormalizeString(l.Name)
+					normalizedDriversLicense := strings.ToUpper(strings.ReplaceAll(l.Name, " ", ""))
 					if len(normalizedDriversLicense) == 0 {
 						continue
 					}
-					profile.NormalizedDriversLicensesCache = append(profile.NormalizedDriversLicensesCache, normalizedDriversLicense)
+					profile.NormalizedDriversLicensesCache = append(
+						profile.NormalizedDriversLicensesCache,
+						jsonHelpers.NewDriversLicense(normalizedDriversLicense),
+					)
 				}
 			}
 
 		driversLicensesLoop:
 			for _, normalizedDriversLicense := range profile.NormalizedDriversLicensesCache {
-				// Cache the normalized names once we need it so we don't have to do duplicated work
-				if normalizedCVDriversLicenseCache == nil {
-					normalizedCVDriversLicenseCache = []string{}
-					for _, cvDriversLicense := range cv.DriversLicenses {
-						normalizedName := wordvalidator.NormalizeString(cvDriversLicense)
-						if len(normalizedName) == 0 {
-							continue
-						}
-						normalizedCVDriversLicenseCache = append(normalizedCVDriversLicenseCache, normalizedName)
-					}
-				}
-
-				for _, normalizedCVDriversLicense := range normalizedCVDriversLicenseCache {
-					if normalizedDriversLicense == normalizedCVDriversLicense {
+				for _, cvDriversLicense := range cv.DriversLicenses {
+					if normalizedDriversLicense == cvDriversLicense {
 						matchedADriversLicense = true
 						break driversLicensesLoop
 					}

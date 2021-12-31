@@ -12,6 +12,7 @@ import (
 	fuzzymatcher "github.com/mjarkk/fuzzy-matcher"
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/emailservice"
+	"github.com/script-development/RT-CV/helpers/jsonHelpers"
 	"github.com/script-development/RT-CV/helpers/validation"
 	"github.com/valyala/fasthttp"
 	"go.mongodb.org/mongo-driver/bson"
@@ -53,11 +54,11 @@ type Profile struct {
 	// Variables set by the matching process only when they needed
 	// These are mainly used for caching so we don't have to calculate values twice
 	// There values where detected using the -profile flag, see main.go for more info
-	EducationFuzzyMatcher             *fuzzymatcher.Matcher `bson:"-" json:"-"`
-	ProfessionExperiencedFuzzyMatcher *fuzzymatcher.Matcher `bson:"-" json:"-"`
-	DesiredProfessionsFuzzyMatcher    *fuzzymatcher.Matcher `bson:"-" json:"-"`
-	DomainPartsCache                  [][]string            `bson:"-" json:"-"`
-	NormalizedDriversLicensesCache    []string              `bson:"-" json:"-"`
+	EducationFuzzyMatcher             *fuzzymatcher.Matcher        `bson:"-" json:"-"`
+	ProfessionExperiencedFuzzyMatcher *fuzzymatcher.Matcher        `bson:"-" json:"-"`
+	DesiredProfessionsFuzzyMatcher    *fuzzymatcher.Matcher        `bson:"-" json:"-"`
+	DomainPartsCache                  [][]string                   `bson:"-" json:"-"`
+	NormalizedDriversLicensesCache    []jsonHelpers.DriversLicense `bson:"-" json:"-"`
 }
 
 // CollectionName returns the collection name of the Profile
