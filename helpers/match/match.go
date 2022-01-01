@@ -43,7 +43,7 @@ func Match(domains []string, profiles []*models.Profile, cv models.CV) []FoundMa
 		match := models.Match{
 			M:         db.NewM(),
 			ProfileID: profile.ID,
-			When:      jsonHelpers.RFC3339Nano(time.Now()),
+			When:      jsonHelpers.RFC3339Nano(now),
 		}
 
 		// Check domain
@@ -139,7 +139,7 @@ func Match(domains []string, profiles []*models.Profile, cv models.CV) []FoundMa
 				continue
 			}
 
-			yearsSinceEducation := time.Now().Year() - lastEducativeYear.Year()
+			yearsSinceEducation := now.Year() - lastEducativeYear.Year()
 			match.YearsSinceEducation = &yearsSinceEducation
 		}
 
