@@ -27,8 +27,8 @@ func (RFC3339Nano) JSONSchemaDescribe() jsonschema.Property {
 			"RFC3339 is basicly an extension of ISO 8601 so that should also be fine here",
 		Type: jsonschema.PropertyTypeString,
 		Examples: []json.RawMessage{
-			[]byte("2019-10-12T07:20:50.52Z"),
-			[]byte("2019-10-12T14:20:50.52+07:00"),
+			[]byte("\"2019-10-12T07:20:50.52Z\""),
+			[]byte("\"2019-10-12T14:20:50.52+07:00\""),
 		},
 		MinLength: &minLen,
 	}
@@ -128,9 +128,9 @@ func (PhoneNumber) JSONSchemaDescribe() jsonschema.Property {
 		Description: "This field can contain any phone number",
 		Type:        jsonschema.PropertyTypeString,
 		Examples: []json.RawMessage{
-			[]byte("0612345678"),
-			[]byte("06 12345678"),
-			[]byte("+31 - 6 - 1234 - 5678"),
+			[]byte("\"0612345678\""),
+			[]byte("\"06 12345678\""),
+			[]byte("\"+31 - 6 - 1234 - 5678\""),
 		},
 		MinLength: &minLen,
 	}
@@ -279,7 +279,7 @@ func (DriversLicense) JSONSchemaDescribe() jsonschema.Property {
 		Enum: func() []json.RawMessage {
 			var enums []json.RawMessage
 			for _, v := range DriversLicenses {
-				enums = append(enums, json.RawMessage(v.String()))
+				enums = append(enums, json.RawMessage(`"`+v.String()+`"`))
 			}
 			return enums
 		}(),
