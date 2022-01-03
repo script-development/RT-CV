@@ -8,13 +8,13 @@ require (
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/apex/log v1.9.0
 	github.com/go-stack/stack v1.8.1 // indirect
-	github.com/gofiber/fiber/v2 v2.23.0
+	github.com/gofiber/fiber/v2 v2.24.0
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/joho/godotenv v1.4.0
 	github.com/jordan-wright/email v4.0.1-0.20210109023952-943e75fe5223+incompatible
 	github.com/minio/minio-go/v7 v7.0.20 // indirect
 	github.com/mjarkk/fuzzy-matcher v1.0.3
-	github.com/mjarkk/jsonschema v0.0.0-20211224102851-1c2bf83040a7
+	github.com/mjarkk/jsonschema v1.0.1
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
 	github.com/stretchr/testify v1.7.0
