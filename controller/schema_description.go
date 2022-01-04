@@ -31,4 +31,23 @@ apiKey = getApiKey();
 apiKeyID = getApiKeyID();
 key = "Basic " + apiKeyID + ":" + sha512(apiKey);
 `) + `
+
+## How to make a request
+
+Here is a javascript example of how a request should be made
+
+` + mdBlockCodeSample("js", `
+const apiBase = 'https://rtcv.unknownclouds.com/api/v1'
+const key = 'Basic some:key'
+
+const r = await fetch(apiBase + '/auth/keyinfo', {
+    method: 'GET',
+    headers: {
+        'Content-Type': 'application/json',
+        'Authorization': key,
+    }
+})
+const keyInfo = await r.json()
+console.log(keyInfo)
+`) + `
 `
