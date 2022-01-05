@@ -79,7 +79,7 @@ func Routes(app *fiber.App, appVersion string, dbConn db.Connection, testing boo
 			b.Get(``, routeAllProfiles, requiresAuth(models.APIKeyRoleInformationObtainer))
 			b.Group(`/:profile`, func(b *routeBuilder.Router) {
 				b.Get(``, routeGetProfile, requiresAuth(models.APIKeyRoleInformationObtainer))
-				// b.Put(``, routeModifyProfile) // TODO
+				b.Put(``, routeModifyProfile, requiresAuth(models.APIKeyRoleController))
 				b.Delete(``, routeDeleteProfile, requiresAuth(models.APIKeyRoleController))
 			}, middlewareBindProfile())
 		}, requiresAuth(0))
