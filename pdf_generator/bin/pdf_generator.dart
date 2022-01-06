@@ -2,106 +2,70 @@ import 'dart:async';
 import 'dart:io';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart';
+import 'dart:typed_data';
 
 import './data.dart';
+import 'layout.dart';
 
 Future<void> main(List<String> arguments) async {
-  final pdf = Document();
+  var fontFile = File("./MaterialIcons-Regular.ttf");
+  Uint8List data = await fontFile.readAsBytesSync();
+  Font materialIconsFont = Font.ttf(ByteData.view(data.buffer));
+
+  final pdf = Document(
+    title: "CV",
+    theme: ThemeData.withFont(icons: materialIconsFont),
+  );
 
   CV cv = CV.example();
 
-  List<WorkExpWidget> workExpr =
-      cv.workExpr.map((workExpr) => WorkExpWidget(workExpr)).toList();
-  List<EducationWidget> educations =
-      cv.education.map((education) => EducationWidget(education)).toList();
-  List<EducationWidget> course =
-      cv.courses.map((education) => EducationWidget(education)).toList();
-  List<LanguageSkillWidget> languageSkills =
-      cv.languageSkills.map((skill) => LanguageSkillWidget(skill)).toList();
+  List<ListWithHeader> lists = [
+    ListWithHeader(
+      "Werkervaring",
+      cv.workExpr.map((workExpr) => WorkExpWidget(workExpr)).toList(),
+    ),
+    ListWithHeader(
+      "Opleidingen",
+      cv.education.map((education) => EducationWidget(education)).toList(),
+    ),
+    ListWithHeader(
+      "Cursussen",
+      cv.courses.map((education) => EducationWidget(education)).toList(),
+    ),
+    ListWithHeader(
+      "Talen",
+      cv.languageSkills.map((skill) => LanguageSkillWidget(skill)).toList(),
+    ),
+  ];
+
+  // Determain the layout depending on the amound of items in the lists.
+  List<WrapLayoutBlock> wrapLayoutBlocks = [];
+  List<ListWithHeader> remainingLists = [];
+  for (ListWithHeader list in lists) {
+    if (list.length > 4) {
+      wrapLayoutBlocks.add(WrapLayoutBlock(list));
+    } else {
+      remainingLists.add(list);
+    }
+  }
 
   pdf.addPage(
     MultiPage(
-      margin: EdgeInsets.all(0),
+      margin: EdgeInsets.only(bottom: PdfPageFormat.cm),
       build: (Context context) => [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              color: PdfColor.fromInt(0xff4ca1af),
-              padding: EdgeInsets.symmetric(
-                horizontal: PdfPageFormat.cm,
-                vertical: PdfPageFormat.cm * 1.5,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    cv.name,
-                    overflow: TextOverflow.clip,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: PdfColors.white,
-                    ),
-                  ),
-                  Text(
-                    "ref #" + cv.reference,
-                    overflow: TextOverflow.clip,
-                    style: TextStyle(
-                      fontSize: 6,
-                      color: PdfColor.fromInt(0xffb3d8dd),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.all(PdfPageFormat.cm),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  ClientInfo(
-                      email: cv.email,
-                      phoneNr: cv.phoneNr,
-                      driversLicenses: cv.driversLicenses),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Padding(
-                          padding: EdgeInsets.only(right: PdfPageFormat.cm / 2),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ListTitle("Werkervaring"),
-                              ...workExpr,
-                              ListTitle("Talen"),
-                              ...languageSkills,
-                            ],
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Padding(
-                          padding: EdgeInsets.only(left: PdfPageFormat.cm / 2),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ListTitle("Opleidingen"),
-                              ...educations,
-                              ListTitle("Cursussen"),
-                              ...course,
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
+        Header(
+          name: cv.name,
+          ref: cv.reference,
         ),
+        LayoutBlockBase(
+          child: ClientInfo(
+            email: cv.email,
+            phoneNr: cv.phoneNr,
+            driversLicenses: cv.driversLicenses,
+          ),
+        ),
+        ColumnsLayoutBlock(remainingLists),
+        ...wrapLayoutBlocks,
       ],
     ),
   );
@@ -110,25 +74,46 @@ Future<void> main(List<String> arguments) async {
   await file.writeAsBytes(await pdf.save());
 }
 
-class ListTitle extends StatelessWidget {
-  ListTitle(this.title);
+class Header extends StatelessWidget {
+  Header({
+    required this.name,
+    required this.ref,
+  });
 
-  final String title;
+  final String name;
+  final String ref;
 
   @override
   Widget build(Context context) {
-    return Container(
-      color: PdfColor.fromInt(0xffffe004),
-      margin: EdgeInsets.only(top: 10),
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        child: Text(
-          title,
-          overflow: TextOverflow.clip,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-          ),
+    return SizedBox(
+      width: double.infinity,
+      child: Container(
+        color: PdfColor.fromInt(0xff4ca1af),
+        padding: EdgeInsets.symmetric(
+          horizontal: PdfPageFormat.cm,
+          vertical: PdfPageFormat.cm * 1.5,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              name,
+              overflow: TextOverflow.clip,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: PdfColors.white,
+              ),
+            ),
+            Text(
+              "ref #" + ref,
+              overflow: TextOverflow.clip,
+              style: TextStyle(
+                fontSize: 6,
+                color: PdfColor.fromInt(0xffb3d8dd),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -263,9 +248,13 @@ class ListEntry extends StatelessWidget {
   final DateTime? to;
 
   String? formatDate(DateTime? input) {
-    return (input == null)
-        ? null
-        : "${input.year.toString()}-${input.month.toString().padLeft(2, '0')}-${input.day.toString().padLeft(2, '0')}";
+    if (input == null) return null;
+
+    String year = input.year.toString();
+    String month = input.month.toString().padLeft(2, '0');
+    String day = input.day.toString().padLeft(2, '0');
+
+    return "${year}-${month}-${day}";
   }
 
   @override
@@ -294,7 +283,7 @@ class ListEntry extends StatelessWidget {
     if (company != null && company!.isNotEmpty) {
       children.add(
         Row(children: [
-          Text("At: ", style: labelStyle),
+          Text("Bij: ", style: labelStyle),
           Text(
             company!,
             overflow: TextOverflow.clip,
