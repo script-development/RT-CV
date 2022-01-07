@@ -1,10 +1,10 @@
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart';
 
-import 'data.dart';
+import 'cv.dart';
 
-const readingColor = PdfColors.green400;
-const writingColor = PdfColors.blue400;
+const _writingColor = PdfColors.green400;
+const _speakingColor = PdfColors.blue400;
 
 class LanguageLevelInfoWidget extends StatelessWidget {
   final TextStyle labelStyle = TextStyle(
@@ -12,12 +12,12 @@ class LanguageLevelInfoWidget extends StatelessWidget {
     color: PdfColors.grey700,
   );
 
-  Widget labelLanguageSkill(LanguageSkillLevel languageSkillLevel) {
+  Widget labelLanguage(LanguageLevel languageLevel) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Text(
-          humanLanguageSkillLevel[languageSkillLevel] ?? '',
+          humanLanguageLevel[languageLevel] ?? '',
           style: labelStyle,
         ),
         Container(
@@ -29,7 +29,7 @@ class LanguageLevelInfoWidget extends StatelessWidget {
     );
   }
 
-  Widget labelSkillKind(String kind, PdfColor color) {
+  Widget labelLevelKind(String kind, PdfColor color) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -60,9 +60,9 @@ class LanguageLevelInfoWidget extends StatelessWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.only(right: 5),
-                child: labelSkillKind("lezen", readingColor),
+                child: labelLevelKind("schijven", _writingColor),
               ),
-              labelSkillKind("schijven", writingColor),
+              labelLevelKind("spreken", _speakingColor),
             ],
           ),
         ),
@@ -72,16 +72,16 @@ class LanguageLevelInfoWidget extends StatelessWidget {
             children: [
               Container(
                 constraints: BoxConstraints.tightFor(width: 70),
-                child: labelLanguageSkill(LanguageSkillLevel.unknown),
+                child: labelLanguage(LanguageLevel.unknown),
               ),
               Expanded(
-                child: labelLanguageSkill(LanguageSkillLevel.reasonable),
+                child: labelLanguage(LanguageLevel.reasonable),
               ),
               Expanded(
-                child: labelLanguageSkill(LanguageSkillLevel.good),
+                child: labelLanguage(LanguageLevel.good),
               ),
               Expanded(
-                child: labelLanguageSkill(LanguageSkillLevel.excellent),
+                child: labelLanguage(LanguageLevel.excellent),
               ),
             ],
           ),
@@ -91,13 +91,13 @@ class LanguageLevelInfoWidget extends StatelessWidget {
   }
 }
 
-class LanguageSkillWidget extends StatelessWidget {
-  LanguageSkillWidget(this.languageSkill);
+class LanguageWidget extends StatelessWidget {
+  LanguageWidget(this.language);
 
-  final LanguageSkill languageSkill;
+  final Language language;
 
-  int get readingNr => languageSkillLevelNr[languageSkill.reading] ?? 0;
-  int get writingNr => languageSkillLevelNr[languageSkill.writing] ?? 0;
+  int get writingNr => languageLevelToNr[language.levelWritten] ?? 0;
+  int get speakingNr => languageLevelToNr[language.levelSpoken] ?? 0;
 
   @override
   Widget build(Context context) {
@@ -108,7 +108,7 @@ class LanguageSkillWidget extends StatelessWidget {
           Container(
             constraints: BoxConstraints.tightFor(width: 70),
             child: Text(
-              languageSkill.name,
+              language.name,
               overflow: TextOverflow.clip,
               style: TextStyle(
                 fontSize: 10,
@@ -124,8 +124,8 @@ class LanguageSkillWidget extends StatelessWidget {
               ),
               child: Stack(
                 children: [
-                  LanguageLevelbar(readingNr, readingColor, 10),
-                  LanguageLevelbar(writingNr, writingColor, 10),
+                  _LanguageLevelbar(writingNr, _writingColor, 10),
+                  _LanguageLevelbar(speakingNr, _speakingColor, 10),
                 ],
               ),
             ),
@@ -136,8 +136,8 @@ class LanguageSkillWidget extends StatelessWidget {
   }
 }
 
-class LanguageLevelbar extends StatelessWidget {
-  LanguageLevelbar(this.levelNr, this.color, this.height);
+class _LanguageLevelbar extends StatelessWidget {
+  _LanguageLevelbar(this.levelNr, this.color, this.height);
 
   final int levelNr;
   final PdfColor color;

@@ -2,15 +2,60 @@ import 'dart:async';
 import 'dart:io';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart';
+import 'package:args/args.dart';
 import 'dart:typed_data';
+import 'dart:convert';
 
 import 'language_widgets.dart';
-import 'data.dart';
+import 'cv.dart';
 import 'layout.dart';
 import 'utils.dart';
 
-Future<void> main(List<String> arguments) async {
-  var fontFile = File("./MaterialIcons-Regular.ttf");
+Future<void> main(List<String> args) async {
+  ArgParser argsParser = ArgParser();
+  argsParser.addFlag(
+    'help',
+    abbr: 'h',
+    help: "Print this message",
+  );
+  argsParser.addFlag(
+    'dummy',
+    abbr: 'D',
+    help:
+        "Use dummy data, handy for working on this application. The dummy data is located in bin/cv.dart",
+  );
+  argsParser.addOption(
+    'data',
+    abbr: 'd',
+    help:
+        'input CV as json data (the structure of this data should be the json of the CV structure in ../models/cv.go)',
+  );
+  argsParser.addOption(
+    'out',
+    abbr: 'o',
+    defaultsTo: 'example.pdf',
+    help: "to where should we write the output file",
+  );
+
+  final ArgResults result = argsParser.parse(args);
+  if (result['help'] == true) {
+    print(argsParser.usage);
+    exit(0);
+  }
+
+  final String dataFlag = result['data'] ?? '';
+
+  if (result['dummy']) {
+    print("using dummy data to create pdf");
+  } else if (dataFlag.length != 0) {
+    print("using data provided by argument to create pdf");
+    final cvJsonData = jsonDecode(dataFlag);
+  } else {
+    print("did not provide the --data nor --dummy flag");
+    exit(1);
+  }
+
+  final File fontFile = File("./MaterialIcons-Regular.ttf");
   Uint8List data = await fontFile.readAsBytesSync();
   Font materialIconsFont = Font.ttf(ByteData.view(data.buffer));
 
@@ -19,25 +64,31 @@ Future<void> main(List<String> arguments) async {
     theme: ThemeData.withFont(icons: materialIconsFont),
   );
 
-  CV cv = CV.example();
+  final CV cv = CV.example();
 
-  List<ListWithHeader> lists = [
-    ListWithHeader(
+  final List<ListWithHeader> lists = [];
+
+  if (cv.workExperiences != null && cv.workExperiences!.isNotEmpty) {
+    lists.add(ListWithHeader(
       IconData(0xe943), // Work
       "Werkervaring",
-      cv.workExpr.map((workExpr) => WorkExpWidget(workExpr)).toList(),
-    ),
-    ListWithHeader(
+      cv.workExperiences!.map((workExper) => WorkExpWidget(workExper)).toList(),
+    ));
+  }
+  if (cv.educations != null && cv.educations!.isNotEmpty) {
+    lists.add(ListWithHeader(
       IconData(0xe80c), // School
       "Opleidingen",
-      cv.education.map((education) => EducationWidget(education)).toList(),
-    ),
-    ListWithHeader(
+      cv.educations!.map((education) => EducationWidget(education)).toList(),
+    ));
+  }
+  if (cv.courses != null && cv.courses!.isNotEmpty) {
+    lists.add(ListWithHeader(
       IconData(0xe865), // Book
       "Cursussen",
-      cv.courses.map((education) => EducationWidget(education)).toList(),
-    ),
-  ];
+      cv.courses!.map((course) => CourseWidget(course)).toList(),
+    ));
+  }
 
   // Determain the layout depending on the amound of items in the lists.
   List<WrapLayoutBlock> wrapLayoutBlocks = [];
@@ -50,18 +101,20 @@ Future<void> main(List<String> arguments) async {
     }
   }
 
-  // The language list a very short widget so we can always add it to the remainingLists
-  // (The remainingLists only shows small lists)
-  remainingLists.add(
-    ListWithHeader(
-      IconData(0xe8e2), // Translate
-      "Talen",
-      [
-        LanguageLevelInfoWidget(),
-        ...cv.languageSkills.map((skill) => LanguageSkillWidget(skill)).toList()
-      ],
-    ),
-  );
+  if (cv.languages != null && cv.languages!.isNotEmpty) {
+    // The language list a very short widget so we can always add it to the remainingLists
+    // (The remainingLists only shows small lists)
+    remainingLists.add(
+      ListWithHeader(
+        IconData(0xe8e2), // Translate
+        "Talen",
+        [
+          LanguageLevelInfoWidget(),
+          ...cv.languages!.map((lang) => LanguageWidget(lang)).toList()
+        ],
+      ),
+    );
+  }
 
   pdf.addPage(
     MultiPage(
@@ -70,7 +123,7 @@ Future<void> main(List<String> arguments) async {
         Header(cv),
         LayoutBlockBase(
           child: ClientInfo(
-            personalInformation: cv.detials,
+            personalInformation: cv.personalDetails,
             driversLicenses: cv.driversLicenses,
           ),
         ),
@@ -108,19 +161,17 @@ class Header extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              cv.detials.name,
+              cv.personalDetails.fullName,
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: PdfColors.white,
               ),
             ),
-            Text("ref #" + cv.detials.reference, style: metaColor),
-            Text("laatst geupdate " + formatDateTime(cv.updatedAt)!,
+            Text("ref #" + cv.referenceNumber, style: metaColor),
+            Text("laatst geupdate " + formatDateTime(cv.lastChanged)!,
                 style: metaColor),
-            Text("cv gemaakt op " + formatDateTime(cv.updatedAt)!,
-                style: metaColor),
-            Text("van website " + cv.detials.scrapedFromWebsite,
+            Text("cv gemaakt op " + formatDateTime(cv.createdAt)!,
                 style: metaColor),
           ],
         ),
@@ -136,7 +187,7 @@ class ClientInfo extends StatelessWidget {
   });
 
   List<Widget> children = [];
-  final Detials personalInformation;
+  final PersonalDetails personalInformation;
   final List<String>? driversLicenses;
 
   final TextStyle labelStyle = TextStyle(
@@ -170,7 +221,7 @@ class ClientInfo extends StatelessWidget {
   Widget build(Context context) {
     children = [];
     tryAddToList("Email", personalInformation.email);
-    tryAddToList("Telefoon", personalInformation.phoneNr);
+    tryAddToList("Telefoon", personalInformation.phoneNumber);
     if (driversLicenses != null) {
       switch (driversLicenses!.length) {
         case 0:
@@ -205,7 +256,7 @@ class ClientInfo extends StatelessWidget {
                 Row(
                   children: [
                     Text("Stad: ", style: labelStyle),
-                    Text(personalInformation.city, style: valueStyle),
+                    Text(personalInformation.city!, style: valueStyle),
                   ],
                 ),
                 Row(
@@ -219,7 +270,7 @@ class ClientInfo extends StatelessWidget {
                 Row(
                   children: [
                     Text("Postcode: ", style: labelStyle),
-                    Text(personalInformation.zip, style: valueStyle),
+                    Text(personalInformation.zip!, style: valueStyle),
                   ],
                 ),
               ],
@@ -236,18 +287,35 @@ class ClientInfo extends StatelessWidget {
 }
 
 class WorkExpWidget extends StatelessWidget {
-  WorkExpWidget(WorkExp this.workExp);
+  WorkExpWidget(WorkExperience this.exp);
 
-  final WorkExp workExp;
+  final WorkExperience exp;
 
   @override
   Widget build(Context context) {
     return ListEntry(
-      workExp.name,
-      company: workExp.company,
-      description: workExp.description,
-      from: workExp.from,
-      to: workExp.to,
+      exp.profession ?? '??',
+      company: exp.employer,
+      description: exp.description,
+      from: exp.startDate,
+      to: exp.endDate,
+    );
+  }
+}
+
+class CourseWidget extends StatelessWidget {
+  CourseWidget(Course this.course);
+
+  final Course course;
+
+  @override
+  Widget build(Context context) {
+    return ListEntry(
+      course.name,
+      company: course.institute,
+      from: course.startDate,
+      to: course.endDate,
+      description: course.description,
     );
   }
 }
@@ -261,9 +329,10 @@ class EducationWidget extends StatelessWidget {
   Widget build(Context context) {
     return ListEntry(
       education.name,
-      company: education.org,
-      from: education.from,
-      to: education.to,
+      company: education.institute,
+      from: education.startDate,
+      to: education.endDate,
+      description: education.description,
     );
   }
 }

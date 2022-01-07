@@ -5,7 +5,14 @@ This dart project will convert CV data into a good looking PDF.
 ## Development
 
 ```sh
-dart run
+dart run bin/pdf_generator.dart --dummy
+
+# Linux
+xdg-open example.pdf
+# Macos
+open example.pdf
+# Windows (Powershell)
+ii example.pdf
 ```
 
 ### Production
@@ -15,5 +22,5 @@ dart run
 ```sh
 dart compile exe bin/pdf_generator.dart
 
-./bin/pdf_generator.exe
+./bin/pdf_generator.exe --dummy
 ```

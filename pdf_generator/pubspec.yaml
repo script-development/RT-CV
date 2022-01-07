@@ -14,3 +14,4 @@ dev_dependencies:
   lints: ^1.0.0
 dependencies:
   pdf: ^3.6.5
+  args: ^2.3.0
