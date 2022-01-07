@@ -146,6 +146,8 @@ Map<LanguageSkillLevel, int> languageSkillLevelNr = {
   LanguageSkillLevel.excellent: 3,
 };
 
+const int maxLanguageLevelNr = 3;
+
 class LanguageSkill {
   const LanguageSkill(this.name, this.reading, this.writing);
 
