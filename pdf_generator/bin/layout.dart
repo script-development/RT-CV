@@ -2,8 +2,9 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart';
 
 class ListWithHeader {
-  ListWithHeader(this.title, this.widgets);
+  ListWithHeader(this.icon, this.title, this.widgets);
 
+  final IconData icon;
   final String title;
   final List<Widget> widgets;
 
@@ -43,7 +44,7 @@ class WrapLayoutBlock extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ListTitle(listWithHeader.title),
+          ListTitle(listWithHeader.icon, listWithHeader.title),
           Column(
             children: columns
                 .map((row) => Row(
@@ -71,8 +72,9 @@ class ColumnsLayoutBlock extends StatelessWidget {
     for (int i = 0; i < widgets.length; i++) {
       ListWithHeader widget = widgets[i];
       ListTitle title = ListTitle(
+        widget.icon,
         widget.title,
-        margin: i > 1 ? EdgeInsets.only(top: 10) : null,
+        margin: i > 1 ? const EdgeInsets.only(top: 10) : null,
       );
 
       if (i % 2 == 0) {
@@ -90,7 +92,7 @@ class ColumnsLayoutBlock extends StatelessWidget {
         children: [
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(right: PdfPageFormat.cm / 2),
+              padding: const EdgeInsets.only(right: PdfPageFormat.cm / 2),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: left,
@@ -99,7 +101,7 @@ class ColumnsLayoutBlock extends StatelessWidget {
           ),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(left: PdfPageFormat.cm / 2),
+              padding: const EdgeInsets.only(left: PdfPageFormat.cm / 2),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: right,
@@ -120,7 +122,7 @@ class LayoutBlockBase extends StatelessWidget {
   @override
   Widget build(Context contex) {
     return Padding(
-      padding: EdgeInsets.only(
+      padding: const EdgeInsets.only(
         left: PdfPageFormat.cm,
         right: PdfPageFormat.cm,
         top: PdfPageFormat.cm / 2,
@@ -131,8 +133,9 @@ class LayoutBlockBase extends StatelessWidget {
 }
 
 class ListTitle extends StatelessWidget {
-  ListTitle(this.title, {this.margin});
+  ListTitle(this.icon, this.title, {this.margin});
 
+  final IconData icon;
   final String title;
   final EdgeInsets? margin;
 
@@ -148,14 +151,26 @@ class ListTitle extends StatelessWidget {
           Container(
             color: themeColor,
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              child: Text(
-                title,
-                overflow: TextOverflow.clip,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 5),
+                    child: Icon(
+                      icon,
+                      size: 10,
+                    ),
+                  ),
+                  Text(
+                    title,
+                    overflow: TextOverflow.clip,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

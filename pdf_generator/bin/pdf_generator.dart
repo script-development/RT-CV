@@ -4,8 +4,9 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart';
 import 'dart:typed_data';
 
-import './data.dart';
+import 'data.dart';
 import 'layout.dart';
+import 'utils.dart';
 
 Future<void> main(List<String> arguments) async {
   var fontFile = File("./MaterialIcons-Regular.ttf");
@@ -21,18 +22,22 @@ Future<void> main(List<String> arguments) async {
 
   List<ListWithHeader> lists = [
     ListWithHeader(
+      IconData(0xe943), // Work
       "Werkervaring",
       cv.workExpr.map((workExpr) => WorkExpWidget(workExpr)).toList(),
     ),
     ListWithHeader(
+      IconData(0xe80c), // School
       "Opleidingen",
       cv.education.map((education) => EducationWidget(education)).toList(),
     ),
     ListWithHeader(
+      IconData(0xe865), // Book
       "Cursussen",
       cv.courses.map((education) => EducationWidget(education)).toList(),
     ),
     ListWithHeader(
+      IconData(0xe8e2), // Translate
       "Talen",
       cv.languageSkills.map((skill) => LanguageSkillWidget(skill)).toList(),
     ),
@@ -51,16 +56,12 @@ Future<void> main(List<String> arguments) async {
 
   pdf.addPage(
     MultiPage(
-      margin: EdgeInsets.only(bottom: PdfPageFormat.cm),
+      margin: const EdgeInsets.only(bottom: PdfPageFormat.cm),
       build: (Context context) => [
-        Header(
-          name: cv.name,
-          ref: cv.reference,
-        ),
+        Header(cv),
         LayoutBlockBase(
           child: ClientInfo(
-            email: cv.email,
-            phoneNr: cv.phoneNr,
+            personalInformation: cv.detials,
             driversLicenses: cv.driversLicenses,
           ),
         ),
@@ -75,21 +76,22 @@ Future<void> main(List<String> arguments) async {
 }
 
 class Header extends StatelessWidget {
-  Header({
-    required this.name,
-    required this.ref,
-  });
+  Header(this.cv);
 
-  final String name;
-  final String ref;
+  final CV cv;
 
   @override
   Widget build(Context context) {
+    var metaColor = TextStyle(
+      fontSize: 6,
+      color: PdfColor.fromInt(0xffb3d8dd),
+    );
+
     return SizedBox(
       width: double.infinity,
       child: Container(
         color: PdfColor.fromInt(0xff4ca1af),
-        padding: EdgeInsets.symmetric(
+        padding: const EdgeInsets.symmetric(
           horizontal: PdfPageFormat.cm,
           vertical: PdfPageFormat.cm * 1.5,
         ),
@@ -97,22 +99,20 @@ class Header extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              name,
-              overflow: TextOverflow.clip,
+              cv.detials.name,
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: PdfColors.white,
               ),
             ),
-            Text(
-              "ref #" + ref,
-              overflow: TextOverflow.clip,
-              style: TextStyle(
-                fontSize: 6,
-                color: PdfColor.fromInt(0xffb3d8dd),
-              ),
-            ),
+            Text("ref #" + cv.detials.reference, style: metaColor),
+            Text("laatst geupdate " + formatDateTime(cv.updatedAt)!,
+                style: metaColor),
+            Text("cv gemaakt op " + formatDateTime(cv.updatedAt)!,
+                style: metaColor),
+            Text("van website " + cv.detials.scrapedFromWebsite,
+                style: metaColor),
           ],
         ),
       ),
@@ -122,15 +122,22 @@ class Header extends StatelessWidget {
 
 class ClientInfo extends StatelessWidget {
   ClientInfo({
-    this.email,
-    this.phoneNr,
+    required this.personalInformation,
     this.driversLicenses,
   });
 
   List<Widget> children = [];
-  final String? email;
-  final String? phoneNr;
+  final Detials personalInformation;
   final List<String>? driversLicenses;
+
+  final TextStyle labelStyle = TextStyle(
+    fontSize: 8,
+    color: PdfColors.grey,
+  );
+  final TextStyle valueStyle = TextStyle(
+    fontSize: 10,
+    color: PdfColors.black,
+  );
 
   tryAddToList(String label, String? value) {
     if (value != null) {
@@ -138,21 +145,11 @@ class ClientInfo extends StatelessWidget {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              label + ": ",
-              overflow: TextOverflow.clip,
-              style: TextStyle(
-                fontSize: 8,
-                color: PdfColors.grey,
-              ),
-            ),
+            Text(label + ": ", style: labelStyle),
             Text(
               value,
               overflow: TextOverflow.clip,
-              style: TextStyle(
-                fontSize: 10,
-                color: PdfColors.black,
-              ),
+              style: valueStyle,
             ),
           ],
         ),
@@ -163,8 +160,8 @@ class ClientInfo extends StatelessWidget {
   @override
   Widget build(Context context) {
     children = [];
-    tryAddToList("Email", email);
-    tryAddToList("Telefoon", phoneNr);
+    tryAddToList("Email", personalInformation.email);
+    tryAddToList("Telefoon", personalInformation.phoneNr);
     if (driversLicenses != null) {
       switch (driversLicenses!.length) {
         case 0:
@@ -178,7 +175,54 @@ class ClientInfo extends StatelessWidget {
       }
     }
 
-    return Wrap(children: children, spacing: 10);
+    if (!personalInformation.hasAddress) {
+      tryAddToList("Postcode", personalInformation.zip);
+      return Wrap(children: children, spacing: 10);
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          constraints: BoxConstraints(
+            minWidth: 150,
+          ),
+          child: Padding(
+            padding: EdgeInsets.only(right: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text("Stad: ", style: labelStyle),
+                    Text(personalInformation.city, style: valueStyle),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Text("Address: ", style: labelStyle),
+                    Text(
+                        "${personalInformation.streetName} ${personalInformation.houseNumber} ${personalInformation.houseNumberSuffix}",
+                        style: valueStyle),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Text("Postcode: ", style: labelStyle),
+                    Text(personalInformation.zip, style: valueStyle),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: children,
+        ),
+      ],
+    );
   }
 }
 
@@ -247,16 +291,6 @@ class ListEntry extends StatelessWidget {
   final DateTime? from;
   final DateTime? to;
 
-  String? formatDate(DateTime? input) {
-    if (input == null) return null;
-
-    String year = input.year.toString();
-    String month = input.month.toString().padLeft(2, '0');
-    String day = input.day.toString().padLeft(2, '0');
-
-    return "${year}-${month}-${day}";
-  }
-
   @override
   Widget build(Context context) {
     List<Widget> children = [
@@ -319,7 +353,7 @@ class ListEntry extends StatelessWidget {
     }
 
     return Padding(
-      padding: EdgeInsets.only(top: 5),
+      padding: const EdgeInsets.only(top: 5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: children,
