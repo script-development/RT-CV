@@ -36,11 +36,6 @@ Future<void> main(List<String> arguments) async {
       "Cursussen",
       cv.courses.map((education) => EducationWidget(education)).toList(),
     ),
-    ListWithHeader(
-      IconData(0xe8e2), // Translate
-      "Talen",
-      cv.languageSkills.map((skill) => LanguageSkillWidget(skill)).toList(),
-    ),
   ];
 
   // Determain the layout depending on the amound of items in the lists.
@@ -53,6 +48,19 @@ Future<void> main(List<String> arguments) async {
       remainingLists.add(list);
     }
   }
+
+  // The language list a very short widget so we can always add it to the remainingLists
+  // (The remainingLists only shows small lists)
+  remainingLists.add(
+    ListWithHeader(
+      IconData(0xe8e2), // Translate
+      "Talen",
+      [
+        LanguageLevelInfoWidget(),
+        ...cv.languageSkills.map((skill) => LanguageSkillWidget(skill)).toList()
+      ],
+    ),
+  );
 
   pdf.addPage(
     MultiPage(
@@ -226,6 +234,91 @@ class ClientInfo extends StatelessWidget {
   }
 }
 
+final TextStyle labelStyle = TextStyle(
+  fontSize: 8,
+  color: PdfColors.grey700,
+);
+
+class LanguageLevelInfoWidget extends StatelessWidget {
+  Widget labelLanguageSkill(LanguageSkillLevel languageSkillLevel) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(
+          humanLanguageSkillLevel[languageSkillLevel] ?? '',
+          style: labelStyle,
+        ),
+        Container(
+          color: PdfColors.grey700,
+          height: 5,
+          width: 1,
+        ),
+      ],
+    );
+  }
+
+  Widget labelSkillKind(String kind, PdfColor color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          kind + " ",
+          style: labelStyle,
+        ),
+        Container(
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          height: 8,
+          width: 8,
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(Context context) {
+    return Column(
+      children: [
+        Container(
+          margin: const EdgeInsets.only(top: 5),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(right: 5),
+                child: labelSkillKind("lezen", PdfColors.green),
+              ),
+              labelSkillKind("schijven", PdfColors.blue),
+            ],
+          ),
+        ),
+        Container(
+          margin: const EdgeInsets.only(top: 5),
+          child: Row(
+            children: [
+              Container(
+                constraints: BoxConstraints.tightFor(width: 70),
+                child: labelLanguageSkill(LanguageSkillLevel.unknown),
+              ),
+              Expanded(
+                child: labelLanguageSkill(LanguageSkillLevel.reasonable),
+              ),
+              Expanded(
+                child: labelLanguageSkill(LanguageSkillLevel.good),
+              ),
+              Expanded(
+                child: labelLanguageSkill(LanguageSkillLevel.excellent),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class LanguageSkillWidget extends StatelessWidget {
   LanguageSkillWidget(this.languageSkill);
 
@@ -234,11 +327,79 @@ class LanguageSkillWidget extends StatelessWidget {
   get humandReading => humanLanguageSkillLevel[languageSkill.reading];
   get humandWriting => humanLanguageSkillLevel[languageSkill.writing];
 
+  int get readingNr => languageSkillLevelNr[languageSkill.reading] ?? 0;
+  int get writingNr => languageSkillLevelNr[languageSkill.writing] ?? 0;
+
   @override
   Widget build(Context context) {
-    return ListEntry(
-      languageSkill.name,
-      description: "Lezen: ${humandReading}, Schijven: ${humandWriting}",
+    return Container(
+      margin: EdgeInsets.only(top: 4),
+      child: Row(
+        children: [
+          Container(
+            constraints: BoxConstraints.tightFor(width: 70),
+            child: Text(
+              languageSkill.name,
+              overflow: TextOverflow.clip,
+              style: TextStyle(
+                fontSize: 10,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Container(
+              height: 10,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(5),
+                color: PdfColors.grey200,
+              ),
+              child: Stack(
+                children: [
+                  LanguageLevelbar(
+                    readingNr,
+                    3,
+                    PdfColors.green,
+                  ),
+                  LanguageLevelbar(
+                    writingNr,
+                    3,
+                    PdfColors.blue,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class LanguageLevelbar extends StatelessWidget {
+  LanguageLevelbar(this.levelNr, this.maxLevel, this.color);
+
+  final int levelNr;
+  final int maxLevel;
+  final PdfColor color;
+
+  @override
+  Widget build(Context context) {
+    return Row(
+      children: [
+        Expanded(
+          flex: levelNr,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(5),
+              color: color,
+            ),
+          ),
+        ),
+        Expanded(
+          flex: maxLevel - levelNr,
+          child: Container(),
+        ),
+      ],
     );
   }
 }

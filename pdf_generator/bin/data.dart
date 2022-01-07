@@ -139,6 +139,13 @@ Map<LanguageSkillLevel, String> humanLanguageSkillLevel = {
   LanguageSkillLevel.excellent: "Uitstekend",
 };
 
+Map<LanguageSkillLevel, int> languageSkillLevelNr = {
+  LanguageSkillLevel.unknown: 0,
+  LanguageSkillLevel.reasonable: 1,
+  LanguageSkillLevel.good: 2,
+  LanguageSkillLevel.excellent: 3,
+};
+
 class LanguageSkill {
   const LanguageSkill(this.name, this.reading, this.writing);
 
