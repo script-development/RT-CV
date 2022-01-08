@@ -61,7 +61,10 @@ function AppContent({ Component, pageProps }: AppProps) {
 
   useEffect(() => {
     if ((!fetcher.getApiKeyHashed || !fetcher.getApiKeyId) && router.route != '/login') {
-      router.push('/login')
+      let url = new URL('http://localhost')
+      url.searchParams.set('redirectTo', location.pathname + location.search + location.hash)
+
+      location.href = "/login" + url.search
       return
     }
 

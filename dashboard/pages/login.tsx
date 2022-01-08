@@ -19,7 +19,14 @@ export default function Home() {
 			setLoading(true)
 			setError('')
 			await fetcher.login(apiKey, apiKeyId)
-			router.push('/')
+
+			const url = new URL(location.href)
+			const redirectTo = url.searchParams.get('redirectTo')
+			if (typeof redirectTo == 'string' && redirectTo?.length > 1) {
+				router.push(redirectTo)
+			} else {
+				router.push('/')
+			}
 		} catch (e: any) {
 			setError(e?.message || e)
 		} finally {
