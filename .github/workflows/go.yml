@@ -11,7 +11,7 @@ jobs:
   build:
     strategy:
       matrix:
-        go: [1.15, 1.17]
+        go: [1.16, 1.17]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -47,9 +47,9 @@ jobs:
 
     - name: Test
       run: go test -v ./...
-    
+
     - name: Check if app startup works
       env:
         TESTING_DIE_AFTER_INIT: 'TRUE'
         USE_TESTING_DB: 'TRUE'
-      run: go run . 
+      run: go run .
