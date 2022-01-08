@@ -257,7 +257,16 @@ class ClientInfo extends StatelessWidget {
     }
 
     if (!personalInformation.hasAddress) {
-      tryAddToList("Postcode", personalInformation.zip);
+      if (personalInformation.zip != null) {
+        String? postalCodePlace =
+            guessPostalCodePlace(personalInformation.zip!);
+
+        if (postalCodePlace != null)
+          tryAddToList("Postcode",
+              "${personalInformation.zip} (in buurt van ${postalCodePlace})");
+        else
+          tryAddToList("Postcode", personalInformation.zip);
+      }
       return Wrap(children: children, spacing: 10);
     }
 
