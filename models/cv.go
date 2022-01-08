@@ -7,11 +7,12 @@ import (
 	"fmt"
 	"html/template"
 	"os"
+	"os/exec"
+	"path"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/SebastiaanKlippert/go-wkhtmltopdf"
 	"github.com/mjarkk/jsonschema"
 	"github.com/script-development/RT-CV/helpers/jsonHelpers"
 )
@@ -21,8 +22,8 @@ import (
 type CV struct {
 	Title                string                       `json:"-"` // Not supported yet
 	ReferenceNumber      string                       `json:"referenceNumber"`
-	CreatedAt            *jsonHelpers.RFC3339Nano     `json:"-"` // Not supported yet
-	LastChanged          *jsonHelpers.RFC3339Nano     `json:"-"` // Not supported yet
+	CreatedAt            *jsonHelpers.RFC3339Nano     `json:"createdAt,omitempty"`
+	LastChanged          *jsonHelpers.RFC3339Nano     `json:"lastChanged,omitempty"`
 	Educations           []Education                  `json:"educations,omitempty"`
 	Courses              []Course                     `json:"courses,omitempty"`
 	WorkExperiences      []WorkExperience             `json:"workExperiences,omitempty"`
@@ -269,34 +270,44 @@ func (cv *CV) GetEmailHTML(profile Profile, matchText string) (*bytes.Buffer, er
 }
 
 // GetPDF generates a PDF from a cv that can be send
-func (cv *CV) GetPDF() ([]byte, error) {
-	generator, err := wkhtmltopdf.NewPDFGenerator()
+func (cv *CV) GetPDF() (*os.File, error) {
+	cvJSON, err := json.Marshal(cv)
 	if err != nil {
 		return nil, err
 	}
 
-	generator.MarginBottom.Set(50)
-	generator.MarginTop.Set(0)
-	generator.MarginLeft.Set(0)
-	generator.MarginRight.Set(0)
-	generator.ImageQuality.Set(100)
-
-	html, err := cv.GetEmailAttachmentHTML()
+	cwd, err := os.Getwd()
 	if err != nil {
 		return nil, err
 	}
 
-	page := wkhtmltopdf.NewPageReader(html)
-	page.PageOptions = wkhtmltopdf.NewPageOptions()
-	page.DisableSmartShrinking.Set(true)
-	generator.AddPage(page)
-
-	err = generator.Create()
+	pdfGeneratorProjectPath := path.Join(cwd, "pdf_generator")
+	pdfGeneratorBin := path.Join(pdfGeneratorProjectPath, "bin/pdf_generator.exe")
+	f, err := os.CreateTemp(pdfGeneratorProjectPath, "cv-*.pdf")
 	if err != nil {
 		return nil, err
 	}
+	pdfOutFile := f.Name()
+	f.Close()
 
-	return generator.Bytes(), nil
+	cmd := exec.Command(pdfGeneratorBin, "--data", string(cvJSON), "--out", pdfOutFile)
+	cmd.Dir = pdfGeneratorProjectPath
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		os.Remove(pdfOutFile)
+		if len(out) != 0 {
+			return nil, errors.New(string(out))
+		}
+		return nil, err
+	}
+
+	pdfFile, err := os.Open(pdfOutFile)
+	if err != nil {
+		os.Remove(pdfOutFile)
+		return nil, err
+	}
+
+	return pdfFile, nil
 }
 
 // Validate validates the cv and returns an error if it's not valid

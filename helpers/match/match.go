@@ -1,6 +1,7 @@
 package match
 
 import (
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -380,7 +381,7 @@ func Match(domains []string, profiles []*models.Profile, cv models.CV) []FoundMa
 }
 
 // HandleMatch sends a match to the desired destination based on the OnMatch field in the profile
-func (match FoundMatch) HandleMatch(cv models.CV, pdfBytes []byte) {
+func (match FoundMatch) HandleMatch(cv models.CV, pdfFile *os.File) {
 	onMatch := match.Profile.OnMatch
 
 	for _, http := range onMatch.HTTPCall {
@@ -398,7 +399,7 @@ func (match FoundMatch) HandleMatch(cv models.CV, pdfBytes []byte) {
 		}
 
 		for _, email := range onMatch.SendMail {
-			err := email.SendEmail(match.Profile, emailBody.Bytes(), pdfBytes)
+			err := email.SendEmail(match.Profile, emailBody.Bytes(), pdfFile)
 			if err != nil {
 				log.WithError(err).Error("unable to send email")
 			}

@@ -1,8 +1,10 @@
 package models
 
 import (
+	"encoding/json"
 	"os"
 	"os/exec"
+	"path"
 	"strings"
 	"sync"
 	"testing"
@@ -182,18 +184,51 @@ func TestGetEmailAttachmentHTML(t *testing.T) {
 	Contains(t, html, cv.Interests[0].Description)
 }
 
-func TestGetEmailAttachmentPDF(t *testing.T) {
-	_, err := exec.LookPath("wkhtmltopdf")
+func getBaseProjectPath() string {
+	p, err := os.Getwd()
 	if err != nil {
-		t.Skip("wkhtmltopdf not found in path, error: " + err.Error())
+		panic(err.Error())
+	}
+	if strings.HasSuffix(p, "/models") || strings.HasSuffix(p, "\\models") {
+		p = path.Clean(path.Join(p, ".."))
+	}
+	return p
+}
+
+func TestGetNewEmailAttachmentPDF(t *testing.T) {
+	pdfGeneratorProjectPath := path.Join(getBaseProjectPath(), "pdf_generator")
+
+	pdfGeneratorBin := path.Join(pdfGeneratorProjectPath, "bin/pdf_generator.exe")
+	pdfOutfile := path.Join(pdfGeneratorProjectPath, "example.pdf")
+
+	_, err := os.Open(pdfGeneratorBin)
+	if err == os.ErrNotExist {
+		t.Skip(pdfGeneratorBin + " does not exist, skipping test")
+	} else if err != nil {
+		NoError(t, err)
 	}
 
-	tryLoadEmailEnv()
-
 	cv := getExampleCV()
-	bytes, err := cv.GetPDF()
+	jsonCV, err := json.Marshal(cv)
 	NoError(t, err)
-	NotNil(t, bytes)
+
+	tests := [][]string{
+		{"--dummy"},
+		{"--data", string(jsonCV)},
+	}
+
+	for _, args := range tests {
+		os.Remove(pdfOutfile)
+
+		cmd := exec.Command(pdfGeneratorBin, append(args, "--out", pdfOutfile)...)
+		cmd.Dir = pdfGeneratorProjectPath
+		out, err := cmd.CombinedOutput()
+		NoError(t, err, string(out))
+		NotEmpty(t, out)
+
+		_, err = os.Open(pdfOutfile)
+		NoError(t, err)
+	}
 }
 
 func TestSendMail(t *testing.T) {
@@ -231,7 +266,7 @@ func TestSendMail(t *testing.T) {
 	NoError(t, err)
 
 	emailToSendData := &ProfileSendEmailData{Email: "example@localhost"}
-	err = emailToSendData.SendEmail(profile, emailBody.Bytes(), []byte{})
+	err = emailToSendData.SendEmail(profile, emailBody.Bytes(), nil)
 	NoError(t, err)
 
 	// Wait for the email to succeed

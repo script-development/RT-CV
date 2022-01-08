@@ -37,19 +37,22 @@ Future<void> main(List<String> args) async {
     help: "to where should we write the output file",
   );
 
-  final ArgResults result = argsParser.parse(args);
-  if (result['help'] == true) {
+  final ArgResults argResult = argsParser.parse(args);
+  if (argResult['help'] == true) {
     print(argsParser.usage);
     exit(0);
   }
 
-  final String dataFlag = result['data'] ?? '';
+  final String dataFlag = argResult['data'] ?? '';
 
-  if (result['dummy']) {
+  final CV cv;
+  if (argResult['dummy']) {
     print("using dummy data to create pdf");
+    cv = CV.example();
   } else if (dataFlag.length != 0) {
     print("using data provided by argument to create pdf");
     final cvJsonData = jsonDecode(dataFlag);
+    cv = CV.fromJson(cvJsonData);
   } else {
     print("did not provide the --data nor --dummy flag");
     exit(1);
@@ -63,8 +66,6 @@ Future<void> main(List<String> args) async {
     title: "CV",
     theme: ThemeData.withFont(icons: materialIconsFont),
   );
-
-  final CV cv = CV.example();
 
   final List<ListWithHeader> lists = [];
 
@@ -133,7 +134,7 @@ Future<void> main(List<String> args) async {
     ),
   );
 
-  final file = File('example.pdf');
+  final file = File(argResult['out']);
   await file.writeAsBytes(await pdf.save());
 }
 
@@ -148,6 +149,21 @@ class Header extends StatelessWidget {
       fontSize: 6,
       color: PdfColor.fromInt(0xffb3d8dd),
     );
+
+    List<Widget> meta = [
+      Text("ref #" + cv.referenceNumber, style: metaColor),
+    ];
+    if (cv.lastChanged != null) {
+      meta.add(Text(
+        "laatst geupdate " + formatDateTime(cv.lastChanged)!,
+        style: metaColor,
+      ));
+    } else if (cv.createdAt != null) {
+      meta.add(Text(
+        "cv gemaakt op " + formatDateTime(cv.createdAt)!,
+        style: metaColor,
+      ));
+    }
 
     return SizedBox(
       width: double.infinity,
@@ -168,11 +184,7 @@ class Header extends StatelessWidget {
                 color: PdfColors.white,
               ),
             ),
-            Text("ref #" + cv.referenceNumber, style: metaColor),
-            Text("laatst geupdate " + formatDateTime(cv.lastChanged)!,
-                style: metaColor),
-            Text("cv gemaakt op " + formatDateTime(cv.createdAt)!,
-                style: metaColor),
+            ...meta,
           ],
         ),
       ),

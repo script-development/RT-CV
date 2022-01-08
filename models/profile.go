@@ -1,11 +1,11 @@
 package models
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
+	"os"
 	"regexp"
 
 	"github.com/jordan-wright/email"
@@ -200,7 +200,7 @@ type ProfileSendEmailData struct {
 }
 
 // SendEmail sends an email
-func (d *ProfileSendEmailData) SendEmail(profile Profile, htmlBody, pdfBytes []byte) error {
+func (d *ProfileSendEmailData) SendEmail(profile Profile, htmlBody []byte, pdfFile *os.File) error {
 	e := email.NewEmail()
 
 	e.To = []string{d.Email}
@@ -209,9 +209,12 @@ func (d *ProfileSendEmailData) SendEmail(profile Profile, htmlBody, pdfBytes []b
 	text, _ := html2text.FromString(string(htmlBody), html2text.Options{})
 	e.Text = []byte(text)
 
-	_, err := e.Attach(bytes.NewBuffer(pdfBytes), "match.pdf", "application/pdf")
-	if err != nil {
-		return err
+	if pdfFile != nil {
+		pdfFile.Seek(0, 0)
+		_, err := e.Attach(pdfFile, "match.pdf", "application/pdf")
+		if err != nil {
+			return err
+		}
 	}
 
 	emailservice.SendMail(e)

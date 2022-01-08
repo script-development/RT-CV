@@ -17,20 +17,23 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm ci \
     && npm run build
 
+# Build cv pdf generator
+FROM dart as pdf_generator
+
+COPY ./pdf_generator/ .
+RUN dart pub get && dart compile exe bin/pdf_generator.dart
+
 # Setup the runtime
 FROM ubuntu AS runtime
 
 RUN ln -fs /usr/share/zoneinfo/Europe/Amsterdam /etc/localtime \
-    && mkdir -p /project/dashboard \
-    && apt update \
-    && apt install -y --no-install-recommends xvfb libfontconfig wkhtmltopdf \
-    fonts-dejavu fonts-freefont-ttf fonts-ubuntu ttf-bitstream-vera \
-    && apt autoremove \
-    && apt clean \
+    && mkdir -p /project/dashboard /project/pdf_generator/bin \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=backend /project/rtcv /project/rtcv
 COPY --from=dashboard /app/out /project/dashboard/out
+COPY --from=pdf_generator /root/bin/pdf_generator.exe /project/pdf_generator/bin/pdf_generator.exe
+COPY pdf_generator/MaterialIcons-Regular.ttf /project/pdf_generator/MaterialIcons-Regular.ttf
 COPY assets /project/assets
 
 WORKDIR /project

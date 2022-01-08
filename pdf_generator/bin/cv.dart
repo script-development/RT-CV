@@ -72,6 +72,31 @@ class CV {
     );
   }
 
+  CV.fromJson(Map<String, dynamic> json) {
+    referenceNumber = json['referenceNumber'];
+    createdAt = jsonParseDate(json['createdAt']);
+    lastChanged = jsonParseDate(json['lastChanged']);
+    educations = json['educations']
+        ?.map((entry) => Education.fromJson(entry))
+        ?.toList()
+        ?.cast<Education>();
+    courses = json['courses']
+        ?.map((entry) => Course.fromJson(entry))
+        ?.toList()
+        ?.cast<Course>();
+    workExperiences = json['workExperiences']
+        ?.map((entry) => WorkExperience.fromJson(entry))
+        ?.toList()
+        ?.cast<WorkExperience>();
+    preferredJobs = json['preferredJobs']?.cast<String>();
+    languages = json['languages']
+        ?.map((entry) => Language.fromJson(entry))
+        ?.toList()
+        ?.cast<Language>();
+    personalDetails = PersonalDetails.fromJson(json['personalDetails']);
+    driversLicenses = json['driversLicenses']?.cast<String>();
+  }
+
   CV({
     required this.referenceNumber,
     this.createdAt,
@@ -85,19 +110,29 @@ class CV {
     this.driversLicenses,
   });
 
-  final String referenceNumber;
-  final DateTime? createdAt;
-  final DateTime? lastChanged;
-  final List<Education>? educations;
-  final List<Course>? courses;
-  final List<WorkExperience>? workExperiences;
-  final List<String>? preferredJobs;
-  final List<Language>? languages;
-  final PersonalDetails personalDetails;
-  final List<String>? driversLicenses;
+  late final String referenceNumber;
+  late final DateTime? createdAt;
+  late final DateTime? lastChanged;
+  late final List<Education>? educations;
+  late final List<Course>? courses;
+  late final List<WorkExperience>? workExperiences;
+  late final List<String>? preferredJobs;
+  late final List<Language>? languages;
+  late final PersonalDetails personalDetails;
+  late final List<String>? driversLicenses;
 }
 
 class Education {
+  Education.fromJson(Map<String, dynamic> json) {
+    name = json['name'];
+    description = json['description'];
+    institute = json['institute'];
+    isCompleted = json['isCompleted'];
+    hasDiploma = json['hasDiploma'];
+    startDate = jsonParseDate(json['startDate']);
+    endDate = jsonParseDate(json['endDate']);
+  }
+
   Education(
     this.name, {
     this.description,
@@ -108,16 +143,25 @@ class Education {
     this.endDate,
   });
 
-  final String name;
-  final String? description;
-  final String? institute;
-  final bool? isCompleted;
-  final bool? hasDiploma;
-  final DateTime? startDate;
-  final DateTime? endDate;
+  late final String name;
+  late final String? description;
+  late final String? institute;
+  late final bool? isCompleted;
+  late final bool? hasDiploma;
+  late final DateTime? startDate;
+  late final DateTime? endDate;
 }
 
 class Course {
+  Course.fromJson(Map<String, dynamic> json) {
+    name = json['name'];
+    institute = json['institute'];
+    startDate = jsonParseDate(json['startDate']);
+    endDate = jsonParseDate(json['endDate']);
+    isCompleted = json['isCompleted'];
+    description = json['description'];
+  }
+
   Course(
     this.name, {
     this.institute,
@@ -127,15 +171,25 @@ class Course {
     this.description,
   });
 
-  final String name;
-  final String? institute;
-  final DateTime? startDate;
-  final DateTime? endDate;
-  final bool? isCompleted;
-  final String? description;
+  late final String name;
+  late final String? institute;
+  late final DateTime? startDate;
+  late final DateTime? endDate;
+  late final bool? isCompleted;
+  late final String? description;
 }
 
 class WorkExperience {
+  WorkExperience.fromJson(Map<String, dynamic> json) {
+    profession = json['profession'];
+    description = json['description'];
+    startDate = jsonParseDate(json['startDate']);
+    endDate = jsonParseDate(json['endDate']);
+    stillEmployed = json['stillEmployed'];
+    employer = json['employer'];
+    weeklyHoursWorked = json['weeklyHoursWorked'];
+  }
+
   WorkExperience({
     this.profession,
     this.description,
@@ -146,13 +200,13 @@ class WorkExperience {
     this.weeklyHoursWorked,
   });
 
-  final String? profession;
-  final String? description;
-  final DateTime? startDate;
-  final DateTime? endDate;
-  final bool? stillEmployed;
-  final String? employer;
-  final int? weeklyHoursWorked;
+  late final String? profession;
+  late final String? description;
+  late final DateTime? startDate;
+  late final DateTime? endDate;
+  late final bool? stillEmployed;
+  late final String? employer;
+  late final int? weeklyHoursWorked;
 }
 
 enum LanguageLevel {
@@ -186,11 +240,19 @@ Map<int, LanguageLevel> nrToLanguageLevel = {
 const int maxLanguageLevelNr = 3;
 
 class Language {
+  Language.fromJson(Map<String, dynamic> json) {
+    name = json['name'];
+    levelSpoken =
+        nrToLanguageLevel[json['levelSpoken']] ?? LanguageLevel.unknown;
+    levelWritten =
+        nrToLanguageLevel[json['levelWritten']] ?? LanguageLevel.unknown;
+  }
+
   Language(this.name, this.levelSpoken, this.levelWritten);
 
-  final String name;
-  final LanguageLevel levelSpoken;
-  final LanguageLevel levelWritten;
+  late final String name;
+  late final LanguageLevel levelSpoken;
+  late final LanguageLevel levelWritten;
 }
 
 class Competence {
@@ -225,20 +287,37 @@ class PersonalDetails {
     this.email,
   });
 
-  final String? initials;
-  final String? firstName;
-  final String? surNamePrefix;
-  final String? surName;
-  final DateTime? dob;
-  final String? gender;
-  final String? streetName;
-  final String? houseNumber;
-  final String? houseNumberSuffix;
-  final String? zip;
-  final String? city;
-  final String? country;
-  final String? phoneNumber;
-  final String? email;
+  PersonalDetails.fromJson(Map<String, dynamic> json) {
+    initials = json['initials'];
+    firstName = json['firstName'];
+    surNamePrefix = json['surNamePrefix'];
+    surName = json['surName'];
+    dob = jsonParseDate(json['dob']);
+    gender = json['gender'];
+    streetName = json['streetName'];
+    houseNumber = json['houseNumber'];
+    houseNumberSuffix = json['houseNumberSuffix'];
+    zip = json['zip'];
+    city = json['city'];
+    country = json['country'];
+    phoneNumber = json['phoneNumber'];
+    email = json['email'];
+  }
+
+  late final String? initials;
+  late final String? firstName;
+  late final String? surNamePrefix;
+  late final String? surName;
+  late final DateTime? dob;
+  late final String? gender;
+  late final String? streetName;
+  late final String? houseNumber;
+  late final String? houseNumberSuffix;
+  late final String? zip;
+  late final String? city;
+  late final String? country;
+  late final String? phoneNumber;
+  late final String? email;
 
   bool get hasAddress =>
       streetName != null && houseNumber != null && city != null;
@@ -255,4 +334,9 @@ class PersonalDetails {
 
     return resp;
   }
+}
+
+DateTime? jsonParseDate(dynamic input) {
+  if (input == null) return null;
+  return DateTime.parse(input);
 }
