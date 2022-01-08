@@ -21,23 +21,27 @@ class WrapLayoutBlock extends StatelessWidget {
     List<List<Widget>> columns = [];
     for (var i = 0; i < listWithHeader.widgets.length; i++) {
       int idxInRow = i % 3;
-      if (idxInRow == 0) {
-        columns.add([]);
-      }
-      columns[columns.length - 1].add(Expanded(
+      Widget toAdd = Expanded(
         child: Padding(
           padding: EdgeInsets.only(
-            left: idxInRow == 1 ? 4 : 0,
-            right: idxInRow == 1
-                ? 4
-                : 0, // Only add horizontal padding to the second column
+            left: idxInRow == 0 ? 0 : 2,
+            right: idxInRow == 2 ? 0 : 2,
             top: i > 2
                 ? 4
                 : 0, // Only add padding to top if we are on the second row or more
           ),
           child: listWithHeader.widgets[i],
         ),
-      ));
+      );
+      if (idxInRow == 0) {
+        columns.add([
+          Expanded(child: toAdd),
+          Expanded(child: Container()),
+          Expanded(child: Container()),
+        ]);
+      } else {
+        columns[columns.length - 1][idxInRow] = toAdd;
+      }
     }
 
     return LayoutBlockBase(
