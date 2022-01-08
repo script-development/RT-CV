@@ -33,7 +33,7 @@ RUN ln -fs /usr/share/zoneinfo/Europe/Amsterdam /etc/localtime \
 COPY --from=backend /project/rtcv /project/rtcv
 COPY --from=dashboard /app/out /project/dashboard/out
 COPY --from=pdf_generator /root/bin/pdf_generator.exe /project/pdf_generator/bin/pdf_generator.exe
-COPY pdf_generator/MaterialIcons-Regular.ttf /project/pdf_generator/MaterialIcons-Regular.ttf
+COPY pdf_generator/fonts /project/pdf_generator/fonts
 COPY assets /project/assets
 
 WORKDIR /project

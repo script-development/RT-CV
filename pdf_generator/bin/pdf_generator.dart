@@ -58,13 +58,22 @@ Future<void> main(List<String> args) async {
     exit(1);
   }
 
-  final File fontFile = File("./MaterialIcons-Regular.ttf");
-  Uint8List data = await fontFile.readAsBytesSync();
-  Font materialIconsFont = Font.ttf(ByteData.view(data.buffer));
-
   final pdf = Document(
     title: "CV",
-    theme: ThemeData.withFont(icons: materialIconsFont),
+    theme: ThemeData.withFont(
+      // We need custom fonts as the default fon't doesn't have a lot of glyphs (sepcial characters)
+      // The pdf library panics if a glyph is missing
+      // As we handle with scraped data it's very common to see wired glyphs so if we want to create pdfs for those we'll need to use a custom font
+      base: await loadFont("./fonts/OpenSans-Regular.ttf"),
+      bold: await loadFont("./fonts/OpenSans-Bold.ttf"),
+
+      // Use the google icons font as the icons font
+      icons: await loadFont("./fonts/MaterialIcons-Regular.ttf"),
+
+      // We don't use the italic fonts currently, lets comment them out for now to make the result PDF smaller
+      // italic: await loadFont("./fonts/OpenSans-Italic.ttf"),
+      // boldItalic: await loadFont("./fonts/OpenSans-BoldItalic.ttf"),
+    ),
   );
 
   final List<ListWithHeader> lists = [];
