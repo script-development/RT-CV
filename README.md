@@ -46,12 +46,18 @@ _note that this uses an in memory database that resets every time the app restar
 Extra requirements:
 
 - Mongodb _(mongodb compass is a great db viewer)_
+- Dart 2+
 
 Make sure to also create a new mongodb database, the collections are created automatically by this program
 
 ```bash
 cp .env.example .env
 vim .env
+
+cd pdf_generator
+dart pub get
+dart compile exe bin/pdf_generator.dart
+cd ..
 
 go run .
 ```
