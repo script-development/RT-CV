@@ -202,7 +202,7 @@ func TestGetNewEmailAttachmentPDF(t *testing.T) {
 	pdfOutfile := path.Join(pdfGeneratorProjectPath, "example.pdf")
 
 	_, err := os.Open(pdfGeneratorBin)
-	if err == os.ErrNotExist {
+	if os.IsNotExist(err) {
 		t.Skip(pdfGeneratorBin + " does not exist, skipping test")
 	} else if err != nil {
 		NoError(t, err)
