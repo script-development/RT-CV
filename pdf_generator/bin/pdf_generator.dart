@@ -96,10 +96,6 @@ Future<void> main(List<String> args) async {
 
       // Use the google icons font as the icons font
       icons: await loadFont("./fonts/MaterialIcons-Regular.ttf"),
-
-      // We don't use the italic fonts currently, lets comment them out for now to make the result PDF smaller
-      // italic: await loadFont("./fonts/OpenSans-Italic.ttf"),
-      // boldItalic: await loadFont("./fonts/OpenSans-BoldItalic.ttf"),
     ),
   );
 
