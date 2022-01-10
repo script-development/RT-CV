@@ -71,6 +71,7 @@ Head over to [localhost:4000/docs](http://localhost:4000/docs) to get the api do
 Make sure to read
 
 - [/dashboard](/dashboard)
+- [/pdf_generator](/pdf_generator)
 - [/CONTRIBUTING.md](/CONTRIBUTING.md)
 
 ## Docker
