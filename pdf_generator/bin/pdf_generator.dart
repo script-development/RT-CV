@@ -53,6 +53,16 @@ Future<void> main(List<String> args) async {
     help: 'set the company address section',
   );
   argsParser.addOption(
+    "font-regular",
+    help: 'set the font to use',
+    defaultsTo: 'OpenSans',
+  );
+  argsParser.addOption(
+    "font-bold",
+    help: 'set the font to use',
+    defaultsTo: 'OpenSans',
+  );
+  argsParser.addOption(
     'out',
     abbr: 'o',
     defaultsTo: 'example.pdf',
@@ -81,9 +91,37 @@ Future<void> main(List<String> args) async {
   }
 
   var logo = await obtainLogo(argResult['logo-image-url']);
-  BgColor headerColor = BgColor(PdfColor.fromHex(argResult['header-color']));
-  BgColor subHeaderColor =
+  final BgColor headerColor =
+      BgColor(PdfColor.fromHex(argResult['header-color']));
+  final BgColor subHeaderColor =
       BgColor(PdfColor.fromHex(argResult['sub-header-color']));
+
+  final Font regularFont;
+  final Font boldFont;
+
+  Map<String, FontFiles> fontFilesMap = {
+    'BeVietnamPro':
+        FontFiles("BeVietnamPro-Regular.ttf", "BeVietnamPro-Bold.ttf"),
+    'IBMPlexMono': FontFiles("IBMPlexMono-Regular.ttf", "IBMPlexMono-Bold.ttf"),
+    'IBMPlexSans': FontFiles("IBMPlexSans-Regular.ttf", "IBMPlexSans-Bold.ttf"),
+    'IBMPlexSerif':
+        FontFiles("IBMPlexSerif-Regular.ttf", "IBMPlexSerif-Bold.ttf"),
+    'Lobster': FontFiles("Lobster-Regular.ttf", "Lobster-Regular.ttf"),
+    'OpenSans': FontFiles("OpenSans-Regular.ttf", "OpenSans-Bold.ttf"),
+    'PlayfairDisplay':
+        FontFiles("PlayfairDisplay-Regular.ttf", "PlayfairDisplay-Bold.ttf"),
+    'RobotoSlab': FontFiles("RobotoSlab-Regular.ttf", "RobotoSlab-Bold.ttf"),
+  };
+
+  String fontname = argResult['font-regular'] ?? 'OpenSans';
+  FontFiles? fontFiles = fontFilesMap[fontname];
+  if (fontFiles == null) throw 'font ${fontname} not found';
+  regularFont = await loadFont("./fonts/" + fontFiles.regular);
+
+  fontname = argResult['font-bold'] ?? 'OpenSans';
+  fontFiles = fontFilesMap[fontname];
+  if (fontFiles == null) throw 'font ${fontname} not found';
+  boldFont = await loadFont("./fonts/" + fontFiles.bold);
 
   final pdf = Document(
     title: "CV",
@@ -91,8 +129,8 @@ Future<void> main(List<String> args) async {
       // We need custom fonts as the default fon't doesn't have a lot of glyphs (sepcial characters)
       // The pdf library panics if a glyph is missing
       // As we handle with scraped data it's very common to see wired glyphs so if we want to create pdfs for those we'll need to use a custom font
-      base: await loadFont("./fonts/OpenSans-Regular.ttf"),
-      bold: await loadFont("./fonts/OpenSans-Bold.ttf"),
+      base: regularFont,
+      bold: boldFont,
 
       // Use the google icons font as the icons font
       icons: await loadFont("./fonts/MaterialIcons-Regular.ttf"),
@@ -174,4 +212,11 @@ Future<void> main(List<String> args) async {
 
   final file = File(argResult['out']);
   await file.writeAsBytes(await pdf.save());
+}
+
+class FontFiles {
+  const FontFiles(this.regular, this.bold);
+
+  final String regular;
+  final String bold;
 }
