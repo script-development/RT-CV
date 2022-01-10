@@ -55,6 +55,12 @@ class CV {
           startDate: DateTime.utc(2010, 1, 1),
           endDate: DateTime.utc(2011, 1, 1),
         ),
+        Course(
+          "TV host voor dummies",
+          institute: "Hogeschool",
+          startDate: DateTime.utc(2010, 1, 1),
+          // endDate: DateTime.utc(2011, 1, 1),
+        ),
       ],
       driversLicenses: ["B", "C", "D"],
       languages: [

@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart';
 import 'package:args/args.dart';
-import 'dart:typed_data';
 import 'dart:convert';
 
 import 'language_widgets.dart';
@@ -28,7 +27,7 @@ Future<void> main(List<String> args) async {
     'data',
     abbr: 'd',
     help:
-        'input CV as json data (the structure of this data should be the json of the CV structure in ../models/cv.go)',
+        'input CV as json data (the structure of the CV should be the CV in /models/cv.go marshaled)',
   );
   argsParser.addOption(
     'out',
@@ -421,14 +420,23 @@ class ListEntry extends StatelessWidget {
     String? fromStr = formatDate(from);
     String? toStr = formatDate(to);
     if (fromStr != null || toStr != null) {
-      children.add(
-        Row(children: [
-          Text("Vanaf ", style: labelStyle),
-          Text(fromStr ?? '??', style: contentStyle),
-          Text(" tot ", style: labelStyle),
-          Text(toStr ?? '??', style: contentStyle),
-        ]),
-      );
+      if (toStr == null || fromStr == null) {
+        children.add(
+          Row(children: [
+            Text("Op ", style: labelStyle),
+            Text(fromStr ?? toStr ?? '??', style: contentStyle),
+          ]),
+        );
+      } else {
+        children.add(
+          Row(children: [
+            Text("Vanaf ", style: labelStyle),
+            Text(fromStr, style: contentStyle),
+            Text(" tot ", style: labelStyle),
+            Text(toStr, style: contentStyle),
+          ]),
+        );
+      }
     }
 
     if (description != null && description!.isNotEmpty) {
