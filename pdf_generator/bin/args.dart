@@ -1,0 +1,120 @@
+import 'dart:io';
+
+import 'package:args/args.dart';
+import 'package:pdf/pdf.dart';
+
+class ArgsParser {
+  ArgsParser(List<String> args) {
+    ArgParser argsParser = ArgParser();
+    argsParser.addFlag(
+      'help',
+      abbr: 'h',
+      help: "Print this message",
+    );
+    argsParser.addFlag(
+      'dummy',
+      help:
+          "Use dummy data, handy for working on this application. The dummy data is located in bin/cv.dart",
+    );
+    argsParser.addOption(
+      'data',
+      help:
+          'input CV as json data (the structure of the CV should be the CV in /models/cv.go marshaled)',
+    );
+    argsParser.addOption(
+      'header-color',
+      help: 'set the backgorund color hex (#ffffff) of the main header',
+      defaultsTo: '#4398a5',
+    );
+    argsParser.addOption(
+      'sub-header-color',
+      help: 'set the background color hex (#ffffff) of the sub headers',
+      defaultsTo: '#ffe004',
+    );
+    argsParser.addOption(
+      "logo-image-url",
+      help: 'set the logo image url, leave empty for no logo',
+    );
+    argsParser.addOption(
+      "company-name",
+      help: 'set the company name',
+    );
+    argsParser.addOption(
+      "company-address",
+      help: 'set the company address section',
+    );
+    argsParser.addOption(
+      "font-regular",
+      help: 'set the font to use',
+      defaultsTo: 'OpenSans',
+    );
+    argsParser.addOption(
+      "font-bold",
+      help: 'set the font to use',
+      defaultsTo: 'OpenSans',
+    );
+    argsParser.addOption(
+      'style',
+      help: 'set the style of the document based an a set list of styles',
+      defaultsTo: '1',
+      allowed: [
+        '1',
+        '2',
+      ],
+    );
+    argsParser.addOption(
+      'out',
+      abbr: 'o',
+      defaultsTo: 'example.pdf',
+      help: "to where should we write the output file",
+    );
+
+    try {
+      this.argResult = argsParser.parse(args);
+    } catch (e) {
+      print('unable to parse args, error: ${e}');
+      exit(1);
+    }
+    if (argResult['help'] == true) {
+      print(argsParser.usage);
+      exit(0);
+    }
+  }
+
+  ArgsParser.fromArgResults(this.argResult);
+
+  late final ArgResults argResult;
+
+  /// data is the cv data (should be encoded as json)
+  /// The layout of this data is based of the main project's CV struct in /models/cv.go
+  String get data => argResult['data'];
+
+  /// should dummy data be used to generate the document
+  bool get dummy => argResult['dummy'];
+
+  /// logoImageUrl is a logo place on the bottom of the document
+  /// This logo is fetched from the internet
+  String? get logoImageUrl => argResult['logo-image-url'];
+
+  /// headerColor sets the heaader color of the main header
+  PdfColor get headerColor => PdfColor.fromHex(argResult['header-color']);
+
+  /// set the background color of the smaller headers
+  PdfColor get subHeaderColor =>
+      PdfColor.fromHex(argResult['sub-header-color']);
+
+  /// fontRegular is the regular font to use
+  String get fontRegular => argResult['font-regular'];
+
+  /// fontBold is font used as bold font thus used for the headers
+  String get fontBold => argResult['font-bold'];
+
+  /// The company name placed at the bottom of the file
+  String? get companyName => argResult['company-name'];
+
+  /// The company address placed at the bottom of the file
+  String? get companyAddress => argResult['company-address'];
+
+  /// The output file name
+  String get out => argResult['out'];
+}

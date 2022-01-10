@@ -1,8 +1,4 @@
-import 'dart:io';
-import 'dart:typed_data';
-
 import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart';
 
 String? formatDate(DateTime? input) {
   if (input == null) return null;
@@ -22,12 +18,6 @@ String? formatDateTime(DateTime? input) {
   String second = input.second.toString().padLeft(2, '0');
 
   return "${formatDate(input)!} ${hour}:${minute}:${second}";
-}
-
-Future<Font> loadFont(String file) async {
-  final File fontFile = File(file);
-  Uint8List data = await fontFile.readAsBytesSync();
-  return Font.ttf(ByteData.view(data.buffer));
 }
 
 class BgColor {

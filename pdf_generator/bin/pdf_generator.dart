@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart';
-import 'package:args/args.dart';
 
 import 'language_widgets.dart';
 import 'info_widgets.dart';
@@ -12,128 +11,42 @@ import 'layout.dart';
 import 'utils.dart';
 import 'header.dart';
 import 'footer.dart';
+import 'args.dart';
+import 'fonts.dart';
 
-Future<void> main(List<String> args) async {
-  ArgParser argsParser = ArgParser();
-  argsParser.addFlag(
-    'help',
-    abbr: 'h',
-    help: "Print this message",
-  );
-  argsParser.addFlag(
-    'dummy',
-    help:
-        "Use dummy data, handy for working on this application. The dummy data is located in bin/cv.dart",
-  );
-  argsParser.addOption(
-    'data',
-    help:
-        'input CV as json data (the structure of the CV should be the CV in /models/cv.go marshaled)',
-  );
-  argsParser.addOption(
-    'header-color',
-    help: 'set the backgorund color hex (#ffffff) of the main header',
-    defaultsTo: '#4398a5',
-  );
-  argsParser.addOption(
-    'sub-header-color',
-    help: 'set the background color hex (#ffffff) of the sub headers',
-    defaultsTo: '#ffe004',
-  );
-  argsParser.addOption(
-    "logo-image-url",
-    help: 'set the logo image url, leave empty for no logo',
-  );
-  argsParser.addOption(
-    "company-name",
-    help: 'set the company name',
-  );
-  argsParser.addOption(
-    "company-address",
-    help: 'set the company address section',
-  );
-  argsParser.addOption(
-    "font-regular",
-    help: 'set the font to use',
-    defaultsTo: 'OpenSans',
-  );
-  argsParser.addOption(
-    "font-bold",
-    help: 'set the font to use',
-    defaultsTo: 'OpenSans',
-  );
-  argsParser.addOption(
-    'out',
-    abbr: 'o',
-    defaultsTo: 'example.pdf',
-    help: "to where should we write the output file",
-  );
-
-  final ArgResults argResult = argsParser.parse(args);
-  if (argResult['help'] == true) {
-    print(argsParser.usage);
-    exit(0);
-  }
-
-  final String dataFlag = argResult['data'] ?? '';
+Future<void> main(List<String> programArgs) async {
+  final ArgsParser args = ArgsParser(programArgs);
 
   final CV cv;
-  if (argResult['dummy']) {
+  if (args.dummy) {
     print("using dummy data to create pdf");
     cv = CV.example();
-  } else if (dataFlag.length != 0) {
+  } else if (args.data.length != 0) {
     print("using data provided by argument to create pdf");
-    final cvJsonData = jsonDecode(dataFlag);
+    final cvJsonData = jsonDecode(args.data);
     cv = CV.fromJson(cvJsonData);
   } else {
     print("did not provide the --data nor --dummy flag");
     exit(1);
   }
 
-  var logo = await obtainLogo(argResult['logo-image-url']);
-  final BgColor headerColor =
-      BgColor(PdfColor.fromHex(argResult['header-color']));
-  final BgColor subHeaderColor =
-      BgColor(PdfColor.fromHex(argResult['sub-header-color']));
+  var logo = await obtainLogo(args.logoImageUrl);
+  final BgColor headerColor = BgColor(args.headerColor);
+  final BgColor subHeaderColor = BgColor(args.subHeaderColor);
 
-  final Font regularFont;
-  final Font boldFont;
-
-  Map<String, FontFiles> fontFilesMap = {
-    'BeVietnamPro':
-        FontFiles("BeVietnamPro-Regular.ttf", "BeVietnamPro-Bold.ttf"),
-    'IBMPlexMono': FontFiles("IBMPlexMono-Regular.ttf", "IBMPlexMono-Bold.ttf"),
-    'IBMPlexSans': FontFiles("IBMPlexSans-Regular.ttf", "IBMPlexSans-Bold.ttf"),
-    'IBMPlexSerif':
-        FontFiles("IBMPlexSerif-Regular.ttf", "IBMPlexSerif-Bold.ttf"),
-    'Lobster': FontFiles("Lobster-Regular.ttf", "Lobster-Regular.ttf"),
-    'OpenSans': FontFiles("OpenSans-Regular.ttf", "OpenSans-Bold.ttf"),
-    'PlayfairDisplay':
-        FontFiles("PlayfairDisplay-Regular.ttf", "PlayfairDisplay-Bold.ttf"),
-    'RobotoSlab': FontFiles("RobotoSlab-Regular.ttf", "RobotoSlab-Bold.ttf"),
-  };
-
-  String fontname = argResult['font-regular'] ?? 'OpenSans';
-  FontFiles? fontFiles = fontFilesMap[fontname];
-  if (fontFiles == null) throw 'font ${fontname} not found';
-  regularFont = await loadFont("./fonts/" + fontFiles.regular);
-
-  fontname = argResult['font-bold'] ?? 'OpenSans';
-  fontFiles = fontFilesMap[fontname];
-  if (fontFiles == null) throw 'font ${fontname} not found';
-  boldFont = await loadFont("./fonts/" + fontFiles.bold);
+  // We need custom fonts as the default fon't doesn't have a lot of glyphs (sepcial characters)
+  // The pdf library panics if a glyph is missing
+  // As we handle with scraped data it's very common to see wired glyphs so if we want to create pdfs for those we'll need to use a custom font
+  FontsManager fonts = FontsManager(args);
 
   final pdf = Document(
     title: "CV",
     theme: ThemeData.withFont(
-      // We need custom fonts as the default fon't doesn't have a lot of glyphs (sepcial characters)
-      // The pdf library panics if a glyph is missing
-      // As we handle with scraped data it's very common to see wired glyphs so if we want to create pdfs for those we'll need to use a custom font
-      base: regularFont,
-      bold: boldFont,
+      base: await fonts.resolvedFontRegular,
+      bold: await fonts.resolvedFontBold,
 
       // Use the google icons font as the icons font
-      icons: await loadFont("./fonts/MaterialIcons-Regular.ttf"),
+      icons: await fonts.iconsFont,
     ),
   );
 
@@ -192,8 +105,8 @@ Future<void> main(List<String> args) async {
       footer: (Context context) => FooterWidget(
         ref: cv.referenceNumber,
         logo: logo,
-        companyName: argResult['company-name'],
-        companyAddress: argResult['company-address'],
+        companyName: args.companyName,
+        companyAddress: args.companyAddress,
       ),
       margin: const EdgeInsets.only(bottom: PdfPageFormat.cm),
       build: (Context context) => [
@@ -210,13 +123,6 @@ Future<void> main(List<String> args) async {
     ),
   );
 
-  final file = File(argResult['out']);
+  final file = File(args.out);
   await file.writeAsBytes(await pdf.save());
-}
-
-class FontFiles {
-  const FontFiles(this.regular, this.bold);
-
-  final String regular;
-  final String bold;
 }
