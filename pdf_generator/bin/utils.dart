@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart';
 
 String? formatDate(DateTime? input) {
@@ -27,6 +28,25 @@ Future<Font> loadFont(String file) async {
   final File fontFile = File(file);
   Uint8List data = await fontFile.readAsBytesSync();
   return Font.ttf(ByteData.view(data.buffer));
+}
+
+class BgColor {
+  BgColor(this.bgColor) : this.textColor = getTextColorFromBg(bgColor);
+
+  final PdfColor bgColor;
+  final PdfColor textColor;
+}
+
+PdfColor getTextColorFromBg(PdfColor bgColor) {
+  double red = bgColor.red * 255;
+  double green = bgColor.green * 255;
+  double blue = bgColor.blue * 255;
+
+  // Calculate the luminance of the background color and base the text color on that
+  // Colors are a shitshow and looking tough some Q and A's on the internet this calculation might be wrong
+  // For a way to long thread about this issue see: https://stackoverflow.com/questions/596216/formula-to-determine-perceived-brightness-of-rgb-color
+  double luminance = (red * 0.3) + (green * 0.59) + (blue * 0.11);
+  return (luminance >= 128) ? PdfColors.black : PdfColors.white;
 }
 
 String? guessPostalCodePlace(String postalCode) {

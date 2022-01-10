@@ -60,7 +60,7 @@ class LanguageLevelInfoWidget extends StatelessWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.only(right: 5),
-                child: labelLevelKind("schijven", _writingColor),
+                child: labelLevelKind("schrijven", _writingColor),
               ),
               labelLevelKind("spreken", _speakingColor),
             ],

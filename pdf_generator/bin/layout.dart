@@ -1,6 +1,8 @@
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart';
 
+import 'utils.dart';
+
 class ListWithHeader {
   ListWithHeader(this.icon, this.title, this.widgets);
 
@@ -12,9 +14,10 @@ class ListWithHeader {
 }
 
 class WrapLayoutBlock extends StatelessWidget {
-  WrapLayoutBlock(this.listWithHeader);
+  WrapLayoutBlock(this.listWithHeader, this.headerColor);
 
   final ListWithHeader listWithHeader;
+  final BgColor headerColor;
 
   @override
   Widget build(Context context) {
@@ -48,7 +51,11 @@ class WrapLayoutBlock extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ListTitle(listWithHeader.icon, listWithHeader.title),
+          ListTitle(
+            listWithHeader.icon,
+            listWithHeader.title,
+            headerColor,
+          ),
           Column(
             children: columns
                 .map((row) => Row(
@@ -64,9 +71,10 @@ class WrapLayoutBlock extends StatelessWidget {
 }
 
 class ColumnsLayoutBlock extends StatelessWidget {
-  ColumnsLayoutBlock(this.widgets);
+  ColumnsLayoutBlock(this.widgets, this.headerColor);
 
   final List<ListWithHeader> widgets;
+  final BgColor headerColor;
 
   @override
   Widget build(Context context) {
@@ -78,6 +86,7 @@ class ColumnsLayoutBlock extends StatelessWidget {
       ListTitle title = ListTitle(
         widget.icon,
         widget.title,
+        headerColor,
         margin: i > 1 ? const EdgeInsets.only(top: 10) : null,
       );
 
@@ -137,23 +146,22 @@ class LayoutBlockBase extends StatelessWidget {
 }
 
 class ListTitle extends StatelessWidget {
-  ListTitle(this.icon, this.title, {this.margin});
+  ListTitle(this.icon, this.title, this.headerColor, {this.margin});
 
   final IconData icon;
   final String title;
+  final BgColor headerColor;
   final EdgeInsets? margin;
 
   @override
   Widget build(Context context) {
-    PdfColor themeColor = PdfColor.fromInt(0xffffe004);
-
     return Container(
       margin: margin,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            color: themeColor,
+            color: headerColor.bgColor,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               child: Row(
@@ -164,12 +172,14 @@ class ListTitle extends StatelessWidget {
                     child: Icon(
                       icon,
                       size: 10,
+                      color: headerColor.textColor,
                     ),
                   ),
                   Text(
                     title,
                     overflow: TextOverflow.clip,
                     style: TextStyle(
+                      color: headerColor.textColor,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
@@ -181,7 +191,7 @@ class ListTitle extends StatelessWidget {
           Container(
             width: double.infinity,
             height: 2,
-            color: themeColor,
+            color: headerColor.bgColor,
           ),
         ],
       ),

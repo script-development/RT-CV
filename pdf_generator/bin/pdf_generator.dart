@@ -1,14 +1,17 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:convert';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart';
 import 'package:args/args.dart';
-import 'dart:convert';
 
 import 'language_widgets.dart';
+import 'info_widgets.dart';
 import 'cv.dart';
 import 'layout.dart';
 import 'utils.dart';
+import 'header.dart';
+import 'footer.dart';
 
 Future<void> main(List<String> args) async {
   ArgParser argsParser = ArgParser();
@@ -19,15 +22,35 @@ Future<void> main(List<String> args) async {
   );
   argsParser.addFlag(
     'dummy',
-    abbr: 'D',
     help:
         "Use dummy data, handy for working on this application. The dummy data is located in bin/cv.dart",
   );
   argsParser.addOption(
     'data',
-    abbr: 'd',
     help:
         'input CV as json data (the structure of the CV should be the CV in /models/cv.go marshaled)',
+  );
+  argsParser.addOption(
+    'header-color',
+    help: 'set the backgorund color hex (#ffffff) of the main header',
+    defaultsTo: '#4398a5',
+  );
+  argsParser.addOption(
+    'sub-header-color',
+    help: 'set the background color hex (#ffffff) of the sub headers',
+    defaultsTo: '#ffe004',
+  );
+  argsParser.addOption(
+    "logo-image-url",
+    help: 'set the logo image url, leave empty for no logo',
+  );
+  argsParser.addOption(
+    "company-name",
+    help: 'set the company name',
+  );
+  argsParser.addOption(
+    "company-address",
+    help: 'set the company address section',
   );
   argsParser.addOption(
     'out',
@@ -56,6 +79,11 @@ Future<void> main(List<String> args) async {
     print("did not provide the --data nor --dummy flag");
     exit(1);
   }
+
+  var logo = await obtainLogo(argResult['logo-image-url']);
+  BgColor headerColor = BgColor(PdfColor.fromHex(argResult['header-color']));
+  BgColor subHeaderColor =
+      BgColor(PdfColor.fromHex(argResult['sub-header-color']));
 
   final pdf = Document(
     title: "CV",
@@ -104,7 +132,7 @@ Future<void> main(List<String> args) async {
   List<ListWithHeader> remainingLists = [];
   for (ListWithHeader list in lists) {
     if (list.length > 4) {
-      wrapLayoutBlocks.add(WrapLayoutBlock(list));
+      wrapLayoutBlocks.add(WrapLayoutBlock(list, subHeaderColor));
     } else {
       remainingLists.add(list);
     }
@@ -127,16 +155,22 @@ Future<void> main(List<String> args) async {
 
   pdf.addPage(
     MultiPage(
+      footer: (Context context) => FooterWidget(
+        ref: cv.referenceNumber,
+        logo: logo,
+        companyName: argResult['company-name'],
+        companyAddress: argResult['company-address'],
+      ),
       margin: const EdgeInsets.only(bottom: PdfPageFormat.cm),
       build: (Context context) => [
-        Header(cv),
+        HeaderWidget(cv: cv, headerColor: headerColor),
         LayoutBlockBase(
           child: ClientInfo(
             personalInformation: cv.personalDetails,
             driversLicenses: cv.driversLicenses,
           ),
         ),
-        ColumnsLayoutBlock(remainingLists),
+        ColumnsLayoutBlock(remainingLists, subHeaderColor),
         ...wrapLayoutBlocks,
       ],
     ),
@@ -144,319 +178,4 @@ Future<void> main(List<String> args) async {
 
   final file = File(argResult['out']);
   await file.writeAsBytes(await pdf.save());
-}
-
-class Header extends StatelessWidget {
-  Header(this.cv);
-
-  final CV cv;
-
-  @override
-  Widget build(Context context) {
-    var metaColor = TextStyle(
-      fontSize: 6,
-      color: PdfColor.fromInt(0xffb3d8dd),
-    );
-
-    List<Widget> meta = [
-      Text("ref #" + cv.referenceNumber, style: metaColor),
-    ];
-    if (cv.lastChanged != null) {
-      meta.add(Text(
-        "laatst geupdate " + formatDateTime(cv.lastChanged)!,
-        style: metaColor,
-      ));
-    } else if (cv.createdAt != null) {
-      meta.add(Text(
-        "cv gemaakt op " + formatDateTime(cv.createdAt)!,
-        style: metaColor,
-      ));
-    }
-
-    return SizedBox(
-      width: double.infinity,
-      child: Container(
-        color: PdfColor.fromInt(0xff4ca1af),
-        padding: const EdgeInsets.symmetric(
-          horizontal: PdfPageFormat.cm,
-          vertical: PdfPageFormat.cm * 1.5,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              cv.personalDetails.fullName,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: PdfColors.white,
-              ),
-            ),
-            ...meta,
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class ClientInfo extends StatelessWidget {
-  ClientInfo({
-    required this.personalInformation,
-    this.driversLicenses,
-  });
-
-  List<Widget> children = [];
-  final PersonalDetails personalInformation;
-  final List<String>? driversLicenses;
-
-  final TextStyle labelStyle = TextStyle(
-    fontSize: 8,
-    color: PdfColors.grey,
-  );
-  final TextStyle valueStyle = TextStyle(
-    fontSize: 10,
-    color: PdfColors.black,
-  );
-
-  tryAddToList(String label, String? value) {
-    if (value != null) {
-      children.add(
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(label + ": ", style: labelStyle),
-            Text(
-              value,
-              overflow: TextOverflow.clip,
-              style: valueStyle,
-            ),
-          ],
-        ),
-      );
-    }
-  }
-
-  @override
-  Widget build(Context context) {
-    children = [];
-    tryAddToList("Email", personalInformation.email);
-    tryAddToList("Telefoon", personalInformation.phoneNumber);
-    if (driversLicenses != null) {
-      switch (driversLicenses!.length) {
-        case 0:
-          // Do not add the drivers licenses
-          break;
-        case 1:
-          tryAddToList("Rijbewijs", driversLicenses![0]);
-          break;
-        default:
-          tryAddToList("Rijbewijzen", driversLicenses!.join(", "));
-      }
-    }
-
-    if (!personalInformation.hasAddress) {
-      if (personalInformation.zip != null) {
-        String? postalCodePlace =
-            guessPostalCodePlace(personalInformation.zip!);
-
-        if (postalCodePlace != null)
-          tryAddToList("Postcode",
-              "${personalInformation.zip} (in buurt van ${postalCodePlace})");
-        else
-          tryAddToList("Postcode", personalInformation.zip);
-      }
-      return Wrap(children: children, spacing: 10);
-    }
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          constraints: BoxConstraints(
-            minWidth: 150,
-          ),
-          child: Padding(
-            padding: EdgeInsets.only(right: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text("Stad: ", style: labelStyle),
-                    Text(personalInformation.city!, style: valueStyle),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Text("Address: ", style: labelStyle),
-                    Text(
-                        "${personalInformation.streetName} ${personalInformation.houseNumber} ${personalInformation.houseNumberSuffix}",
-                        style: valueStyle),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Text("Postcode: ", style: labelStyle),
-                    Text(personalInformation.zip!, style: valueStyle),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: children,
-        ),
-      ],
-    );
-  }
-}
-
-class WorkExpWidget extends StatelessWidget {
-  WorkExpWidget(WorkExperience this.exp);
-
-  final WorkExperience exp;
-
-  @override
-  Widget build(Context context) {
-    return ListEntry(
-      exp.profession ?? '??',
-      company: exp.employer,
-      description: exp.description,
-      from: exp.startDate,
-      to: exp.endDate,
-    );
-  }
-}
-
-class CourseWidget extends StatelessWidget {
-  CourseWidget(Course this.course);
-
-  final Course course;
-
-  @override
-  Widget build(Context context) {
-    return ListEntry(
-      course.name,
-      company: course.institute,
-      from: course.startDate,
-      to: course.endDate,
-      description: course.description,
-    );
-  }
-}
-
-class EducationWidget extends StatelessWidget {
-  EducationWidget(Education this.education);
-
-  final Education education;
-
-  @override
-  Widget build(Context context) {
-    return ListEntry(
-      education.name,
-      company: education.institute,
-      from: education.startDate,
-      to: education.endDate,
-      description: education.description,
-    );
-  }
-}
-
-class ListEntry extends StatelessWidget {
-  ListEntry(
-    this.title, {
-    this.description,
-    this.company,
-    this.from,
-    this.to,
-  });
-
-  final String title;
-  final String? company;
-  final String? description;
-  final DateTime? from;
-  final DateTime? to;
-
-  @override
-  Widget build(Context context) {
-    List<Widget> children = [
-      Flexible(
-        child: Text(
-          title,
-          overflow: TextOverflow.clip,
-          style: TextStyle(
-            fontSize: 10,
-          ),
-        ),
-      ),
-    ];
-
-    TextStyle contentStyle = TextStyle(
-      fontSize: 8,
-      color: PdfColors.grey800,
-    );
-    TextStyle labelStyle = TextStyle(
-      fontSize: 8,
-      color: PdfColors.grey600,
-    );
-
-    if (company != null && company!.isNotEmpty) {
-      children.add(
-        Row(children: [
-          Text("Bij: ", style: labelStyle),
-          Text(
-            company!,
-            overflow: TextOverflow.clip,
-            style: contentStyle,
-          ),
-        ]),
-      );
-    }
-
-    String? fromStr = formatDate(from);
-    String? toStr = formatDate(to);
-    if (fromStr != null || toStr != null) {
-      if (toStr == null || fromStr == null) {
-        children.add(
-          Row(children: [
-            Text("Op ", style: labelStyle),
-            Text(fromStr ?? toStr ?? '??', style: contentStyle),
-          ]),
-        );
-      } else {
-        children.add(
-          Row(children: [
-            Text("Vanaf ", style: labelStyle),
-            Text(fromStr, style: contentStyle),
-            Text(" tot ", style: labelStyle),
-            Text(toStr, style: contentStyle),
-          ]),
-        );
-      }
-    }
-
-    if (description != null && description!.isNotEmpty) {
-      children.add(Flexible(
-        child: Text(
-          (description!.length > 300)
-              ? description!.substring(0, 300) + '..'
-              : description!,
-          overflow: TextOverflow.clip,
-          style: contentStyle,
-        ),
-      ));
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 5),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: children,
-      ),
-    );
-  }
 }
