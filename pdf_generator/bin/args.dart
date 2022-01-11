@@ -56,10 +56,11 @@ class ArgsParser {
     argsParser.addOption(
       'style',
       help: 'set the style of the document based an a set list of styles',
-      defaultsTo: '1',
+      defaultsTo: 'style_1',
       allowed: [
-        '1',
-        '2',
+        'style_1',
+        'style_2',
+        'style_3',
       ],
     );
     argsParser.addOption(
@@ -115,6 +116,28 @@ class ArgsParser {
   /// The company address placed at the bottom of the file
   String? get companyAddress => argResult['company-address'];
 
+  /// The style of the document
+  PdfStyle get style => pdfStyleFromString(argResult['style']);
+
   /// The output file name
   String get out => argResult['out'];
+}
+
+enum PdfStyle {
+  style_1,
+  style_2,
+  style_3,
+}
+
+PdfStyle pdfStyleFromString(String style) {
+  switch (style) {
+    case 'style_1':
+      return PdfStyle.style_1;
+    case 'style_2':
+      return PdfStyle.style_2;
+    case 'style_3':
+      return PdfStyle.style_3;
+    default:
+      throw 'unknown style: ${style}';
+  }
 }

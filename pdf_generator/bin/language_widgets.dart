@@ -1,12 +1,17 @@
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart';
 
+import 'args.dart';
 import 'cv.dart';
 
 const _writingColor = PdfColors.green400;
 const _speakingColor = PdfColors.blue400;
 
 class LanguageLevelInfoWidget extends StatelessWidget {
+  LanguageLevelInfoWidget(this.style);
+
+  final PdfStyle style;
+
   final TextStyle labelStyle = TextStyle(
     fontSize: 8,
     color: PdfColors.grey700,
@@ -30,22 +35,32 @@ class LanguageLevelInfoWidget extends StatelessWidget {
   }
 
   Widget labelLevelKind(String kind, PdfColor color) {
+    Widget dot = Container(
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      height: 8,
+      width: 8,
+    );
+
     return Row(
       mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          kind + " ",
-          style: labelStyle,
-        ),
-        Container(
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(4),
-          ),
-          height: 8,
-          width: 8,
-        ),
-      ],
+      children: style == PdfStyle.style_1
+          ? [
+              Text(
+                kind + " ",
+                style: labelStyle,
+              ),
+              dot,
+            ]
+          : [
+              dot,
+              Text(
+                " " + kind,
+                style: labelStyle,
+              ),
+            ],
     );
   }
 
@@ -56,7 +71,9 @@ class LanguageLevelInfoWidget extends StatelessWidget {
         Container(
           margin: const EdgeInsets.only(top: 5),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+            mainAxisAlignment: style == PdfStyle.style_1
+                ? MainAxisAlignment.end
+                : MainAxisAlignment.start,
             children: [
               Padding(
                 padding: const EdgeInsets.only(right: 5),

@@ -2,6 +2,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart';
 
 import 'utils.dart';
+import 'args.dart';
 
 class ListWithHeader {
   ListWithHeader(this.icon, this.title, this.widgets);
@@ -14,9 +15,10 @@ class ListWithHeader {
 }
 
 class WrapLayoutBlock extends StatelessWidget {
-  WrapLayoutBlock(this.listWithHeader, this.headerColor);
+  WrapLayoutBlock(this.listWithHeader, this.style, this.headerColor);
 
   final ListWithHeader listWithHeader;
+  final PdfStyle style;
   final BgColor headerColor;
 
   @override
@@ -48,32 +50,50 @@ class WrapLayoutBlock extends StatelessWidget {
     }
 
     return LayoutBlockBase(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ListTitle(
-            listWithHeader.icon,
-            listWithHeader.title,
-            headerColor,
-          ),
-          Column(
-            children: columns
-                .map((row) => Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: row,
-                    ))
-                .toList(),
-          ),
-        ],
+      child: Container(
+        decoration: BoxDecoration(
+          border: style == PdfStyle.style_3
+              ? Border(
+                  left: BorderSide(
+                    color: headerColor.bgColor,
+                    width: 2,
+                  ),
+                )
+              : null,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ListTitle(
+              listWithHeader.icon,
+              listWithHeader.title,
+              headerColor,
+              style,
+            ),
+            Padding(
+              padding:
+                  EdgeInsets.only(left: style == PdfStyle.style_3 ? 10 : 0),
+              child: Column(
+                children: columns
+                    .map((row) => Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: row,
+                        ))
+                    .toList(),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class ColumnsLayoutBlock extends StatelessWidget {
-  ColumnsLayoutBlock(this.widgets, this.headerColor);
+  ColumnsLayoutBlock(this.widgets, this.style, this.headerColor);
 
   final List<ListWithHeader> widgets;
+  final PdfStyle style;
   final BgColor headerColor;
 
   @override
@@ -83,19 +103,48 @@ class ColumnsLayoutBlock extends StatelessWidget {
 
     for (int i = 0; i < widgets.length; i++) {
       ListWithHeader widget = widgets[i];
-      ListTitle title = ListTitle(
-        widget.icon,
-        widget.title,
-        headerColor,
-        margin: i > 1 ? const EdgeInsets.only(top: 10) : null,
+
+      Widget listEntriesWidget = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: widget.widgets,
+      );
+
+      Widget listWithHeaderToadd = Padding(
+        padding: EdgeInsets.only(top: i > 1 ? 10 : 0),
+        child: Container(
+          decoration: BoxDecoration(
+            border: style == PdfStyle.style_3
+                ? Border(
+                    left: BorderSide(
+                      color: headerColor.bgColor,
+                      width: 2,
+                    ),
+                  )
+                : null,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ListTitle(
+                widget.icon,
+                widget.title,
+                headerColor,
+                style,
+              ),
+              Padding(
+                padding:
+                    EdgeInsets.only(left: style == PdfStyle.style_3 ? 10 : 0),
+                child: listEntriesWidget,
+              ),
+            ],
+          ),
+        ),
       );
 
       if (i % 2 == 0) {
-        left.add(title);
-        left.addAll(widget.widgets);
+        left.add(listWithHeaderToadd);
       } else {
-        right.add(title);
-        right.addAll(widget.widgets);
+        right.add(listWithHeaderToadd);
       }
     }
 
@@ -146,55 +195,61 @@ class LayoutBlockBase extends StatelessWidget {
 }
 
 class ListTitle extends StatelessWidget {
-  ListTitle(this.icon, this.title, this.headerColor, {this.margin});
+  ListTitle(this.icon, this.title, this.headerColor, this.style);
 
   final IconData icon;
   final String title;
   final BgColor headerColor;
-  final EdgeInsets? margin;
+  final PdfStyle style;
 
   @override
   Widget build(Context context) {
-    return Container(
-      margin: margin,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            color: headerColor.bgColor,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 5),
-                    child: Icon(
-                      icon,
-                      size: 10,
-                      color: headerColor.textColor,
-                    ),
-                  ),
-                  Text(
-                    title,
-                    overflow: TextOverflow.clip,
-                    style: TextStyle(
-                      color: headerColor.textColor,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+    var children = [
+      Container(
+        decoration: BoxDecoration(
+          borderRadius:
+              style == PdfStyle.style_2 ? BorderRadius.circular(5) : null,
+          color: headerColor.bgColor,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(right: 5),
+                child: Icon(
+                  icon,
+                  size: 10,
+                  color: headerColor.textColor,
+                ),
               ),
-            ),
+              Text(
+                title,
+                overflow: TextOverflow.clip,
+                style: TextStyle(
+                  color: headerColor.textColor,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
-          Container(
-            width: double.infinity,
-            height: 2,
-            color: headerColor.bgColor,
-          ),
-        ],
+        ),
       ),
+    ];
+
+    if (style == PdfStyle.style_1) {
+      children.add(Container(
+        width: double.infinity,
+        height: 2,
+        color: headerColor.bgColor,
+      ));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children,
     );
   }
 }

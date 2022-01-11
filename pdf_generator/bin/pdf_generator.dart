@@ -16,6 +16,7 @@ import 'fonts.dart';
 
 Future<void> main(List<String> programArgs) async {
   final ArgsParser args = ArgsParser(programArgs);
+  final PdfStyle style = args.style;
 
   final CV cv;
   if (args.dummy) {
@@ -79,7 +80,7 @@ Future<void> main(List<String> programArgs) async {
   List<ListWithHeader> remainingLists = [];
   for (ListWithHeader list in lists) {
     if (list.length > 4) {
-      wrapLayoutBlocks.add(WrapLayoutBlock(list, subHeaderColor));
+      wrapLayoutBlocks.add(WrapLayoutBlock(list, style, subHeaderColor));
     } else {
       remainingLists.add(list);
     }
@@ -93,7 +94,7 @@ Future<void> main(List<String> programArgs) async {
         IconData(0xe8e2), // Translate
         "Talen",
         [
-          LanguageLevelInfoWidget(),
+          LanguageLevelInfoWidget(style),
           ...cv.languages!.map((lang) => LanguageWidget(lang)).toList()
         ],
       ),
@@ -117,7 +118,7 @@ Future<void> main(List<String> programArgs) async {
             driversLicenses: cv.driversLicenses,
           ),
         ),
-        ColumnsLayoutBlock(remainingLists, subHeaderColor),
+        ColumnsLayoutBlock(remainingLists, style, subHeaderColor),
         ...wrapLayoutBlocks,
       ],
     ),
