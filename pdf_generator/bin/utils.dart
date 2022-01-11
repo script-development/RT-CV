@@ -20,13 +20,6 @@ String? formatDateTime(DateTime? input) {
   return "${formatDate(input)!} ${hour}:${minute}:${second}";
 }
 
-class BgColor {
-  BgColor(this.bgColor) : this.textColor = getTextColorFromBg(bgColor);
-
-  final PdfColor bgColor;
-  final PdfColor textColor;
-}
-
 PdfColor getTextColorFromBg(PdfColor bgColor) {
   double red = bgColor.red * 255;
   double green = bgColor.green * 255;

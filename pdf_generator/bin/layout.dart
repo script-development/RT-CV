@@ -15,11 +15,10 @@ class ListWithHeader {
 }
 
 class WrapLayoutBlock extends StatelessWidget {
-  WrapLayoutBlock(this.listWithHeader, this.style, this.headerColor);
+  WrapLayoutBlock(this.listWithHeader, this.style);
 
   final ListWithHeader listWithHeader;
-  final PdfStyle style;
-  final BgColor headerColor;
+  final Style style;
 
   @override
   Widget build(Context context) {
@@ -52,10 +51,10 @@ class WrapLayoutBlock extends StatelessWidget {
     return LayoutBlockBase(
       child: Container(
         decoration: BoxDecoration(
-          border: style == PdfStyle.style_3
+          border: style.layoutStyle == LayoutStyle.style_3
               ? Border(
                   left: BorderSide(
-                    color: headerColor.bgColor,
+                    color: style.subHeaderBackgroundColor,
                     width: 2,
                   ),
                 )
@@ -67,12 +66,11 @@ class WrapLayoutBlock extends StatelessWidget {
             ListTitle(
               listWithHeader.icon,
               listWithHeader.title,
-              headerColor,
               style,
             ),
             Padding(
-              padding:
-                  EdgeInsets.only(left: style == PdfStyle.style_3 ? 10 : 0),
+              padding: EdgeInsets.only(
+                  left: style.layoutStyle == LayoutStyle.style_3 ? 10 : 0),
               child: Column(
                 children: columns
                     .map((row) => Row(
@@ -90,11 +88,10 @@ class WrapLayoutBlock extends StatelessWidget {
 }
 
 class ColumnsLayoutBlock extends StatelessWidget {
-  ColumnsLayoutBlock(this.widgets, this.style, this.headerColor);
+  ColumnsLayoutBlock(this.widgets, this.style);
 
   final List<ListWithHeader> widgets;
-  final PdfStyle style;
-  final BgColor headerColor;
+  final Style style;
 
   @override
   Widget build(Context context) {
@@ -113,10 +110,10 @@ class ColumnsLayoutBlock extends StatelessWidget {
         padding: EdgeInsets.only(top: i > 1 ? 10 : 0),
         child: Container(
           decoration: BoxDecoration(
-            border: style == PdfStyle.style_3
+            border: style.layoutStyle == LayoutStyle.style_3
                 ? Border(
                     left: BorderSide(
-                      color: headerColor.bgColor,
+                      color: style.subHeaderBackgroundColor,
                       width: 2,
                     ),
                   )
@@ -128,12 +125,11 @@ class ColumnsLayoutBlock extends StatelessWidget {
               ListTitle(
                 widget.icon,
                 widget.title,
-                headerColor,
                 style,
               ),
               Padding(
-                padding:
-                    EdgeInsets.only(left: style == PdfStyle.style_3 ? 10 : 0),
+                padding: EdgeInsets.only(
+                    left: style.layoutStyle == LayoutStyle.style_3 ? 10 : 0),
                 child: listEntriesWidget,
               ),
             ],
@@ -195,21 +191,21 @@ class LayoutBlockBase extends StatelessWidget {
 }
 
 class ListTitle extends StatelessWidget {
-  ListTitle(this.icon, this.title, this.headerColor, this.style);
+  ListTitle(this.icon, this.title, this.style);
 
   final IconData icon;
   final String title;
-  final BgColor headerColor;
-  final PdfStyle style;
+  final Style style;
 
   @override
   Widget build(Context context) {
     var children = [
       Container(
         decoration: BoxDecoration(
-          borderRadius:
-              style == PdfStyle.style_2 ? BorderRadius.circular(5) : null,
-          color: headerColor.bgColor,
+          borderRadius: style.layoutStyle == LayoutStyle.style_2
+              ? BorderRadius.circular(5)
+              : null,
+          color: style.subHeaderBackgroundColor,
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -221,14 +217,14 @@ class ListTitle extends StatelessWidget {
                 child: Icon(
                   icon,
                   size: 10,
-                  color: headerColor.textColor,
+                  color: style.subHeaderTextColor,
                 ),
               ),
               Text(
                 title,
                 overflow: TextOverflow.clip,
                 style: TextStyle(
-                  color: headerColor.textColor,
+                  color: style.subHeaderTextColor,
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
                 ),
@@ -239,11 +235,11 @@ class ListTitle extends StatelessWidget {
       ),
     ];
 
-    if (style == PdfStyle.style_1) {
+    if (style.layoutStyle == LayoutStyle.style_1) {
       children.add(Container(
         width: double.infinity,
         height: 2,
-        color: headerColor.bgColor,
+        color: style.subHeaderBackgroundColor,
       ));
     }
 

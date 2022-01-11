@@ -10,7 +10,7 @@ const _speakingColor = PdfColors.blue400;
 class LanguageLevelInfoWidget extends StatelessWidget {
   LanguageLevelInfoWidget(this.style);
 
-  final PdfStyle style;
+  final Style style;
 
   final TextStyle labelStyle = TextStyle(
     fontSize: 8,
@@ -46,7 +46,7 @@ class LanguageLevelInfoWidget extends StatelessWidget {
 
     return Row(
       mainAxisSize: MainAxisSize.min,
-      children: style == PdfStyle.style_1
+      children: style.layoutStyle == LayoutStyle.style_1
           ? [
               Text(
                 kind + " ",
@@ -71,7 +71,7 @@ class LanguageLevelInfoWidget extends StatelessWidget {
         Container(
           margin: const EdgeInsets.only(top: 5),
           child: Row(
-            mainAxisAlignment: style == PdfStyle.style_1
+            mainAxisAlignment: style.layoutStyle == LayoutStyle.style_1
                 ? MainAxisAlignment.end
                 : MainAxisAlignment.start,
             children: [

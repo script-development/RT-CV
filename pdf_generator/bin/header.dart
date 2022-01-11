@@ -3,27 +3,25 @@ import 'package:pdf/widgets.dart';
 
 import 'cv.dart';
 import 'utils.dart';
+import 'args.dart';
 
 class HeaderWidget extends StatelessWidget {
   HeaderWidget({
     required this.cv,
-    required this.headerColor,
+    required this.style,
   });
 
   final CV cv;
-  final BgColor headerColor;
+  final Style style;
 
   @override
   Widget build(Context context) {
-    final PdfColor textColor = headerColor.textColor;
-    final PdfColor bgColor = headerColor.bgColor;
-
     // Create meta color
-    PdfColorHsl bgColorAsHsl = headerColor.bgColor.toHsl();
+    PdfColorHsl bgColorAsHsl = style.headerBackgroundColor.toHsl();
     final double hue = bgColorAsHsl.hue;
     final double saturation = bgColorAsHsl.saturation;
     double lightness = bgColorAsHsl.lightness;
-    if (textColor == PdfColors.white) {
+    if (style.headerTextColor == PdfColors.white) {
       lightness += .35;
       if (lightness > 1) {
         lightness = 1;
@@ -56,7 +54,7 @@ class HeaderWidget extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       child: Container(
-        color: bgColor,
+        color: style.headerBackgroundColor,
         padding: const EdgeInsets.symmetric(
           horizontal: PdfPageFormat.cm,
           vertical: PdfPageFormat.cm * 1.5,
@@ -69,7 +67,7 @@ class HeaderWidget extends StatelessWidget {
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: textColor,
+                color: style.headerTextColor,
               ),
             ),
             ...meta,

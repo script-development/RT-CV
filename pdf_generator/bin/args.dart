@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:args/args.dart';
 import 'package:pdf/pdf.dart';
 
+import 'utils.dart';
+
 class ArgsParser {
   ArgsParser(List<String> args) {
     ArgParser argsParser = ArgParser();
@@ -97,13 +99,6 @@ class ArgsParser {
   /// This logo is fetched from the internet
   String? get logoImageUrl => argResult['logo-image-url'];
 
-  /// headerColor sets the heaader color of the main header
-  PdfColor get headerColor => PdfColor.fromHex(argResult['header-color']);
-
-  /// set the background color of the smaller headers
-  PdfColor get subHeaderColor =>
-      PdfColor.fromHex(argResult['sub-header-color']);
-
   /// fontRegular is the regular font to use
   String get fontRegular => argResult['font-regular'];
 
@@ -117,26 +112,50 @@ class ArgsParser {
   String? get companyAddress => argResult['company-address'];
 
   /// The style of the document
-  PdfStyle get style => pdfStyleFromString(argResult['style']);
+  Style get style => Style(
+        layoutStyle: pdfStyleFromString(argResult['style']),
+        headerBackgroundColor: PdfColor.fromHex(argResult['header-color']),
+        subHeaderBackgroundColor:
+            PdfColor.fromHex(argResult['sub-header-color']),
+      );
 
   /// The output file name
   String get out => argResult['out'];
 }
 
-enum PdfStyle {
+class Style {
+  Style({
+    required this.layoutStyle,
+    required this.headerBackgroundColor,
+    required this.subHeaderBackgroundColor,
+  }) {
+    this.headerTextColor = getTextColorFromBg(headerBackgroundColor);
+    this.subHeaderTextColor = getTextColorFromBg(subHeaderBackgroundColor);
+  }
+
+  final LayoutStyle layoutStyle;
+
+  final PdfColor headerBackgroundColor;
+  late final PdfColor headerTextColor;
+
+  final PdfColor subHeaderBackgroundColor;
+  late final PdfColor subHeaderTextColor;
+}
+
+enum LayoutStyle {
   style_1,
   style_2,
   style_3,
 }
 
-PdfStyle pdfStyleFromString(String style) {
+LayoutStyle pdfStyleFromString(String style) {
   switch (style) {
     case 'style_1':
-      return PdfStyle.style_1;
+      return LayoutStyle.style_1;
     case 'style_2':
-      return PdfStyle.style_2;
+      return LayoutStyle.style_2;
     case 'style_3':
-      return PdfStyle.style_3;
+      return LayoutStyle.style_3;
     default:
       throw 'unknown style: ${style}';
   }

@@ -8,7 +8,6 @@ import 'language_widgets.dart';
 import 'info_widgets.dart';
 import 'cv.dart';
 import 'layout.dart';
-import 'utils.dart';
 import 'header.dart';
 import 'footer.dart';
 import 'args.dart';
@@ -16,7 +15,7 @@ import 'fonts.dart';
 
 Future<void> main(List<String> programArgs) async {
   final ArgsParser args = ArgsParser(programArgs);
-  final PdfStyle style = args.style;
+  final Style style = args.style;
 
   final CV cv;
   if (args.dummy) {
@@ -32,8 +31,6 @@ Future<void> main(List<String> programArgs) async {
   }
 
   var logo = await obtainLogo(args.logoImageUrl);
-  final BgColor headerColor = BgColor(args.headerColor);
-  final BgColor subHeaderColor = BgColor(args.subHeaderColor);
 
   // We need custom fonts as the default fon't doesn't have a lot of glyphs (sepcial characters)
   // The pdf library panics if a glyph is missing
@@ -80,7 +77,7 @@ Future<void> main(List<String> programArgs) async {
   List<ListWithHeader> remainingLists = [];
   for (ListWithHeader list in lists) {
     if (list.length > 4) {
-      wrapLayoutBlocks.add(WrapLayoutBlock(list, style, subHeaderColor));
+      wrapLayoutBlocks.add(WrapLayoutBlock(list, style));
     } else {
       remainingLists.add(list);
     }
@@ -111,14 +108,14 @@ Future<void> main(List<String> programArgs) async {
       ),
       margin: const EdgeInsets.only(bottom: PdfPageFormat.cm),
       build: (Context context) => [
-        HeaderWidget(cv: cv, headerColor: headerColor),
+        HeaderWidget(cv: cv, style: style),
         LayoutBlockBase(
           child: ClientInfo(
             personalInformation: cv.personalDetails,
             driversLicenses: cv.driversLicenses,
           ),
         ),
-        ColumnsLayoutBlock(remainingLists, style, subHeaderColor),
+        ColumnsLayoutBlock(remainingLists, style),
         ...wrapLayoutBlocks,
       ],
     ),
