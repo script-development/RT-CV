@@ -82,6 +82,30 @@ class AuthenticatedFetcher {
 
     async fetch(path: string, method: 'POST' | 'GET' | 'PUT' | 'DELETE' = 'GET', data?: any) {
         try {
+            const r = await this.fetchNoJsonMarshal(path, method, data)
+            const resJsonData = await r.json()
+            const error = resJsonData?.error
+
+            if (r.status == 401) {
+                if (error && error != "you do not have auth roles required to access this route")
+                    // redirect to login screen as something with the credentials is going wrong
+                    location.pathname = '/login'
+
+                throw error
+            }
+
+            if (error || r.status >= 400) {
+                throw error
+            }
+
+            return resJsonData
+        } catch (e: any) {
+            throw e
+        }
+    }
+
+    async fetchNoJsonMarshal(path: string, method: 'POST' | 'GET' | 'PUT' | 'DELETE' = 'GET', data?: any) {
+        try {
             if (path.replace(/http(s?):\/\//, '').indexOf('//') != -1)
                 throw 'invalid path, path cannot contains empty parts, path: ' + path
 
@@ -97,24 +121,7 @@ class AuthenticatedFetcher {
                 body: data ? JSON.stringify(data) : undefined,
             }
 
-            const r = await fetch(url, args)
-            const { status } = r
-            const resJsonData = await r.json()
-            const error = resJsonData?.error
-
-            if (status == 401) {
-                if (error && error != "you do not have auth roles required to access this route")
-                    // redirect to login screen as something with the credentials is going wrong
-                    location.pathname = '/login'
-
-                throw error
-            }
-
-            if (error || status >= 400) {
-                throw error
-            }
-
-            return resJsonData
+            return await fetch(url, args)
         } catch (e: any) {
             throw e
         }

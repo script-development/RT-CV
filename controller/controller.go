@@ -93,6 +93,12 @@ func Routes(app *fiber.App, appVersion string, dbConn db.Connection, testing boo
 				b.Delete(``, routeDeleteKey)
 			}, middlewareBindKey())
 		}, requiresAuth(models.APIKeyRoleDashboard))
+
+		b.Post(
+			`/exampleAttachmentPdf`,
+			routeGetExampleAttachmentPDF,
+			requiresAuth(models.APIKeyRoleController|models.APIKeyRoleDashboard),
+		)
 	}, InsertData(dbConn))
 
 	_, err := os.Stat("./dashboard/out")
@@ -111,6 +117,7 @@ func Routes(app *fiber.App, appVersion string, dbConn db.Connection, testing boo
 		b.Static("", "./dashboard/out/index.html", staticOpts)
 		b.Static("login", "./dashboard/out/login.html", staticOpts)
 		b.Static("tryMatcher", "./dashboard/out/tryMatcher.html", staticOpts)
+		b.Static("tryPdfGenerator", "./dashboard/out/tryPdfGenerator.html", staticOpts)
 		b.Static("docs", "./dashboard/out/docs.html", staticOpts)
 		b.Static("_next", "./dashboard/out/_next", staticOpts)
 		b.Static("favicon.ico", "./dashboard/out/favicon.ico", staticOpts)

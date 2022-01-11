@@ -18,7 +18,10 @@ export default function Home() {
 
 				<div className="appLinks">
 					<Link href="/tryMatcher">
-						<Button style={ButtonStyle} color="primary" variant="outlined" startIcon={<Icon>construction</Icon>}>Try the CV matcher</Button>
+						<Button style={ButtonStyle} color="primary" variant="outlined" startIcon={<Icon>construction</Icon>}>Try CV matcher</Button>
+					</Link>
+					<Link href="/tryPdfGenerator">
+						<Button style={ButtonStyle} color="primary" variant="outlined" startIcon={<Icon>assignment_ind</Icon>}>Try PDF generator</Button>
 					</Link>
 					<Link href="/docs">
 						<Button style={ButtonStyle} color="primary" variant="outlined" startIcon={<Icon>menu_book</Icon>}>API docs</Button>

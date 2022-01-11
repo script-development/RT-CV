@@ -305,7 +305,7 @@ func (cv *CV) GetPDF(options *PdfOptions, pdfGeneratorProjectPath *string) (*os.
 			args = append(args, "--font-bold", *options.FontHeader)
 		}
 		if options.FontRegular != nil {
-			args = append(args, "--font-regular", *options.FontHeader)
+			args = append(args, "--font-regular", *options.FontRegular)
 		}
 		if options.Style != nil {
 			args = append(args, "--style", *options.Style)
@@ -398,4 +398,75 @@ func (cv *CV) FullName() string {
 	}
 
 	return res + " " + details.SurNamePrefix + " " + details.SurName
+}
+
+// ExampleCV is a cv that can be used for demonstrative purposes
+func ExampleCV() *CV {
+	now := jsonHelpers.RFC3339Nano(time.Now()).ToPtr()
+	return &CV{
+		Title:           "Pilot with experience in farming simulator 2020",
+		ReferenceNumber: "4455-PIETER",
+		CreatedAt:       now,
+		LastChanged:     now,
+
+		Educations: []Education{{
+			Name:        "Education name",
+			Description: "Education description",
+			Institute:   "Institute name",
+			IsCompleted: true,
+			HasDiploma:  true,
+			StartDate:   now,
+			EndDate:     now,
+		}},
+		Courses: []Course{{
+			Name:        "Course name",
+			Institute:   "Institute name",
+			IsCompleted: true,
+			StartDate:   now,
+			EndDate:     now,
+		}},
+		WorkExperiences: []WorkExperience{{
+			Description:       "WorkExperience description",
+			Profession:        "hitman",
+			StartDate:         now,
+			EndDate:           now,
+			StillEmployed:     true,
+			Employer:          "Bond.. James bond",
+			WeeklyHoursWorked: 60,
+		}},
+		PreferredJobs: []string{"hitman"},
+		Languages: []Language{{
+			Name:         "Language name",
+			LevelSpoken:  LanguageLevelExcellent,
+			LevelWritten: LanguageLevelGood,
+		}},
+		Competences: []Competence{{
+			Name:        "Competence name",
+			Description: "Competence description",
+		}},
+		Interests: []Interest{{
+			Name:        "Interest name",
+			Description: "Interest description",
+		}},
+		PersonalPresentation: "Sir",
+		DriversLicenses: []jsonHelpers.DriversLicense{
+			jsonHelpers.NewDriversLicense("AAA"),
+		},
+		PersonalDetails: PersonalDetails{
+			Initials:          "P.S.",
+			FirstName:         "Pietter",
+			SurNamePrefix:     "Ven ther",
+			SurName:           "Steen",
+			DateOfBirth:       now,
+			Gender:            "Male",
+			StreetName:        "Streetname abc",
+			HouseNumber:       "33",
+			HouseNumberSuffix: "b",
+			Zip:               "9779AB",
+			City:              "Groningen",
+			Country:           "Netherlands",
+			PhoneNumber:       &jsonHelpers.PhoneNumber{IsLocal: true, Number: 611223344},
+			Email:             "p.steen@very-smart-people.com",
+		},
+	}
 }

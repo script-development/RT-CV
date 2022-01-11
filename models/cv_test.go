@@ -7,13 +7,11 @@ import (
 	"strings"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/apex/log"
 	"github.com/joho/godotenv"
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/emailservice"
-	"github.com/script-development/RT-CV/helpers/jsonHelpers"
 	. "github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -46,80 +44,10 @@ func tryLoadEmailEnv() {
 	}
 }
 
-func getExampleCV() *CV {
-	now := jsonHelpers.RFC3339Nano(time.Now()).ToPtr()
-	return &CV{
-		Title:           "Pilot with experience in farming simulator 2020",
-		ReferenceNumber: "4455-PIETER",
-		CreatedAt:       now,
-		LastChanged:     now,
-
-		Educations: []Education{{
-			Name:        "Education name",
-			Description: "Education description",
-			Institute:   "Institute name",
-			IsCompleted: true,
-			HasDiploma:  true,
-			StartDate:   now,
-			EndDate:     now,
-		}},
-		Courses: []Course{{
-			Name:        "Course name",
-			Institute:   "Institute name",
-			IsCompleted: true,
-			StartDate:   now,
-			EndDate:     now,
-		}},
-		WorkExperiences: []WorkExperience{{
-			Description:       "WorkExperience description",
-			Profession:        "hitman",
-			StartDate:         now,
-			EndDate:           now,
-			StillEmployed:     true,
-			Employer:          "Bond.. James bond",
-			WeeklyHoursWorked: 60,
-		}},
-		PreferredJobs: []string{"hitman"},
-		Languages: []Language{{
-			Name:         "Language name",
-			LevelSpoken:  LanguageLevelExcellent,
-			LevelWritten: LanguageLevelGood,
-		}},
-		Competences: []Competence{{
-			Name:        "Competence name",
-			Description: "Competence description",
-		}},
-		Interests: []Interest{{
-			Name:        "Interest name",
-			Description: "Interest description",
-		}},
-		PersonalPresentation: "Sir",
-		DriversLicenses: []jsonHelpers.DriversLicense{
-			jsonHelpers.NewDriversLicense("AAA"),
-		},
-		PersonalDetails: PersonalDetails{
-			Initials:          "P.S.",
-			FirstName:         "D.R. Pietter",
-			SurNamePrefix:     "Ven ther",
-			SurName:           "Steen",
-			DateOfBirth:       now,
-			Gender:            "Apache helicopter",
-			StreetName:        "Streetname abc",
-			HouseNumber:       "33",
-			HouseNumberSuffix: "b",
-			Zip:               "9999AB",
-			City:              "Groningen",
-			Country:           "Netherlands",
-			PhoneNumber:       &jsonHelpers.PhoneNumber{IsLocal: true, Number: 611223344},
-			Email:             "dr.p.steen@smart-people.com",
-		},
-	}
-}
-
 func TestGetEmailHTML(t *testing.T) {
 	matchTest := "this is a test text that should re-appear in the response html"
 
-	cv := getExampleCV()
+	cv := ExampleCV()
 
 	profileObjectID := primitive.NewObjectID()
 	profile := Profile{
@@ -142,7 +70,7 @@ func TestGetEmailHTML(t *testing.T) {
 }
 
 func TestGetEmailAttachmentHTML(t *testing.T) {
-	cv := getExampleCV()
+	cv := ExampleCV()
 
 	htmlBuff, err := cv.GetEmailAttachmentHTML()
 	NoError(t, err)
@@ -206,7 +134,7 @@ func TestGetNewEmailAttachmentPDF(t *testing.T) {
 		NoError(t, err)
 	}
 
-	cv := getExampleCV()
+	cv := ExampleCV()
 
 	ptrStr := func(in string) *string { return &in }
 
@@ -289,7 +217,7 @@ func TestSendMail(t *testing.T) {
 		return
 	}
 
-	cv := getExampleCV()
+	cv := ExampleCV()
 	profile := Profile{
 		M:       db.M{ID: primitive.NewObjectID()},
 		Name:    "profile name",
