@@ -190,8 +190,27 @@ func (p *ProfileDutchZipcode) IsWithinCithAndArea(cityAndArea uint16) bool {
 
 // ProfileOnMatch defines what should happen when a profile is matched to a CV
 type ProfileOnMatch struct {
-	SendMail []ProfileSendEmailData `json:"sendMail" bson:"sendMail"`
-	HTTPCall []ProfileHTTPCallData  `json:"httpCall" bson:"httpCall"`
+	SendMail   []ProfileSendEmailData `json:"sendMail" bson:"sendMail"`
+	HTTPCall   []ProfileHTTPCallData  `json:"httpCall" bson:"httpCall"`
+	PdfOptions *PdfOptions            `json:"pdfOptions" bson:"pdfOptions"`
+}
+
+// PdfOptions contains options for the creation of the pdf
+type PdfOptions struct {
+	// See pdf_generator/bin/fonts.dart > _fontFilesMap for available fonts
+	FontHeader  *string `json:"fontHeader" bson:"fontHeader"`
+	FontRegular *string `json:"fontRegular" bson:"fontRegular"`
+
+	// See pdf_generator/bin/args.dart > LayoutStyle for available styles
+	Style *string `json:"style" bson:"style"`
+
+	// Expected to be a hex value like: #ffffff
+	HeaderColor    *string `json:"headerColor" bson:"headerColor"`
+	SubHeaderColor *string `json:"subHeaderColor" bson:"subHeaderColor"`
+
+	LogoImageURL   *string `json:"logoImageUrl" bson:"logoImageUrl"`
+	CompanyName    *string `json:"companyName" bson:"companyName"`
+	CompanyAddress *string `json:"companyAddress" bson:"companyAddress"`
 }
 
 // ProfileSendEmailData only contains an email address atm

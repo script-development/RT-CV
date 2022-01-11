@@ -3,7 +3,6 @@ package models
 import (
 	"encoding/json"
 	"os"
-	"os/exec"
 	"path"
 	"strings"
 	"sync"
@@ -199,7 +198,6 @@ func TestGetNewEmailAttachmentPDF(t *testing.T) {
 	pdfGeneratorProjectPath := path.Join(getBaseProjectPath(), "pdf_generator")
 
 	pdfGeneratorBin := path.Join(pdfGeneratorProjectPath, "bin/pdf_generator.exe")
-	pdfOutfile := path.Join(pdfGeneratorProjectPath, "example.pdf")
 
 	_, err := os.Open(pdfGeneratorBin)
 	if os.IsNotExist(err) {
@@ -209,25 +207,61 @@ func TestGetNewEmailAttachmentPDF(t *testing.T) {
 	}
 
 	cv := getExampleCV()
-	jsonCV, err := json.Marshal(cv)
-	NoError(t, err)
 
-	tests := [][]string{
-		{"--dummy"},
-		{"--data", string(jsonCV)},
+	ptrStr := func(in string) *string { return &in }
+
+	optionsToTest := []*PdfOptions{
+		nil,
+		{},
+		{
+			FontHeader:  ptrStr("IBMPlexSerif"),
+			FontRegular: ptrStr("IBMPlexSerif"),
+		},
+		{
+			FontHeader: ptrStr("This font does not exist, pdf generator should use fallback font and not fail"),
+		},
+		{
+			Style: ptrStr("style_2"),
+		},
+		{
+			Style: ptrStr("This style does not exist, pdf generator should use fallback style and not fail"),
+		},
+		{
+			HeaderColor:    ptrStr("#FFFFFF"),
+			SubHeaderColor: ptrStr("#FFF"),
+		},
+		{
+			HeaderColor:    ptrStr("#ffffff"),
+			SubHeaderColor: ptrStr("#fff"),
+		},
+		{
+			HeaderColor:    ptrStr("FFFFFF"),
+			SubHeaderColor: ptrStr("FFF"),
+		},
+		{
+			HeaderColor:    ptrStr("ffffff"),
+			SubHeaderColor: ptrStr("fff"),
+		},
+		{
+			CompanyName: ptrStr("A company name"),
+		},
+		{
+			CompanyAddress: ptrStr("A company address"),
+		},
 	}
 
-	for _, args := range tests {
-		os.Remove(pdfOutfile)
-
-		cmd := exec.Command(pdfGeneratorBin, append(args, "--out", pdfOutfile)...)
-		cmd.Dir = pdfGeneratorProjectPath
-		out, err := cmd.CombinedOutput()
-		NoError(t, err, string(out))
-		NotEmpty(t, out)
-
-		_, err = os.Open(pdfOutfile)
+	for _, options := range optionsToTest {
+		jsonOptionsBytes, err := json.Marshal(options)
 		NoError(t, err)
+		jsonOptions := string(jsonOptionsBytes)
+
+		file, err := cv.GetPDF(options, &pdfGeneratorProjectPath)
+		if file != nil {
+			_, err = os.Open(file.Name())
+			os.Remove(file.Name())
+			NoError(t, err, jsonOptions)
+		}
+		NoError(t, err, jsonOptions)
 	}
 }
 

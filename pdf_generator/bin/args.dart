@@ -47,7 +47,8 @@ class ArgsParser {
     );
     argsParser.addOption(
       "font-regular",
-      help: 'set the font to use',
+      help:
+          'set the font to use, for a list of fonts look in bin/fonts.dart > _fontFilesMap',
       defaultsTo: 'OpenSans',
     );
     argsParser.addOption(
@@ -57,13 +58,9 @@ class ArgsParser {
     );
     argsParser.addOption(
       'style',
-      help: 'set the style of the document based an a set list of styles',
+      help:
+          'set the style of the document based an a set list of styles, for a list of styles look in bin/args.dart > LayoutStyle',
       defaultsTo: 'style_1',
-      allowed: [
-        'style_1',
-        'style_2',
-        'style_3',
-      ],
     );
     argsParser.addOption(
       'out',
@@ -157,6 +154,7 @@ LayoutStyle pdfStyleFromString(String style) {
     case 'style_3':
       return LayoutStyle.style_3;
     default:
-      throw 'unknown style: ${style}';
+      print('unknown style: ${style}');
+      return LayoutStyle.style_1;
   }
 }

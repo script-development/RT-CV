@@ -2,7 +2,6 @@ package controller
 
 import (
 	"errors"
-	"os"
 	"sync"
 	"time"
 
@@ -209,20 +208,7 @@ func (args ProcessMatches) Process() {
 		return
 	}
 
-	var pdfFile *os.File
 	for _, aMatch := range args.MatchedProfiles {
-		if len(aMatch.Profile.OnMatch.SendMail) > 0 && pdfFile == nil {
-			// Only once and if we really need it create the email attachment pdf as this takes quite a bit of time
-			pdfFile, err = args.CV.GetPDF()
-			if err != nil {
-				log.WithError(err).Error("mail attachment creation error")
-			}
-		}
-
-		aMatch.HandleMatch(args.CV, pdfFile)
-	}
-	if pdfFile != nil {
-		pdfFile.Close()
-		os.Remove(pdfFile.Name())
+		aMatch.HandleMatch(args.CV)
 	}
 }
