@@ -3,7 +3,7 @@ import dynamic from 'next/dynamic'
 import Header from '../components/header'
 import { useEffect, useRef, useState } from 'react'
 import { fetcher } from '../src/auth'
-import { Checkbox, FormControl, FormLabel, Select, MenuItem, InputLabel, CircularProgress } from "@material-ui/core"
+import { Checkbox, FormControl, FormLabel, Select, MenuItem, InputLabel, CircularProgress, Tooltip, TextField } from "@material-ui/core"
 
 const JSONCode = dynamic(() => import('../components/jsonCode'), { ssr: false })
 
@@ -37,7 +37,6 @@ export default function TryPdfGenerator() {
         if (previewIframe.current) {
             previewIframe.current.src = url
         }
-        console.log(loadPreviewTimeout.current)
         if (!loadPreviewTimeout.current) {
             setLoading(false)
         }
@@ -75,106 +74,107 @@ export default function TryPdfGenerator() {
                 <div className="inputs">
                     <div>
                         <h2>Options</h2>
-                        <FormControl fullWidth>
-                            <FormLabel>Header background color</FormLabel>
-                            <div className="addPadding">
-                                <Checkbox
-                                    checked={options.headerColor !== undefined}
-                                    onChange={() =>
-                                        setOptions(v => {
-                                            if (v.headerColor === undefined) {
-                                                v.headerColor = '#ff0000'
-                                            } else {
-                                                v.headerColor = undefined
-                                            }
-                                            return { ...v }
-                                        })
-                                    }
-                                    color="primary"
-                                />
-                                {options.headerColor !== undefined ?
-                                    <input
-                                        value={options.headerColor}
-                                        type="color"
-                                        onChange={e => setOptions(v => ({ ...v, headerColor: e.target.value }))}
-                                    />
-                                    : undefined}
-                            </div>
-                        </FormControl>
-                        <FormControl fullWidth>
-                            <FormLabel>Sub header background color</FormLabel>
-                            <div className="addPadding">
-                                <Checkbox
-                                    checked={options.subHeaderColor !== undefined}
-                                    onChange={() => setOptions(v => ({
-                                        ...v,
-                                        subHeaderColor: v.subHeaderColor === undefined
-                                            ? '#ff0000'
-                                            : undefined,
-                                    }))}
-                                    color="primary"
-                                />
-                                {options.subHeaderColor !== undefined ?
-                                    <input
-                                        value={options.subHeaderColor}
-                                        type="color"
-                                        onChange={e => setOptions(v => ({ ...v, subHeaderColor: e.target.value }))}
-                                    />
-                                    : undefined}
-                            </div>
-                        </FormControl>
-                        <FormLabel>Fonts</FormLabel>
-                        <div>
-                            <Checkbox
-                                checked={options.fontRegular !== undefined}
-                                onChange={() => setOptions(v => ({
-                                    ...v,
-                                    fontRegular: v.fontRegular === undefined
-                                        ? 'OpenSans'
-                                        : undefined,
-                                    fontHeader: v.fontHeader === undefined
-                                        ? 'OpenSans'
-                                        : undefined,
-                                }))}
-                                color="primary"
+                        <SwitchableInput
+                            title="Header background color"
+                            valueToCheck={options.headerColor}
+                            setValue={enabled => setOptions(v => ({ ...v, headerColor: enabled ? '#ff0000' : undefined }))}
+                        >
+                            <input
+                                value={options.headerColor}
+                                type="color"
+                                onChange={e => setOptions(v => ({ ...v, headerColor: e.target.value }))}
                             />
-                            {options.fontRegular ? <>
-                                <FormControl>
-                                    <InputLabel id="font-header-label">Header</InputLabel>
-                                    <Select labelId="font-header-label" value={options.fontHeader} onChange={e => setOptions(v => ({ ...v, fontHeader: e.target.value as string | undefined }))}>
-                                        {fontOptions.map((font, i) => <MenuItem key={i} value={font.value}>{font.label}</MenuItem>)}
-                                    </Select>
-                                </FormControl>
-                                <div style={{ paddingRight: 10, display: 'inline-block' }} />
-                                <FormControl>
-                                    <InputLabel id="font-regular-label">Other</InputLabel>
-                                    <Select labelId="font-regular-label" value={options.fontRegular} onChange={e => setOptions(v => ({ ...v, fontRegular: e.target.value as string | undefined }))}>
-                                        {fontOptions.map((font, i) => <MenuItem key={i} value={font.value}>{font.label}</MenuItem>)}
-                                    </Select>
-                                </FormControl>
-                            </> : undefined}
-                        </div>
-                        <FormLabel>Layout</FormLabel>
-                        <div>
-                            <Checkbox
-                                checked={options.style !== undefined}
-                                onChange={() => setOptions(v => ({
-                                    ...v,
-                                    style: v.style === undefined
-                                        ? 'style_1'
-                                        : undefined,
-                                }))}
-                                color="primary"
+                        </SwitchableInput>
+                        <SwitchableInput
+                            title="Sub header background color"
+                            valueToCheck={options.subHeaderColor}
+                            setValue={enabled => setOptions(v => ({
+                                ...v,
+                                subHeaderColor: enabled ? '#ff0000' : undefined,
+                            }))}
+                        >
+                            <input
+                                value={options.subHeaderColor}
+                                type="color"
+                                onChange={e => setOptions(v => ({ ...v, subHeaderColor: e.target.value }))}
                             />
-                            {options.style ?
-                                <FormControl>
-                                    <InputLabel id="style-label">Style</InputLabel>
-                                    <Select labelId="style-label" value={options.style} onChange={e => setOptions(v => ({ ...v, style: e.target.value as string | undefined }))}>
-                                        {styleOptions.map((entry, i) => <MenuItem key={i} value={entry.value}>{entry.label}</MenuItem>)}
-                                    </Select>
-                                </FormControl>
-                                : undefined}
-                        </div>
+                        </SwitchableInput>
+                        <SwitchableInput
+                            title="Fonts"
+                            valueToCheck={options.fontRegular}
+                            setValue={enabled => setOptions(v => ({
+                                ...v,
+                                fontRegular: enabled ? 'OpenSans' : undefined,
+                                fontHeader: enabled ? 'OpenSans' : undefined,
+                            }))}
+                        >
+                            <FormControl>
+                                <InputLabel id="font-header-label">Header</InputLabel>
+                                <Select labelId="font-header-label" value={options.fontHeader} onChange={e => setOptions(v => ({ ...v, fontHeader: e.target.value as string | undefined }))}>
+                                    {fontOptions.map((font, i) => <MenuItem key={i} value={font.value}>{font.label}</MenuItem>)}
+                                </Select>
+                            </FormControl>
+                            <div style={{ paddingRight: 10, display: 'inline-block' }} />
+                            <FormControl>
+                                <InputLabel id="font-regular-label">Other</InputLabel>
+                                <Select labelId="font-regular-label" value={options.fontRegular} onChange={e => setOptions(v => ({ ...v, fontRegular: e.target.value as string | undefined }))}>
+                                    {fontOptions.map((font, i) => <MenuItem key={i} value={font.value}>{font.label}</MenuItem>)}
+                                </Select>
+                            </FormControl>
+                        </SwitchableInput>
+                        <SwitchableInput
+                            title="Layout"
+                            valueToCheck={options.style}
+                            setValue={enabled => setOptions(v => ({ ...v, style: enabled ? 'style_1' : undefined }))}
+                        >
+                            <FormControl>
+                                <InputLabel id="style-label">Style</InputLabel>
+                                <Select labelId="style-label" value={options.style} onChange={e => setOptions(v => ({ ...v, style: e.target.value as string | undefined }))}>
+                                    {styleOptions.map((entry, i) => <MenuItem key={i} value={entry.value}>{entry.label}</MenuItem>)}
+                                </Select>
+                            </FormControl>
+                        </SwitchableInput>
+                        <SwitchableInput
+                            title="Logo image url"
+                            valueToCheck={options.logoImageUrl}
+                            setValue={enabled => setOptions(v => ({ ...v, logoImageUrl: enabled ? '' : undefined }))}
+                        >
+                            <TextField
+                                id="logo-image-url"
+                                label="Logo image url"
+                                variant="filled"
+                                value={options.logoImageUrl}
+                                onChange={e => setOptions(v => ({ ...v, logoImageUrl: e.target.value }))}
+                            />
+                        </SwitchableInput>
+                        <SwitchableInput
+                            title="Company name"
+                            valueToCheck={options.companyName}
+                            setValue={enabled => setOptions(v => ({ ...v, companyName: enabled ? 'a company b.v.' : undefined }))}
+                        >
+                            <TextField
+                                id="company-name"
+                                label="Company name"
+                                variant="filled"
+                                value={options.companyName}
+                                onChange={e => setOptions(v => ({ ...v, companyName: e.target.value }))}
+                            />
+                        </SwitchableInput>
+                        <SwitchableInput
+                            title="Company address"
+                            valueToCheck={options.companyAddress}
+                            setValue={enabled => setOptions(v => ({ ...v, companyAddress: enabled ? '9977AB\nSome street 15, a city' : undefined }))}
+                        >
+                            <TextField
+                                id="company-address"
+                                label="Company name"
+                                variant="filled"
+                                multiline
+                                rows={4}
+                                value={options.companyAddress}
+                                onChange={e => setOptions(v => ({ ...v, companyAddress: e.target.value }))}
+                            />
+                        </SwitchableInput>
                     </div>
                     <div>
                         <h2>Config send to server</h2>
@@ -198,9 +198,6 @@ export default function TryPdfGenerator() {
                 </div>
             </div>
             <style jsx>{`
-                .addPadding {
-                    padding: 10px 0;
-                }
                 .container {
                     max-height: 100vh;
                     min-height: 100vh;
@@ -210,11 +207,16 @@ export default function TryPdfGenerator() {
                 .editor {
                     flex-grow: 1;
                     display: flex;
+                    overflow: hidden;
                 }
                 .editor > * {
                     width: 50%;
+                    flex-grow: 1;
                 }
                 .inputs {
+                    overflow-y: scroll;
+                    overflow-x: hidden;
+                    box-sizing: border-box;
                     padding: 20px;
                 }
                 .preview iframe {
@@ -254,6 +256,31 @@ export default function TryPdfGenerator() {
                    display: none;
                 }
             `}</style>
+        </div>
+    )
+}
+
+interface SwitchableInputProps {
+    title: string
+    valueToCheck: any
+    setValue: (enabled: boolean) => void
+    children?: React.ReactNode
+}
+
+function SwitchableInput({ title, valueToCheck, setValue, children }: SwitchableInputProps) {
+    return (
+        <div>
+            <FormLabel>{title}</FormLabel>
+            <div>
+                <Tooltip title="Enable / Disable this configuration field">
+                    <Checkbox
+                        checked={valueToCheck !== undefined}
+                        onChange={() => setValue(valueToCheck === undefined ? true : false)}
+                        color="primary"
+                    />
+                </Tooltip>
+                {valueToCheck !== undefined ? children : undefined}
+            </div>
         </div>
     )
 }
