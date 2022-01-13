@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart';
+import 'package:image/image.dart' as image;
 
 import 'language_widgets.dart';
 import 'info_widgets.dart';
@@ -30,18 +31,26 @@ Future<void> main(List<String> programArgs) async {
     exit(1);
   }
 
-  var logo = await obtainLogo(args.logoImageUrl);
-
   // We need custom fonts as the default fon't doesn't have a lot of glyphs (sepcial characters)
   // The pdf library panics if a glyph is missing
   // As we handle with scraped data it's very common to see wired glyphs so if we want to create pdfs for those we'll need to use a custom font
   FontsManager fonts = FontsManager(args);
 
+  List<dynamic> awaitedResults = await Future.wait([
+    obtainLogo(args.logoImageUrl),
+    fonts.resolvedFontRegular,
+    fonts.resolvedFontBold,
+  ]);
+
+  image.Image? logo = awaitedResults[0];
+  Font baseFont = awaitedResults[1];
+  Font boldFont = awaitedResults[2];
+
   final pdf = Document(
     title: "CV",
     theme: ThemeData.withFont(
-      base: await fonts.resolvedFontRegular,
-      bold: await fonts.resolvedFontBold,
+      base: baseFont,
+      bold: boldFont,
 
       // Use the google icons font as the icons font
       icons: await fonts.iconsFont,

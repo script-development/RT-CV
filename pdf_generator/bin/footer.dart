@@ -142,7 +142,8 @@ class FooterWidget extends StatelessWidget {
 }
 
 Future<image.Image?> obtainLogo(String? url) async {
-  if (url == null) {
+  if (url == null ||
+      (!url.startsWith("http://") && !url.startsWith("https://"))) {
     return null;
   }
 
