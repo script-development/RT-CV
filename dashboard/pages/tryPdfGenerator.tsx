@@ -77,7 +77,7 @@ export default function TryPdfGenerator() {
                         <SwitchableInput
                             title="Header background color"
                             valueToCheck={options.headerColor}
-                            setValue={enabled => setOptions(v => ({ ...v, headerColor: enabled ? '#ff0000' : undefined }))}
+                            setValue={enabled => setOptions(v => ({ ...v, headerColor: enabled ? '#db885a' : undefined }))}
                         >
                             <input
                                 value={options.headerColor}
@@ -90,7 +90,7 @@ export default function TryPdfGenerator() {
                             valueToCheck={options.subHeaderColor}
                             setValue={enabled => setOptions(v => ({
                                 ...v,
-                                subHeaderColor: enabled ? '#ff0000' : undefined,
+                                subHeaderColor: enabled ? '#20221e' : undefined,
                             }))}
                         >
                             <input
