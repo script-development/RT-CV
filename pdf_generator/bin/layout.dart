@@ -22,30 +22,37 @@ class WrapLayoutBlock extends StatelessWidget {
 
   @override
   Widget build(Context context) {
-    List<List<Widget>> columns = [];
+    List<List<Widget>> columns = [
+      [],
+      [],
+      [],
+    ];
+
     for (var i = 0; i < listWithHeader.widgets.length; i++) {
-      int idxInRow = i % 3;
-      Widget toAdd = Expanded(
+      if (i > 2) {
+        columns[i % 3].add(Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: listWithHeader.widgets[i],
+        ));
+      } else {
+        columns[i % 3].add(listWithHeader.widgets[i]);
+      }
+    }
+
+    List<Widget> columnWidgets = [];
+    for (var i = 0; i < columns.length; i++) {
+      columnWidgets.add(Expanded(
         child: Padding(
           padding: EdgeInsets.only(
-            left: idxInRow == 0 ? 0 : 2,
-            right: idxInRow == 2 ? 0 : 2,
-            top: i > 2
-                ? 4
-                : 0, // Only add padding to top if we are on the second row or more
+            left: i == 0 ? 0 : 2,
+            right: i == 2 ? 0 : 2,
           ),
-          child: listWithHeader.widgets[i],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: columns[i],
+          ),
         ),
-      );
-      if (idxInRow == 0) {
-        columns.add([
-          Expanded(child: toAdd),
-          Expanded(child: Container()),
-          Expanded(child: Container()),
-        ]);
-      } else {
-        columns[columns.length - 1][idxInRow] = toAdd;
-      }
+      ));
     }
 
     return LayoutBlockBase(
@@ -71,13 +78,9 @@ class WrapLayoutBlock extends StatelessWidget {
             Padding(
               padding: EdgeInsets.only(
                   left: style.layoutStyle == LayoutStyle.style_3 ? 10 : 0),
-              child: Column(
-                children: columns
-                    .map((row) => Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: row,
-                        ))
-                    .toList(),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: columnWidgets,
               ),
             ),
           ],
