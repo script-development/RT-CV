@@ -3,7 +3,7 @@ import dynamic from 'next/dynamic'
 import Header from '../components/header'
 import { useEffect, useRef, useState } from 'react'
 import { fetcher } from '../src/auth'
-import { Checkbox, FormControl, FormLabel, Select, MenuItem, InputLabel } from "@material-ui/core"
+import { Checkbox, FormControl, FormLabel, Select, MenuItem, InputLabel, CircularProgress } from "@material-ui/core"
 
 const JSONCode = dynamic(() => import('../components/jsonCode'), { ssr: false })
 
@@ -20,10 +20,12 @@ interface PdfCreationOptions {
 
 export default function TryPdfGenerator() {
     const previewIframe = useRef<HTMLIFrameElement>(null)
-    const loadPreviewTimeout = useRef<NodeJS.Timeout>()
+    const loadPreviewTimeout = useRef<NodeJS.Timeout | null>()
     const [options, setOptions] = useState<PdfCreationOptions>({})
+    const [loading, setLoading] = useState(true)
 
     const reLoadPreview = async (options: PdfCreationOptions) => {
+        loadPreviewTimeout.current = null;
         const r = await fetcher.fetchNoJsonMarshal(
             '/api/v1/exampleAttachmentPdf',
             'POST',
@@ -34,6 +36,10 @@ export default function TryPdfGenerator() {
         const url = URL.createObjectURL(blob)
         if (previewIframe.current) {
             previewIframe.current.src = url
+        }
+        console.log(loadPreviewTimeout.current)
+        if (!loadPreviewTimeout.current) {
+            setLoading(false)
         }
     }
 
@@ -55,6 +61,7 @@ export default function TryPdfGenerator() {
     ]
 
     useEffect(() => {
+        setLoading(true)
         if (loadPreviewTimeout.current) { clearTimeout(loadPreviewTimeout.current) }
         loadPreviewTimeout.current = setTimeout(() => reLoadPreview(options), 2000)
     }, [options])
@@ -174,7 +181,21 @@ export default function TryPdfGenerator() {
                         <JSONCode json={options} />
                     </div>
                 </div>
-                <iframe className="preview" ref={previewIframe} />
+                <div className="preview">
+                    <div className="loading-indicator-container">
+                        <div
+                            className="loading-indicator"
+                            style={{
+                                opacity: loading ? 1 : 0,
+                                transform: `translateY(${loading ? 20 : 0}px)`,
+                            }}
+                        >
+                            <CircularProgress size={20} />
+                            <span>Loading</span>
+                        </div>
+                    </div>
+                    <iframe className="preview" ref={previewIframe} />
+                </div>
             </div>
             <style jsx>{`
                 .addPadding {
@@ -195,6 +216,36 @@ export default function TryPdfGenerator() {
                 }
                 .inputs {
                     padding: 20px;
+                }
+                .preview iframe {
+                    height: 100%;
+                    width: 100%;
+                    border: 0 solid transparent;
+                }
+                .loading-indicator-container {
+                    width: 100%;
+                    max-height: 0;
+                }
+                .loading-indicator {
+                    pointer-events: none;
+                    position: relative;
+                    margin: 0 auto;
+                    min-width: 130px;
+                    max-width: 130px;
+                    min-height: 40px;
+                    max-height: 40px;
+                    border-radius: 20px;
+                    background-color: #303030;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 10;
+                    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+                    transition: opacity .5s, transform .5s;
+                }
+                .loading-indicator span {
+                    display: inline-block;
+                    padding-left: 10px;
                 }
             `}</style>
 
