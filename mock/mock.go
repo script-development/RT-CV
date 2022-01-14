@@ -14,9 +14,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-var (
+func init() {
 	// Key1 is a mock api key
 	Key1 = &models.APIKey{
+		M:       db.NewM(),
 		Enabled: true,
 		Domains: []string{"werk.nl"},
 		Key:     "aaa",
@@ -24,6 +25,7 @@ var (
 	}
 	// Key2 is a mock api key
 	Key2 = &models.APIKey{
+		M:       db.NewM(),
 		Enabled: true,
 		Domains: []string{"werk.nl"},
 		Key:     "bbb",
@@ -31,6 +33,7 @@ var (
 	}
 	// Key3 is a mock api key
 	Key3 = &models.APIKey{
+		M:       db.NewM(),
 		Enabled: true,
 		Domains: []string{"werk.nl"},
 		Key:     "ccc",
@@ -47,11 +50,10 @@ var (
 		Key:     "ddd",
 		Roles:   models.APIKeyRoleDashboard,
 	}
-)
 
-var (
 	// Profile1 contains the first example profile
 	Profile1 = &models.Profile{
+		M:                     db.NewM(),
 		Name:                  "Mock profile 1",
 		YearsSinceWork:        nil,
 		Active:                true,
@@ -84,8 +86,10 @@ var (
 			To:   8000,
 		}},
 	}
+
 	// Profile2 contains the second example profile
 	Profile2 = &models.Profile{
+		M:                     db.NewM(),
 		Name:                  "Mock profile 2",
 		YearsSinceWork:        nil,
 		Active:                true,
@@ -107,6 +111,49 @@ var (
 			},
 		},
 	}
+
+	// mockMatch1 contains a example match between profile 1 and a cv
+	mockMatch1 = &models.Match{
+		M:                     db.NewM(),
+		RequestID:             primitive.NewObjectID(),
+		ProfileID:             Profile1.ID,
+		KeyID:                 Key1.ID,
+		When:                  jsonHelpers.RFC3339Nano(time.Now().Add(-(time.Minute * 15))),
+		ReferenceNr:           "a",
+		ProfessionExperienced: &professionExperienced,
+		YearsSinceEducation:   &yearsSinceEducation,
+		Education:             &matchedEducation,
+		Course:                &matchedCourse,
+		DriversLicense:        true,
+		Domain:                &werkDotNL,
+	}
+	mockMatch2 = &models.Match{
+		M:           db.NewM(),
+		RequestID:   primitive.NewObjectID(),
+		ProfileID:   Profile2.ID,
+		KeyID:       Key2.ID,
+		When:        jsonHelpers.RFC3339Nano(time.Now().Add(-(time.Minute * 7))),
+		ReferenceNr: "b",
+		Domain:      &werkDotNL,
+	}
+}
+
+var (
+	// Key1 is a mock api key
+	Key1 *models.APIKey
+	// Key2 is a mock api key
+	Key2 *models.APIKey
+	// Key3 is a mock api key
+	Key3 *models.APIKey
+	// DashboardKey is the mock key for the dashboard
+	DashboardKey *models.APIKey
+)
+
+var (
+	// Profile1 contains the second example profile
+	Profile1 *models.Profile
+	// Profile2 contains the second example profile
+	Profile2 *models.Profile
 )
 
 var werkDotNL = "werk.nl"
@@ -117,25 +164,8 @@ var professionExperienced = "Dancer"
 
 var (
 	// mockMatch1 contains a example match between profile 1 and a cv
-	mockMatch1 = &models.Match{
-		RequestID:             primitive.NewObjectID(),
-		ProfileID:             Profile1.ID,
-		KeyID:                 Key1.ID,
-		When:                  jsonHelpers.RFC3339Nano(time.Now().Add(-(time.Minute * 15))),
-		ProfessionExperienced: &professionExperienced,
-		YearsSinceEducation:   &yearsSinceEducation,
-		Education:             &matchedEducation,
-		Course:                &matchedCourse,
-		DriversLicense:        true,
-		Domain:                &werkDotNL,
-	}
-	mockMatch2 = &models.Match{
-		RequestID: primitive.NewObjectID(),
-		ProfileID: Profile2.ID,
-		KeyID:     Key2.ID,
-		When:      jsonHelpers.RFC3339Nano(time.Now().Add(-(time.Minute * 7))),
-		Domain:    &werkDotNL,
-	}
+	mockMatch1 *models.Match
+	mockMatch2 *models.Match
 )
 
 // NewMockDB returns an in memory temp testing database with mock data

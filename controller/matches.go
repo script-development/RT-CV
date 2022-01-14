@@ -49,6 +49,10 @@ _RFC 3339 is basically an extension to iso 8601_`,
 			},
 		}
 
+		if c.Params(`profile`) != "" {
+			query["profileId"] = ctx.GetProfile(c).ID
+		}
+
 		matches := []models.Match{}
 		err = db.Find(&models.Match{}, &matches, query)
 		if err != nil {

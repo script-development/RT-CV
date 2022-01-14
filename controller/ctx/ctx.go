@@ -54,12 +54,12 @@ func SetRequestID(ctx context.Context, value primitive.ObjectID) context.Context
 	return context.WithValue(ctx, requestIDCtxKey, value)
 }
 
-// GetProfile returns a single profile
+// GetProfile returns a profile (probably based on the profile id specified in the url)
 func GetProfile(c *fiber.Ctx) *models.Profile {
 	return getCtxValue(c, profileCtxKey).(*models.Profile)
 }
 
-// SetProfile sets a single search profile
+// SetProfile sets a profile
 func SetProfile(ctx context.Context, value *models.Profile) context.Context {
 	return context.WithValue(ctx, profileCtxKey, value)
 }

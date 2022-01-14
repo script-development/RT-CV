@@ -25,7 +25,15 @@ func TestScannedReferenceNrs(t *testing.T) {
 		}
 	}
 
-	err := router.db.UnsafeInsert(
+	matchesInDB := []models.Match{}
+	err := router.db.Find(&models.Match{}, &matchesInDB, nil)
+	NoError(t, err)
+	for _, match := range matchesInDB {
+		err = router.db.DeleteByID(&match)
+		NoError(t, err)
+	}
+
+	err = router.db.UnsafeInsert(
 		newMatch("1", time.Now().Add(-(time.Minute*30))),
 		newMatch("2", time.Now().Add(-(time.Minute*90))),
 		newMatch("3", time.Now().AddDate(0, 0, -2)),
