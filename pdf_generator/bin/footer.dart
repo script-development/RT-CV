@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:pdf/pdf.dart';
+import 'dart:io';
 import 'package:pdf/widgets.dart';
 import 'package:image/image.dart' as image;
 import 'package:http/http.dart' as http;
@@ -147,9 +149,45 @@ Future<image.Image?> obtainLogo(String? url) async {
     return null;
   }
 
+  List<int> urlHash = List.generate(32, (index) => 0);
+  var urlChars = utf8.encode(url);
+  for (var i = 0; i < urlChars.length; i++) {
+    var urlHashIdx = i % urlHash.length;
+    urlHash[urlHashIdx] ^= urlChars[i];
+  }
+
+  var logoCacheFile = File(
+    'cache/' +
+        urlHash.map((e) => e.toRadixString(16)).join('').padLeft(2, '0') +
+        '.png',
+  );
+
   try {
+    if (await logoCacheFile.exists()) {
+      var logoBytes = await logoCacheFile.readAsBytes();
+      return image.decodePng(logoBytes);
+    }
+
     http.Response response = await http.get(Uri.parse(url));
-    return image.decodeImage(response.bodyBytes);
+    var recivedImage = image.decodeImage(response.bodyBytes);
+    if (recivedImage == null) return null;
+
+    if (recivedImage.height > 100) {
+      recivedImage = image.copyResize(
+        recivedImage,
+        height: 50,
+        interpolation: image
+            .Interpolation.average, // average and linear seem to work best here
+      );
+    }
+
+    var cacheDir = Directory("cache");
+    if (!await cacheDir.exists()) {
+      await cacheDir.create();
+    }
+
+    await logoCacheFile.writeAsBytes(image.encodePng(recivedImage));
+    return recivedImage;
   } catch (e) {
     print("An error occurred while loading the logo: ${e}");
     print("Continuing without logo");

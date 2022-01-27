@@ -87,7 +87,7 @@ class ArgsParser {
 
   /// data is the cv data (should be encoded as json)
   /// The layout of this data is based of the main project's CV struct in /models/cv.go
-  String get data => argResult['data'];
+  String get data => argResult['data'] ?? '';
 
   /// should dummy data be used to generate the document
   bool get dummy => argResult['dummy'];

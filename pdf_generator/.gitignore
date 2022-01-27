@@ -7,3 +7,8 @@ build/
 
 *.pdf
 *.exe
+*.aot
+*.dill
+
+# ignore the caching directory
+cache/
