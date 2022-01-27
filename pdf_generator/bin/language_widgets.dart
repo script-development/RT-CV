@@ -140,10 +140,30 @@ class LanguageWidget extends StatelessWidget {
                 color: PdfColors.grey200,
               ),
               child: Stack(
-                children: [
-                  _LanguageLevelbar(writingNr, _writingColor, 10),
-                  _LanguageLevelbar(speakingNr, _speakingColor, 10),
-                ],
+                children: speakingNr == writingNr
+                    ? [
+                        _LanguageLevelbar(
+                          writingNr,
+                          _writingColor,
+                          10,
+                          addOffsetToLeft: true,
+                        ),
+                        _LanguageLevelbar(
+                          speakingNr,
+                          _speakingColor,
+                          10,
+                          addOffsetToRight: true,
+                        ),
+                      ]
+                    : speakingNr > writingNr
+                        ? [
+                            _LanguageLevelbar(speakingNr, _speakingColor, 10),
+                            _LanguageLevelbar(writingNr, _writingColor, 10),
+                          ]
+                        : [
+                            _LanguageLevelbar(writingNr, _writingColor, 10),
+                            _LanguageLevelbar(speakingNr, _speakingColor, 10),
+                          ],
               ),
             ),
           ),
@@ -154,30 +174,52 @@ class LanguageWidget extends StatelessWidget {
 }
 
 class _LanguageLevelbar extends StatelessWidget {
-  _LanguageLevelbar(this.levelNr, this.color, this.height);
+  _LanguageLevelbar(
+    this.levelNr,
+    this.color,
+    this.height, {
+    this.addOffsetToRight,
+    this.addOffsetToLeft,
+  });
 
   final int levelNr;
   final PdfColor color;
   final double height;
+  final bool? addOffsetToRight;
+  final bool? addOffsetToLeft;
+
+  double get offsetRight => addOffsetToRight == true ? 5 : 0;
+  double get offsetLeft => addOffsetToLeft == true ? 5 : 0;
 
   @override
   Widget build(Context context) {
+    var padding = EdgeInsets.only(
+      left: offsetLeft,
+      right: offsetRight,
+    );
+
     if (levelNr == 0) {
       // Display a simple dot to indicate that the language is unknown.
-      return Container(
-        height: height,
-        width: height,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(5),
-          color: color,
-        ),
-      );
-    } else if (levelNr == maxLanguageLevelNr) {
-      return Expanded(
+      return Padding(
+        padding: padding,
         child: Container(
+          height: height,
+          width: height,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(5),
             color: color,
+          ),
+        ),
+      );
+    } else if (levelNr == maxLanguageLevelNr) {
+      return Padding(
+        padding: padding,
+        child: Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(5),
+              color: color,
+            ),
           ),
         ),
       );
@@ -186,10 +228,13 @@ class _LanguageLevelbar extends StatelessWidget {
         children: [
           Expanded(
             flex: levelNr,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(5),
-                color: color,
+            child: Padding(
+              padding: padding,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(5),
+                  color: color,
+                ),
               ),
             ),
           ),

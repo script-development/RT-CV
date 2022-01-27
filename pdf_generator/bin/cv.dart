@@ -70,9 +70,14 @@ class CV {
           LanguageLevel.excellent,
         ),
         Language(
+          "Engels",
+          LanguageLevel.good,
+          LanguageLevel.reasonable,
+        ),
+        Language(
           "Duits",
           LanguageLevel.reasonable,
-          LanguageLevel.good,
+          LanguageLevel.reasonable,
         ),
       ],
     );
