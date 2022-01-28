@@ -451,7 +451,9 @@ func ExampleCV() *CV {
 		}},
 		PersonalPresentation: "Sir",
 		DriversLicenses: []jsonHelpers.DriversLicense{
-			jsonHelpers.NewDriversLicense("AAA"),
+			jsonHelpers.NewDriversLicense("A"),
+			jsonHelpers.NewDriversLicense("B"),
+			jsonHelpers.NewDriversLicense("C"),
 		},
 		PersonalDetails: PersonalDetails{
 			Initials:          "P.S.",
