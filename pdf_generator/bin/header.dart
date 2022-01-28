@@ -19,9 +19,14 @@ class HeaderWidget extends StatelessWidget {
     // Create meta color
     PdfColorHsl bgColorAsHsl = style.headerBackgroundColor.toHsl();
     final double hue = bgColorAsHsl.hue;
-    final double saturation = bgColorAsHsl.saturation;
+    double saturation = bgColorAsHsl.saturation;
     double lightness = bgColorAsHsl.lightness;
     if (style.headerTextColor == PdfColors.white) {
+      if (lightness < .1 && hue < .1) {
+        // Fix color of text becomming red when a #000 (black) is provided as color
+        // This is a side effect of converting hex to hsl that is fixed here.
+        saturation = 0;
+      }
       lightness += .35;
       if (lightness > 1) {
         lightness = 1;
