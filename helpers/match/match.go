@@ -381,7 +381,7 @@ func Match(domains []string, profiles []*models.Profile, cv models.CV) []FoundMa
 }
 
 // HandleMatch sends a match to the desired destination based on the OnMatch field in the profile
-func (match FoundMatch) HandleMatch(cv models.CV) {
+func (match FoundMatch) HandleMatch(cv models.CV, pdfFile *os.File) {
 	onMatch := match.Profile.OnMatch
 
 	for _, http := range onMatch.HTTPCall {
@@ -392,11 +392,6 @@ func (match FoundMatch) HandleMatch(cv models.CV) {
 
 	emailsLen := len(onMatch.SendMail)
 	if emailsLen != 0 {
-		pdfFile, err := cv.GetPDF(onMatch.PdfOptions, nil)
-		if err != nil {
-			log.WithError(err).Error("mail attachment creation error")
-		}
-
 		emailBody, err := cv.GetEmailHTML(match.Profile, match.Matches.GetMatchSentence())
 		if err != nil {
 			log.WithError(err).Error("unable to generate email body from CV")
@@ -407,11 +402,6 @@ func (match FoundMatch) HandleMatch(cv models.CV) {
 					log.WithError(err).Error("unable to send email")
 				}
 			}
-		}
-
-		if pdfFile != nil {
-			pdfFile.Close()
-			os.Remove(pdfFile.Name())
 		}
 	}
 }

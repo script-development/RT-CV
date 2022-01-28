@@ -2,6 +2,7 @@ package controller
 
 import (
 	"errors"
+	"os"
 	"sync"
 	"time"
 
@@ -208,7 +209,39 @@ func (args ProcessMatches) Process() {
 		return
 	}
 
+	var defaultPdf *os.File
 	for _, aMatch := range args.MatchedProfiles {
-		aMatch.HandleMatch(args.CV)
+		cv := args.CV
+		onMatch := aMatch.Profile.OnMatch
+		if len(onMatch.SendMail) == 0 {
+			aMatch.HandleMatch(cv, nil)
+		}
+
+		if onMatch.HasPDFOptions() {
+			// This pdf has custom options
+			customPDFFile, err := cv.GetPDF(onMatch.PdfOptions, nil)
+			if err != nil {
+				log.WithError(err).Error("mail attachment creation error")
+			}
+
+			aMatch.HandleMatch(cv, customPDFFile)
+
+			customPDFFile.Close()
+			os.Remove(customPDFFile.Name())
+		} else {
+			if defaultPdf == nil {
+				// If the profile has the deafult PDF options we only have to create the PDF once and reuse it
+				defaultPdf, err = cv.GetPDF(nil, nil)
+				if err != nil {
+					log.WithError(err).Error("mail attachment creation error")
+				}
+			}
+
+			aMatch.HandleMatch(cv, defaultPdf)
+		}
+	}
+	if defaultPdf != nil {
+		defaultPdf.Close()
+		os.Remove(defaultPdf.Name())
 	}
 }

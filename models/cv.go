@@ -270,6 +270,7 @@ func (cv *CV) GetEmailHTML(profile Profile, matchText string) (*bytes.Buffer, er
 }
 
 // GetPDF generates a PDF from a cv that can be send
+// the pdfGeneratorProjectPath argument can be used to define the path to the pdf generator project
 func (cv *CV) GetPDF(options *PdfOptions, pdfGeneratorProjectPath *string) (*os.File, error) {
 	cvJSON, err := json.Marshal(cv)
 	if err != nil {

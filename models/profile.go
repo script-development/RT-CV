@@ -195,6 +195,31 @@ type ProfileOnMatch struct {
 	PdfOptions *PdfOptions            `json:"pdfOptions" bson:"pdfOptions"`
 }
 
+// HasPDFOptions returns true if the PdfOptions is set and has at least one option set
+func (onMatch *ProfileOnMatch) HasPDFOptions() bool {
+	options := onMatch.PdfOptions
+	if options == nil {
+		return false
+	}
+
+	for _, entry := range []*string{
+		options.FontHeader,
+		options.FontRegular,
+		options.Style,
+		options.HeaderColor,
+		options.SubHeaderColor,
+		options.LogoImageURL,
+		options.CompanyName,
+		options.CompanyAddress,
+	} {
+		if entry != nil {
+			return true
+		}
+	}
+
+	return false
+}
+
 // PdfOptions contains options for the creation of the pdf
 type PdfOptions struct {
 	// See pdf_generator/bin/fonts.dart > _fontFilesMap for available fonts
