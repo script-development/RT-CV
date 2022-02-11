@@ -18,7 +18,12 @@ type RouteGetExampleExampleAttachmentPDFBody struct {
 var routeGetExampleAttachmentPDF = routeBuilder.R{
 	Description: "Download an example email attachment PDF, with optional options",
 	Body:        RouteGetExampleExampleAttachmentPDFBody{},
-	Res:         []byte{},
+	CustomResponse: &routeBuilder.OpenAPIResponse{
+		Description: "Returns the PDF",
+		Content: map[string]routeBuilder.OpenAPIMediaType{
+			"application/pdf": {},
+		},
+	},
 	Fn: func(c *fiber.Ctx) error {
 		body := RouteGetExampleExampleAttachmentPDFBody{}
 		err := c.BodyParser(&body)

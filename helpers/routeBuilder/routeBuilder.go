@@ -18,11 +18,15 @@ type R struct {
 	// Required
 	// You can also use markdown in this field :^)
 	Description string
+
 	// Res gives the routes
 	Res interface{}
 	// OR use res map if there are multiple possible responses
 	ResMap map[string]interface{}
+	// OR use a completely custom OpenAPIResponse type
+	CustomResponse *OpenAPIResponse
 
+	// The main handler for the route
 	Fn fiber.Handler
 
 	// Optional
@@ -41,8 +45,8 @@ func (r R) check() {
 	if r.Description == "" {
 		panic("routeBuilder.R description cannot be empty")
 	}
-	if r.Res == nil && r.ResMap == nil {
-		panic("routeBuilder.Res or routeBuilder.ResMap must be defined")
+	if r.Res == nil && r.ResMap == nil && r.CustomResponse == nil {
+		panic("routeBuilder.Res or routeBuilder.ResMap or routeBuilder.CustomResponse must be defined")
 	}
 	if r.Fn == nil {
 		panic("routeBuilder.Fn must be defined")

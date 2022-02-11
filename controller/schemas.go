@@ -41,25 +41,25 @@ var routeGetCvSchema = routeBuilder.R{
 	},
 }
 
-var errResponse = IMap{
-	"description": "unexpected error",
-	"content": IMap{
-		"application/json": IMap{
-			"schema": IMap{
+var errResponse = routeBuilder.OpenAPIResponse{
+	Description: "unexpected error",
+	Content: map[string]routeBuilder.OpenAPIMediaType{
+		"application/json": {
+			Schema: IMap{
 				"$ref": "#/components/schemas/Error",
 			},
 		},
 	},
 }
 
-var routeGetOpenAPISchemaCache IMap
+var routeGetOpenAPISchemaCache *routeBuilder.OpenAPI
 
 func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 	// FIXME replace IMap with structs
 	return routeBuilder.R{
 		Description: "Returns the api schema as an openapi schema\n" +
 			"This schema is currently used by the /docs page",
-		Res: IMap{},
+		Res: routeBuilder.OpenAPI{},
 		Fn: func(c *fiber.Ctx) error {
 			origin := c.Get("Origin")
 			if origin == "" {
@@ -92,18 +92,9 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 			// Check if we have a cached version of the response as it's
 			if routeGetOpenAPISchemaCache != nil {
 				// Replace the only variable that changes form server to server
-				routeGetOpenAPISchemaCache["servers"] = []IMap{{"url": origin}}
-
-				return c.JSON(routeGetOpenAPISchemaCache)
-			}
-
-			type pathMethods struct {
-				Get        IMap   `json:"get,omitempty"`
-				Post       IMap   `json:"post,omitempty"`
-				Patch      IMap   `json:"patch,omitempty"`
-				Put        IMap   `json:"put,omitempty"`
-				Delete     IMap   `json:"delete,omitempty"`
-				Parameters []IMap `json:"parameters,omitempty"`
+				schemaInCache := *routeGetOpenAPISchemaCache
+				schemaInCache.Servers = []routeBuilder.OpenAPIServer{{URL: origin}}
+				return c.JSON(schemaInCache)
 			}
 
 			componentsSchema := IMap{
@@ -118,12 +109,12 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 				},
 			}
 
-			paths := map[string]pathMethods{}
+			paths := map[string]routeBuilder.OpenAPIPathItem{}
 
 			allTags := []routeBuilder.Tag{}
 
 			for _, route := range r.Routes() {
-				responsesMap := IMap{
+				responsesMap := map[string]routeBuilder.OpenAPIResponse{
 					"error": errResponse,
 				}
 
@@ -145,17 +136,15 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 						return err
 					}
 
-					responsesMap["200"] = IMap{
-						"description": "response",
-						"content": IMap{
-							route.ResponseContentType.String(): IMap{
-								"schema": schemaValue,
-							},
+					responsesMap["200"] = routeBuilder.OpenAPIResponse{
+						Description: "response",
+						Content: map[string]routeBuilder.OpenAPIMediaType{
+							route.ResponseContentType.String(): {Schema: schemaValue},
 						},
 					}
 				} else if route.Info.ResMap != nil {
 					for key, value := range route.Info.ResMap {
-						content := IMap{}
+						content := routeBuilder.OpenAPIMediaType{}
 						if value != nil {
 							schemaValue, err := jsonschema.From(
 								value,
@@ -172,31 +161,34 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 							if err != nil {
 								return err
 							}
-							content["schema"] = schemaValue
+							content.Schema = schemaValue
 						}
-						responsesMap[key] = IMap{
-							"description": "response",
-							"content": IMap{
+
+						responsesMap[key] = routeBuilder.OpenAPIResponse{
+							Description: "response",
+							Content: map[string]routeBuilder.OpenAPIMediaType{
 								route.ResponseContentType.String(): content,
 							},
 						}
 					}
+				} else if route.Info.CustomResponse != nil {
+					responsesMap["200"] = *route.Info.CustomResponse
 				} else {
-					responsesMap["200"] = IMap{
-						"description": "response",
-						"content": IMap{
-							route.ResponseContentType.String(): IMap{},
+					responsesMap["200"] = routeBuilder.OpenAPIResponse{
+						Description: "response",
+						Content: map[string]routeBuilder.OpenAPIMediaType{
+							route.ResponseContentType.String(): {},
 						},
 					}
 				}
 
 				// Create the actual information about this route's method
-				routeInfo := IMap{
-					"summary":   strings.TrimPrefix(route.OpenAPIPath, "/api/v1"),
-					"responses": responsesMap,
+				routeInfo := routeBuilder.OpenAPIOperation{
+					Summary:   strings.TrimPrefix(route.OpenAPIPath, "/api/v1"),
+					Responses: responsesMap,
 				}
 				if route.Info.Description != "" {
-					routeInfo["description"] = route.Info.Description
+					routeInfo.Description = route.Info.Description
 				}
 
 				if len(route.Info.Tags) > 0 {
@@ -215,7 +207,7 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 							allTags = append(allTags, tag)
 						}
 					}
-					routeInfo["tags"] = tagsList
+					routeInfo.Tags = tagsList
 				}
 
 				// Create the request body expected value
@@ -235,12 +227,10 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 					if err != nil {
 						return err
 					}
-					routeInfo["requestBody"] = IMap{
-						"description": "request data",
-						"content": IMap{
-							"application/json": IMap{
-								"schema": schemaValue,
-							},
+					routeInfo.RequestBody = &routeBuilder.OpenAPIRequestBody{
+						Description: "request data",
+						Content: map[string]routeBuilder.OpenAPIMediaType{
+							"application/json": {Schema: schemaValue},
 						},
 					}
 				}
@@ -249,30 +239,30 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 				path := paths[route.OpenAPIPath]
 				switch route.Method {
 				case routeBuilder.Get:
-					path.Get = routeInfo
+					path.Get = &routeInfo
 				case routeBuilder.Post:
-					path.Post = routeInfo
+					path.Post = &routeInfo
 				case routeBuilder.Patch:
-					path.Patch = routeInfo
+					path.Patch = &routeInfo
 				case routeBuilder.Put:
-					path.Put = routeInfo
+					path.Put = &routeInfo
 				case routeBuilder.Delete:
-					path.Delete = routeInfo
+					path.Delete = &routeInfo
 				}
 
 			paramsLoop:
 				for _, param := range route.Params {
 					// Insert the url params
 					for _, p := range path.Parameters {
-						if p["name"] == param {
+						if p.Name == param {
 							continue paramsLoop
 						}
 					}
-					path.Parameters = append(path.Parameters, IMap{
-						"name":     param,
-						"in":       "path",
-						"required": true,
-						"schema": IMap{
+					path.Parameters = append(path.Parameters, routeBuilder.OpenAPIParameter{
+						Name:     param,
+						In:       "path",
+						Required: true,
+						Schema: IMap{
 							"type": "string",
 						},
 					})
@@ -280,30 +270,30 @@ func routeGetOpenAPISchema(r *routeBuilder.Router) routeBuilder.R {
 				paths[route.OpenAPIPath] = path
 			}
 
-			res := IMap{
-				"openapi": "3.0.3",
-				"info": IMap{
-					"version":        "1.0.0",
-					"title":          "RT-CV",
-					"description":    schemaDescription,
-					"termsOfService": "https://github.com/script-development/RT-CV/blob/main/LICENSE",
-					"contact": IMap{
-						"name": "API Support",
-						"url":  "https://github.com/script-development/RT-CV/issues/new",
+			res := routeBuilder.OpenAPI{
+				OpenAPI: "3.0.3",
+				Info: &routeBuilder.OpenAPIInfo{
+					Version:        "1.0.0",
+					Title:          "RT-CV",
+					Description:    schemaDescription,
+					TermsOfService: "https://github.com/script-development/RT-CV/blob/main/LICENSE",
+					Contact: routeBuilder.OpenAPIContact{
+						Name: "API Support",
+						URL:  "https://github.com/script-development/RT-CV/issues/new",
 					},
-					"license": IMap{
-						"name": "MIT",
-						"url":  "https://github.com/script-development/RT-CV/blob/main/LICENSE",
+					License: routeBuilder.OpenAPILicense{
+						Name: "MIT",
+						URL:  "https://github.com/script-development/RT-CV/blob/main/LICENSE",
 					},
 				},
-				"servers":    []IMap{{"url": origin}},
-				"paths":      paths,
-				"components": IMap{"schemas": componentsSchema},
-				"tags":       allTags,
+				Servers:    []routeBuilder.OpenAPIServer{{URL: origin}},
+				Paths:      paths,
+				Components: &routeBuilder.OpenAPIComponents{Schemas: componentsSchema},
+				Tags:       allTags,
 			}
 
 			// cache the response so we re-use it later on
-			routeGetOpenAPISchemaCache = res
+			routeGetOpenAPISchemaCache = &res
 
 			return c.JSON(res)
 		},
