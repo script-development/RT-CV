@@ -80,7 +80,7 @@ type Entry interface {
 // - SetID
 // - DefaultFindFilters
 type M struct {
-	ID primitive.ObjectID `bson:"_id" json:"id"`
+	ID primitive.ObjectID `bson:"_id" json:"id" description:"The unique id of the entry in the MongoDB ObjectId format, for more info see: https://docs.mongodb.com/manual/reference/method/ObjectId/"`
 }
 
 // NewM returns a new instance of M

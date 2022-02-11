@@ -22,8 +22,6 @@ enableAllRules = true
 [rule.flag-parameter]
   Disabled = true
 
-[rule.line-length-limit]
-  arguments = [140]
 [rule.unhandled-error]
     arguments = ["fmt.Printf", "fmt.Println"]
 [rule.argument-limit]

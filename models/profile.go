@@ -26,7 +26,7 @@ type Profile struct {
 	db.M    `bson:",inline"`
 	Name    string   `json:"name"`
 	Active  bool     `json:"active"`
-	Domains []string `json:"domains"`
+	Domains []string `json:"domains" description:"Filter which domains the profile we want to match CVs with. If empty, unset or null the all domains are accepted. Wildcards are also allwed for example *.foo.com will match CV from bar.foo.com, baz.foo.com and foo.com"`
 
 	MustDesiredProfession bool                `json:"mustDesiredProfession" bson:"mustDesiredProfession"`
 	DesiredProfessions    []ProfileProfession `json:"desiredProfessions" bson:"desiredProfessions"`
@@ -39,14 +39,14 @@ type Profile struct {
 	DriversLicenses    []ProfileDriversLicense `json:"driversLicenses" bson:"driversLicenses"`
 
 	MustEducationFinished bool               `json:"mustEducationFinished" bson:"mustEducationFinished"`
-	MustEducation         bool               `json:"mustEducation" bson:"mustEducation"`
+	MustEducation         bool               `json:"mustEducation" bson:"mustEducation" description:"Should a found CV at least have one education regardless of if it's complete"`
 	YearsSinceEducation   int                `json:"yearsSinceEducation" bson:"yearsSinceEducation"`
 	Educations            []ProfileEducation `json:"educations" bson:"educations"`
 
 	Zipcodes []ProfileDutchZipcode `json:"zipCodes" bson:"zipCodes"`
 
 	// What should happen on a match
-	OnMatch ProfileOnMatch `json:"onMatch" bson:"onMatch"`
+	OnMatch ProfileOnMatch `json:"onMatch" bson:"onMatch" description:"What should happen when a match is made on this profile"`
 
 	// OldID is used to keep track of converted old profiles
 	OldID *uint64 `bson:"_old_id" json:"-"`

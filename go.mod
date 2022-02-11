@@ -13,7 +13,7 @@ require (
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/minio/minio-go/v7 v7.0.21
 	github.com/mjarkk/fuzzy-matcher v1.0.3
-	github.com/mjarkk/jsonschema v1.0.1
+	github.com/mjarkk/jsonschema v1.1.0
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/rogpeppe/go-internal v1.8.1 // indirect
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
@@ -21,7 +21,7 @@ require (
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tj/assert v0.0.3
 	github.com/valyala/fasthttp v1.33.0
-	go.mongodb.org/mongo-driver v1.8.2
+	go.mongodb.org/mongo-driver v1.8.3
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
