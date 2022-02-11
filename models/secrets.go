@@ -59,10 +59,10 @@ func (s SecretValueStructure) ValidateValue(value []byte) bool {
 type Secret struct {
 	db.M           `bson:",inline"`
 	KeyID          primitive.ObjectID   `bson:"keyId" json:"keyId"`
-	Key            string               `json:"key"`
+	Key            string               `json:"key" description:"the identifier of this secret"`
 	Value          string               `json:"-"`
-	Description    string               `json:"description"`
-	ValueStructure SecretValueStructure `json:"valueStructure"`
+	Description    string               `json:"description" description:"a description for this secret"`
+	ValueStructure SecretValueStructure `json:"valueStructure" description:"describes what kind of value this is, is it any value or is the value layout strictly defined"`
 }
 
 // CollectionName returns the collection name of a secret

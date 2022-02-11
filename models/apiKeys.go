@@ -14,11 +14,11 @@ type APIKey struct {
 	Enabled bool       `json:"enabled"`
 	Domains []string   `json:"domains"`
 	Key     string     `json:"key"`
-	Roles   APIKeyRole `json:"roles"`
+	Roles   APIKeyRole `json:"roles" description:"What are the actions this key can do, every truthy bit of this number represends a role"`
 
 	// System indicates if this is a key required by the system
 	// These are keys whereof at least one needs to exists otherwise RT-CV would not work
-	System bool `json:"system"`
+	System bool `json:"system" description:"True when the key is generated (& required) by RT-CV to function"`
 }
 
 // CollectionName returns the collection name of the ApiKey

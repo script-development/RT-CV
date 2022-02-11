@@ -21,7 +21,7 @@ import (
 // TODO check the json removed fields if we actually should use them
 type CV struct {
 	Title                string                       `json:"-"` // Not supported yet
-	ReferenceNumber      string                       `json:"referenceNumber"`
+	ReferenceNumber      string                       `json:"referenceNumber" description:"The reference number (ID) of this CV on the site it was scraped from. We use this to track duplicated CVs"`
 	CreatedAt            *jsonHelpers.RFC3339Nano     `json:"createdAt,omitempty"`
 	LastChanged          *jsonHelpers.RFC3339Nano     `json:"lastChanged,omitempty"`
 	Educations           []Education                  `json:"educations,omitempty"`

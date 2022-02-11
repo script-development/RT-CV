@@ -192,7 +192,7 @@ func (p *ProfileDutchZipcode) IsWithinCithAndArea(cityAndArea uint16) bool {
 type ProfileOnMatch struct {
 	SendMail   []ProfileSendEmailData `json:"sendMail" bson:"sendMail"`
 	HTTPCall   []ProfileHTTPCallData  `json:"httpCall" bson:"httpCall"`
-	PdfOptions *PdfOptions            `json:"pdfOptions" bson:"pdfOptions"`
+	PdfOptions *PdfOptions            `json:"pdfOptions" bson:"pdfOptions" description:"Options for customizing the PDF, for more info about this object look at the /tryPdfGenerator page"`
 }
 
 // HasPDFOptions returns true if the PdfOptions is set and has at least one option set
