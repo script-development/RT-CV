@@ -11,6 +11,7 @@ steps:
       GOCACHE: /tmp/cache/go-build # Change the go build cache to a persistent folder
       GOMODCACHE: /tmp/cache/pkg.mod # Change the go module cache to a persistent folder
     commands:
+      - apk add git
       - mkdir -p /tmp/cache/go-build /tmp/cache/pkg.mod # Make sure the cache folders exist
       - go test -v ./...
     volumes:
