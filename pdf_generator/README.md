@@ -2,6 +2,12 @@
 
 This dart project will convert CV data into a good looking PDF.
 
+## Install
+
+```sh
+dart pub get
+```
+
 ## Development
 
 ```sh
