@@ -61,7 +61,7 @@ func main() {
 		go func() {
 			<-exitSignal
 			pprof.StopCPUProfile()
-			f.Close()
+			_ = f.Close()
 			fmt.Println("saved cpu profile to cpu.profile")
 			fmt.Println("the profile can be inspected using: go tool pprof -http localhost:3333 cpu.profile")
 			os.Exit(0)

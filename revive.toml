@@ -21,6 +21,8 @@ enableAllRules = true
   Disabled = true
 [rule.flag-parameter]
   Disabled = true
+[rule.banned-characters]
+  Disabled = true
 
 [rule.line-length-limit]
   Disabled = true
