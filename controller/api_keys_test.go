@@ -33,6 +33,13 @@ func TestApiKeyRoutes(t *testing.T) {
 	NoError(t, err)
 	Equal(t, string(allKeysInDBJson), string(res))
 
+	// Get scraper keys
+	_, scraperKeysResp := app.MakeRequest(routeBuilder.Get, `/api/v1/keys/scraperKeys`, TestReqOpts{})
+	scraperKeys := []models.APIKey{}
+	err = json.Unmarshal(scraperKeysResp, &scraperKeys)
+	NoError(t, err)
+	Len(t, scraperKeys, 1) // The mock data contains one scraper keys
+
 	// Get each key from earlier by id
 	for _, listKey := range resKeys {
 		if listKey.ID.Hex() == mock.Key1.ID.Hex() {

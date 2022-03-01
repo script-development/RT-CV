@@ -14,6 +14,19 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+var routeGetScraperKeys = routeBuilder.R{
+	Description: "Get all scraper keys from the database",
+	Res:         []models.APIKey{},
+	Fn: func(c *fiber.Ctx) error {
+		dbConn := ctx.GetDbConn(c)
+		keys, err := models.GetScraperAPIKeys(dbConn)
+		if err != nil {
+			return err
+		}
+		return c.JSON(keys)
+	},
+}
+
 var routeGetKeys = routeBuilder.R{
 	Description: "get all api keys from the database",
 	Res:         []models.APIKey{},

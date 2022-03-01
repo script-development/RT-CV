@@ -18,6 +18,7 @@ func init() {
 	// Key1 is a mock api key
 	Key1 = &models.APIKey{
 		M:       db.NewM(),
+		Name:    "Key with all roles",
 		Enabled: true,
 		Domains: []string{"werk.nl"},
 		Key:     "aaa",
@@ -26,6 +27,7 @@ func init() {
 	// Key2 is a mock api key
 	Key2 = &models.APIKey{
 		M:       db.NewM(),
+		Name:    "Scraper key",
 		Enabled: true,
 		Domains: []string{"werk.nl"},
 		Key:     "bbb",
@@ -34,6 +36,7 @@ func init() {
 	// Key3 is a mock api key
 	Key3 = &models.APIKey{
 		M:       db.NewM(),
+		Name:    "Information obtainer key",
 		Enabled: true,
 		Domains: []string{"werk.nl"},
 		Key:     "ccc",
@@ -44,6 +47,7 @@ func init() {
 		M: db.M{
 			ID: primitive.ObjectID{0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11},
 		},
+		Name:    "System login key",
 		System:  true,
 		Enabled: true,
 		Domains: []string{"*"},

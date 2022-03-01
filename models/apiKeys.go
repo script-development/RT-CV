@@ -11,6 +11,7 @@ import (
 // APIKey contains a registered API key
 type APIKey struct {
 	db.M    `bson:",inline"`
+	Name    string     `json:"name`
 	Enabled bool       `json:"enabled"`
 	Domains []string   `json:"domains"`
 	Key     string     `json:"key"`
@@ -58,6 +59,16 @@ func (a *APIKey) Info() APIKeyInfo {
 func GetAPIKeys(conn db.Connection) ([]APIKey, error) {
 	keys := []APIKey{}
 	err := conn.Find(&APIKey{}, &keys, nil)
+	return keys, err
+}
+
+// GetScraperAPIKeys returns all the keys with scraper roles registered in the database
+func GetScraperAPIKeys(conn db.Connection) ([]APIKey, error) {
+	keys := []APIKey{}
+	err := conn.Find(&APIKey{}, &keys, bson.M{
+		"system": false,
+		"roles":  1,
+	})
 	return keys, err
 }
 
