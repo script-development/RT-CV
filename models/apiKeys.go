@@ -11,7 +11,7 @@ import (
 // APIKey contains a registered API key
 type APIKey struct {
 	db.M    `bson:",inline"`
-	Name    string     `json:"name`
+	Name    string     `json:"name"`
 	Enabled bool       `json:"enabled"`
 	Domains []string   `json:"domains"`
 	Key     string     `json:"key"`
