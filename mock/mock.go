@@ -123,7 +123,6 @@ func init() {
 		ProfessionExperienced: &professionExperienced,
 		YearsSinceEducation:   &yearsSinceEducation,
 		Education:             &matchedEducation,
-		Course:                &matchedCourse,
 		DriversLicense:        true,
 		Domain:                &werkDotNL,
 	}

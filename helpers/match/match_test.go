@@ -121,26 +121,6 @@ func TestMatchEducation(t *testing.T) {
 			{Name: "Bananenplukker"},
 		}},
 	)
-
-	// Match on courses
-	MustMatchSingle(
-		t,
-		models.Profile{Educations: []models.ProfileEducation{{Name: "Bananenplukker"}}},
-		models.CV{Courses: []models.Course{{Name: "Bananenplukker"}}},
-	)
-
-	// No matches
-	MustNotMatchSingle(
-		t,
-		models.Profile{
-			MustEducation: true,
-			Educations:    []models.ProfileEducation{{Name: "Peren Plukker"}},
-		},
-		models.CV{
-			Educations: []models.Education{{Name: "Bananenplukker"}},
-			Courses:    []models.Course{{Name: "How to be a gangster for dummies"}},
-		},
-	)
 }
 
 func TestMatchEducationMustFinish(t *testing.T) {
@@ -173,19 +153,6 @@ func TestMatchEducationYearsSinceEducation(t *testing.T) {
 		},
 		models.CV{
 			Educations: []models.Education{{
-				Name:    "Bananenplukker",
-				EndDate: jsonHelpers.RFC3339Nano(time.Now().AddDate(-1, 0, 0)).ToPtr(),
-			}},
-		},
-	)
-
-	MustMatchSingle(
-		t,
-		models.Profile{
-			YearsSinceEducation: 2,
-		},
-		models.CV{
-			Courses: []models.Course{{
 				Name:    "Bananenplukker",
 				EndDate: jsonHelpers.RFC3339Nano(time.Now().AddDate(-1, 0, 0)).ToPtr(),
 			}},
@@ -327,7 +294,6 @@ func TestGetMatchSentence(t *testing.T) {
 		From: 2000,
 		To:   5000,
 	}
-	course := "gangsters for dummies"
 	education := "beeing smart"
 	profession := "gangster"
 
@@ -336,7 +302,6 @@ func TestGetMatchSentence(t *testing.T) {
 		YearsSinceWork:        &yearsSinceWork,
 		YearsSinceEducation:   &yearsSinceWork,
 		Education:             &education,
-		Course:                &course,
 		DesiredProfession:     &profession,
 		ProfessionExperienced: &profession,
 		DriversLicense:        true,
@@ -345,7 +310,6 @@ func TestGetMatchSentence(t *testing.T) {
 	expectedResult := "3 jaren sinds laatste werk ervaaring" +
 		", 3 jaren sinds laatste opleiding" +
 		", opleiding beeing smart" +
-		", cursus gangsters for dummies" +
 		", gewenste werkveld gangster" +
 		", gewerkt als gangster" +
 		", gewenste rijbewijs" +

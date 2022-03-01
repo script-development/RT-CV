@@ -107,8 +107,6 @@ func Match(domains []string, profiles []*models.Profile, cv models.CV) []FoundMa
 
 		// Check years since education
 		if profile.YearsSinceEducation > 0 {
-			foundMatch := false
-
 			mustBeAfter := now.AddDate(-profile.YearsSinceEducation, 0, 0)
 			lastEducativeYear := time.Date(1980, time.January, 1, 0, 0, 0, 0, time.Local)
 
@@ -120,19 +118,6 @@ func Match(domains []string, profiles []*models.Profile, cv models.CV) []FoundMa
 				t := cvEducation.EndDate.Time()
 				if t.After(lastEducativeYear) {
 					lastEducativeYear = t
-				}
-			}
-
-			if !foundMatch {
-				for _, cvCourse := range cv.Courses {
-					if len(cvCourse.Name) == 0 || cvCourse.EndDate == nil {
-						continue
-					}
-
-					t := cvCourse.EndDate.Time()
-					if t.After(mustBeAfter) {
-						lastEducativeYear = t
-					}
 				}
 			}
 
@@ -148,7 +133,7 @@ func Match(domains []string, profiles []*models.Profile, cv models.CV) []FoundMa
 		matchedAnEducationOrCourse := false
 		checkedForEducationOrCourse := len(profile.Educations) > 0
 		if checkedForEducationOrCourse {
-			if (len(cv.Educations) > 0 || len(cv.Courses) > 0) && profile.EducationFuzzyMatcher == nil {
+			if len(cv.Educations) > 0 && profile.EducationFuzzyMatcher == nil {
 				// The fuzzy matcher is not yet setup, lets set it up here
 				names := make([]string, len(profile.Educations))
 				for idx, education := range profile.Educations {
@@ -173,23 +158,6 @@ func Match(domains []string, profiles []*models.Profile, cv models.CV) []FoundMa
 					}
 
 					match.Education = &profile.Educations[educationIdx].Name
-					matchedAnEducationOrCourse = true
-					break
-				}
-			}
-
-			if len(cv.Courses) > 0 {
-				for _, cvCourse := range cv.Courses {
-					if len(cvCourse.Name) == 0 {
-						continue
-					}
-
-					educationIdx := profile.EducationFuzzyMatcher.Match(cvCourse.Name)
-					if educationIdx == -1 {
-						continue
-					}
-
-					match.Course = &profile.Educations[educationIdx].Name
 					matchedAnEducationOrCourse = true
 					break
 				}

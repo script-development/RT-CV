@@ -36,9 +36,6 @@ type Match struct {
 	YearsSinceEducation *int    `bson:",omitempty" json:"yearsSinceEducation"`
 	// the education name of the profile that was matched
 	Education *string `bson:",omitempty" json:"education"`
-	// the course name of the profile that was matched
-	// note that the profile does not really have a course we rather use the education name that matched a cv course
-	Course *string `bson:",omitempty" json:"course"`
 	// The profile desired profession match that was found
 	DesiredProfession     *string              `bson:",omitempty" json:"desiredProfession"`
 	ProfessionExperienced *string              `bson:",omitempty" json:"professionExperienced"`
@@ -127,9 +124,6 @@ func (m *Match) GetMatchSentence() string {
 	}
 	if m.Education != nil {
 		addReason("opleiding " + *m.Education)
-	}
-	if m.Course != nil {
-		addReason("cursus " + *m.Course)
 	}
 	if m.DesiredProfession != nil {
 		addReason("gewenste werkveld " + *m.DesiredProfession)

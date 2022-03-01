@@ -136,23 +136,6 @@ class WorkExpWidget extends StatelessWidget {
   }
 }
 
-class CourseWidget extends StatelessWidget {
-  CourseWidget(Course this.course);
-
-  final Course course;
-
-  @override
-  Widget build(Context context) {
-    return ListEntry(
-      course.name,
-      company: course.institute,
-      from: course.startDate,
-      to: course.endDate,
-      description: course.description,
-    );
-  }
-}
-
 class EducationWidget extends StatelessWidget {
   EducationWidget(Education this.education);
 

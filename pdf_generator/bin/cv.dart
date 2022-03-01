@@ -37,29 +37,32 @@ class CV {
       educations: [
         Education(
           "HBO",
+          EducationIs.Education,
           institute: "Hogeschool",
           startDate: DateTime.utc(2000, 1, 1),
           endDate: DateTime.utc(2010, 1, 1),
         ),
         Education(
           "MBO",
+          EducationIs.Unknown,
           institute: "Some school",
           startDate: DateTime.utc(1995, 2, 1),
           endDate: DateTime.utc(1998, 5, 1),
         ),
       ],
       courses: [
-        Course(
+        Education(
           "beeing smart",
+          EducationIs.Course,
           institute: "Hogeschool",
           startDate: DateTime.utc(2010, 1, 1),
           endDate: DateTime.utc(2011, 1, 1),
         ),
-        Course(
+        Education(
           "TV host voor dummies",
+          EducationIs.Course,
           institute: "Hogeschool",
           startDate: DateTime.utc(2010, 1, 1),
-          // endDate: DateTime.utc(2011, 1, 1),
         ),
       ],
       driversLicenses: ["B", "C", "D"],
@@ -87,14 +90,18 @@ class CV {
     referenceNumber = json['referenceNumber'];
     createdAt = jsonParseDate(json['createdAt']);
     lastChanged = jsonParseDate(json['lastChanged']);
-    educations = json['educations']
+
+    List<Education> parseEducations = json['educations']
         ?.map((entry) => Education.fromJson(entry))
         ?.toList()
         ?.cast<Education>();
-    courses = json['courses']
-        ?.map((entry) => Course.fromJson(entry))
-        ?.toList()
-        ?.cast<Course>();
+    educations = parseEducations
+        .where((e) => e.educationIs != EducationIs.Course)
+        .toList();
+    courses = parseEducations
+        .where((e) => e.educationIs == EducationIs.Course)
+        .toList();
+
     workExperiences = json['workExperiences']
         ?.map((entry) => WorkExperience.fromJson(entry))
         ?.toList()
@@ -125,7 +132,7 @@ class CV {
   late final DateTime? createdAt;
   late final DateTime? lastChanged;
   late final List<Education>? educations;
-  late final List<Course>? courses;
+  late final List<Education>? courses;
   late final List<WorkExperience>? workExperiences;
   late final List<String>? preferredJobs;
   late final List<Language>? languages;
@@ -140,12 +147,20 @@ class Education {
     institute = json['institute'];
     isCompleted = json['isCompleted'];
     hasDiploma = json['hasDiploma'];
+    if (json['is'] == 1) {
+      educationIs = EducationIs.Education;
+    } else if (json['is'] == 2) {
+      educationIs = EducationIs.Course;
+    } else {
+      educationIs = EducationIs.Unknown;
+    }
     startDate = jsonParseDate(json['startDate']);
     endDate = jsonParseDate(json['endDate']);
   }
 
   Education(
-    this.name, {
+    this.name,
+    this.educationIs, {
     this.description,
     this.institute,
     this.isCompleted,
@@ -155,6 +170,7 @@ class Education {
   });
 
   late final String name;
+  late final EducationIs educationIs;
   late final String? description;
   late final String? institute;
   late final bool? isCompleted;
@@ -163,31 +179,10 @@ class Education {
   late final DateTime? endDate;
 }
 
-class Course {
-  Course.fromJson(Map<String, dynamic> json) {
-    name = json['name'];
-    institute = json['institute'];
-    startDate = jsonParseDate(json['startDate']);
-    endDate = jsonParseDate(json['endDate']);
-    isCompleted = json['isCompleted'];
-    description = json['description'];
-  }
-
-  Course(
-    this.name, {
-    this.institute,
-    this.startDate,
-    this.endDate,
-    this.isCompleted,
-    this.description,
-  });
-
-  late final String name;
-  late final String? institute;
-  late final DateTime? startDate;
-  late final DateTime? endDate;
-  late final bool? isCompleted;
-  late final String? description;
+enum EducationIs {
+  Unknown,
+  Education,
+  Course,
 }
 
 class WorkExperience {

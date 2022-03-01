@@ -252,10 +252,6 @@
             background-image: url({{ .EducationIconURL }});
         }
 
-        #courses li {
-            background-image: url({{ .CourseIconURL }});
-        }
-
         #languages li {
             background-image: url({{ .LanguageIconURL }});
         }
@@ -520,30 +516,6 @@
                 {{ end }}
             </ul>
         </div>
-
-        {{ if .Cv.Courses }}
-            <div class="section" id="courses">
-                <h2>Cursussen</h2>
-                <ul>
-                    {{ range .Cv.Courses }}
-                        <li>
-                            <h3>{{ .Name }}</h3>
-                            {{ if .Institute }}
-                                <h4>{{ .Institute }}</h4>
-                            {{ end }}
-
-                            {{ if and .StartDate .EndDate }}
-                                <h5>{{ formatDate .StartDate }} - {{ formatDate .EndDate }}</h5>
-                            {{ end }}
-
-                            {{ if .Description }}
-                                <p>{{ .Description }}</p>
-                            {{ end }}
-                        </li>
-                    {{ end }}
-                </ul>
-            </div>
-        {{ end }}
 
         <table class="column-table">
             <tbody>

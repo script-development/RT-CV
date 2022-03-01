@@ -25,7 +25,6 @@ type CV struct {
 	CreatedAt            *jsonHelpers.RFC3339Nano     `json:"createdAt,omitempty"`
 	LastChanged          *jsonHelpers.RFC3339Nano     `json:"lastChanged,omitempty"`
 	Educations           []Education                  `json:"educations,omitempty"`
-	Courses              []Course                     `json:"courses,omitempty"`
 	WorkExperiences      []WorkExperience             `json:"workExperiences,omitempty"`
 	PreferredJobs        []string                     `json:"preferredJobs,omitempty"`
 	Languages            []Language                   `json:"languages,omitempty"`
@@ -38,6 +37,8 @@ type CV struct {
 
 // Education is something a user has followed
 type Education struct {
+	Is uint8 `json:"is" description:"What kind of education is this?: 0: Unknown, 1: Education, 2: Course"`
+
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Institute   string `json:"institute"`
@@ -46,16 +47,6 @@ type Education struct {
 	HasDiploma  bool                     `json:"hasDiploma"`
 	StartDate   *jsonHelpers.RFC3339Nano `json:"startDate"`
 	EndDate     *jsonHelpers.RFC3339Nano `json:"endDate"`
-}
-
-// Course is something a user has followed
-type Course struct {
-	Name        string                   `json:"name"`
-	Institute   string                   `json:"institute"`
-	StartDate   *jsonHelpers.RFC3339Nano `json:"startDate"`
-	EndDate     *jsonHelpers.RFC3339Nano `json:"endDate"`
-	IsCompleted bool                     `json:"isCompleted"`
-	Description string                   `json:"description"`
 }
 
 // WorkExperience is experience in work
@@ -416,13 +407,6 @@ func ExampleCV() *CV {
 			Institute:   "Institute name",
 			IsCompleted: true,
 			HasDiploma:  true,
-			StartDate:   now,
-			EndDate:     now,
-		}},
-		Courses: []Course{{
-			Name:        "Course name",
-			Institute:   "Institute name",
-			IsCompleted: true,
 			StartDate:   now,
 			EndDate:     now,
 		}},

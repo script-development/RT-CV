@@ -77,7 +77,7 @@ Future<void> main(List<String> programArgs) async {
     lists.add(ListWithHeader(
       IconData(0xe865), // Book
       "Cursussen",
-      cv.courses!.map((course) => CourseWidget(course)).toList(),
+      cv.courses!.map((course) => EducationWidget(course)).toList(),
     ));
   }
 

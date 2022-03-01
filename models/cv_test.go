@@ -95,9 +95,6 @@ func TestGetEmailAttachmentHTML(t *testing.T) {
 	Contains(t, html, cv.Educations[0].Institute)
 	Contains(t, html, cv.Educations[0].Description)
 
-	Contains(t, html, cv.Courses[0].Institute)
-	Contains(t, html, cv.Courses[0].Description)
-
 	Contains(t, html, "<th>Taal</th>")
 	Contains(t, html, "<th>Mondeling</th>")
 	Contains(t, html, "<th>Schriftelijk</th>")
