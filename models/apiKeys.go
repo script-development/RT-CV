@@ -39,6 +39,7 @@ func (*APIKey) DefaultFindFilters() bson.M {
 // To generate this object use the (*APIKey).Info method
 type APIKeyInfo struct {
 	ID      primitive.ObjectID `json:"id"`
+	Name    string             `json:"name"`
 	Domains []string           `json:"domains"`
 	Roles   []APIRole          `json:"roles"`
 	System  bool               `json:"system"`
@@ -49,6 +50,7 @@ type APIKeyInfo struct {
 func (a *APIKey) Info() APIKeyInfo {
 	return APIKeyInfo{
 		ID:      a.ID,
+		Name:    a.Name,
 		Domains: a.Domains,
 		Roles:   a.Roles.ConvertToAPIRoles(),
 		System:  a.System,

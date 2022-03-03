@@ -42,6 +42,7 @@ var routeGetKeys = routeBuilder.R{
 
 type apiKeyModifyCreateData struct {
 	Enabled *bool              `json:"enabled"`
+	Name    *string            `json:"name"`
 	Domains []string           `json:"domains"`
 	Key     *string            `json:"key"`
 	Roles   *models.APIKeyRole `json:"roles"`
@@ -64,6 +65,13 @@ var routeCreateKey = routeBuilder.R{
 			M:       db.NewM(),
 			Enabled: body.Enabled == nil || *body.Enabled,
 		}
+
+		if body.Name == nil {
+			return errors.New("name is required")
+		} else if len(*body.Name) == 0 {
+			return errors.New("name cannot be empty")
+		}
+		newAPIKey.Name = *body.Name
 
 		if body.Domains == nil {
 			return errors.New("domains should be set")
@@ -154,6 +162,10 @@ var routeUpdateKey = routeBuilder.R{
 
 		if body.Enabled != nil {
 			apiKey.Enabled = *body.Enabled
+		}
+
+		if body.Name != nil {
+			apiKey.Name = *body.Name
 		}
 
 		if body.Domains != nil {
