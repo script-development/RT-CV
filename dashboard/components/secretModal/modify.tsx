@@ -15,36 +15,27 @@ import RefreshIcon from '@material-ui/icons/Refresh'
 import { ModifyState } from './secretModal'
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import { ApiKey } from '../../src/types'
-import { getKeys } from '../../src/auth'
 import ModifyValue from './modifyValue'
 
 interface ModifyProps {
     state: ModifyState
     setState: Dispatch<SetStateAction<ModifyState>>
     create?: boolean
+    apiKeys: Array<ApiKey>
 }
 
 export default function Modify({
     state,
     setState,
     create,
+    apiKeys,
 }: ModifyProps) {
-    const [apiKeys, setApiKeys] = useState<undefined | Array<ApiKey>>(undefined)
 
     useEffect(() => {
-        getKeys().then(keys => {
-            const enabledKeys = keys.filter(key => key.enabled)
-            const selectedKeyId = enabledKeys[0].id
-
-            setState(s => {
-                if (s.selectedKeyId)
-                    return s
-                else
-                    return ({ ...s, selectedKeyId })
-            })
-            setApiKeys(enabledKeys)
-        })
-    }, [])
+        if (!state.selectedKeyId) {
+            setState({ ...state, selectedKeyId: apiKeys[0].id })
+        }
+    }, [state])
 
     return (
         <div>
@@ -59,7 +50,7 @@ export default function Modify({
                     <InputLabel htmlFor="secret-key-id">Api key</InputLabel>
 
                     {/* Show placeholder select while we're still loading the keys */}
-                    {!apiKeys || !state.selectedKeyId
+                    {!state.selectedKeyId
                         ? <Select
                             id="secret-key-id"
                             disabled
@@ -75,13 +66,13 @@ export default function Modify({
                             onChange={(id: any) => setState(s => ({ ...s, selectedKeyId: id.target.value }))}
                             id="secret-key-id"
                         >
-                            {apiKeys?.reduce((acc: Array<any>, key: ApiKey) => {
-                                return [
-                                    ...acc,
-                                    <ListSubheader key={key.id + '-header'}>{key.domains.join(', ')}</ListSubheader>,
-                                    <MenuItem key={key.id + '-selectable'} value={key.id}>{key.id}</MenuItem>,
-                                ]
-                            }, [])}
+                            {apiKeys?.map((key: ApiKey) =>
+                                <MenuItem key={key.id} value={key.id}>{
+                                    key.name
+                                        ? key.name
+                                        : <>{key.id} <i>{key.domains.join(', ')}</i></>
+                                }</MenuItem>
+                            )}
                         </Select>
                     }
                     <FormHelperText>The API key selected will be able to access the secret</FormHelperText>
@@ -109,7 +100,7 @@ export default function Modify({
                     value={state.description}
                     onChange={(e) => setState(s => ({ ...s, description: e.target.value }))}
                     variant="filled"
-                    helperText="Aditional information that describes the value"
+                    helperText="Additional information that describes the value"
                     multiline
                     fullWidth
                 />

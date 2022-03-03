@@ -6,13 +6,16 @@ import {
 } from '@material-ui/core'
 import Edit from '@material-ui/icons/Edit'
 import dynamic from 'next/dynamic'
-import React, { useState, useEffect } from 'react'
-import { fetcher } from '../../src/auth'
+import React, { useState, useEffect, useMemo } from 'react'
+import { fetcher, getKeys } from '../../src/auth'
 import { Modal, ModalKind } from '../modal'
-import Create from './modify'
-import { SecretValueStructure } from '../../src/types'
+import ModifyOrCreateSecret from './modify'
+import { SecretValueStructure, ApiKey } from '../../src/types'
 import { SecretModalProps } from './secretModalProps'
 
+// Use dynamic so we only load the bytes of this component once we really need it
+// It'q quite large and loading it this way splits it from the main bundle
+// So that means the first load of the page stays quick
 const JSONCode = dynamic(() => import('../jsonCode'), { ssr: false })
 
 export interface ModifyState {
@@ -29,7 +32,7 @@ export interface ModifyState {
 
 export function SecretModal({ kind, setKind, onClose: onCloseArg, secret }: SecretModalProps) {
     const [apiError, setApiError] = useState('')
-
+    const [apiKeys, setApiKeys] = useState<undefined | Array<ApiKey>>(undefined)
     const [modifyState, setModifyState] = useState<ModifyState>({
         id: '',
         key: '',
@@ -41,11 +44,7 @@ export function SecretModal({ kind, setKind, onClose: onCloseArg, secret }: Secr
         decryptionKey: '',
         decryptionKeyError: 'encryption key value must have a minimal length of 16 chars',
     })
-
-    const [viewState, setViewState] = useState({
-        value: undefined as any,
-        decryptionKey: '',
-    })
+    const [viewState, setViewState] = useState({ value: undefined as any, decryptionKey: '' })
 
     const canSubmit = (kind == ModalKind.Create || kind == ModalKind.Edit) ?
         !modifyState.valueError
@@ -72,6 +71,12 @@ export function SecretModal({ kind, setKind, onClose: onCloseArg, secret }: Secr
         setViewState({ value: undefined, decryptionKey: '' })
         onCloseArg()
     }
+
+    const secretApiKey = useMemo(() => apiKeys?.find(key => key.id == secret?.keyId), [apiKeys, secret])
+
+    useEffect(() => {
+        getKeys().then(keys => setApiKeys(keys))
+    }, [])
 
     useEffect(() => {
         if (kind == ModalKind.View)
@@ -162,7 +167,7 @@ export function SecretModal({ kind, setKind, onClose: onCloseArg, secret }: Secr
                         <div>
                             <div className="info">
                                 <Breadcrumbs>
-                                    <p>{secret?.keyId}</p>
+                                    <p>{secretApiKey?.name || secret?.keyId}</p>
                                     <b style={{ color: "white" }}>{secret?.key}</b>
                                 </Breadcrumbs>
                                 {secret?.description ? <DialogContentText>{secret?.description}</DialogContentText> : undefined}
@@ -200,12 +205,13 @@ export function SecretModal({ kind, setKind, onClose: onCloseArg, secret }: Secr
                             fullWidth
                         />
                     </div>)
-            else if (kind == ModalKind.Create || kind == ModalKind.Edit)
+            else if ((kind == ModalKind.Create || kind == ModalKind.Edit) && apiKeys !== undefined)
                 return (
-                    <Create
+                    <ModifyOrCreateSecret
                         state={modifyState}
                         setState={setModifyState}
                         create={kind == ModalKind.Create}
+                        apiKeys={apiKeys}
                     />
                 )
             else

@@ -48,7 +48,7 @@ export function Modal({
     maxWidth = 'sm',
     showConfirm = true,
 }: ModalProps) {
-    // Inner kinds reflects the value of kind only if the kind != KeyModalKind.Closed
+    // Inner kinds reflects the value of kind only if the kind != ModalKind.Closed
     // This makes it so when you close the modal the content won't change while the closing animation is playing
     const [innerKind, setInnerKind] = useState(ModalKind.Create)
 

@@ -1,5 +1,6 @@
 export interface ApiKey {
     domains: Array<string>
+    name: string,
     enabled: boolean
     id: string
     key: string

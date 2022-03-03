@@ -90,7 +90,7 @@ export default function KeysCard() {
                                         className="status"
                                     >{key.enabled ? 'Enabled' : 'Disabled'}</div>
                                 </Tooltip>
-                                {key.id}
+                                {key.name}
                             </h4>
                             <p className="domains">{key.domains.join(', ')}</p>
                         </div>

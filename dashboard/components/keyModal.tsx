@@ -17,13 +17,6 @@ import RefreshIcon from '@material-ui/icons/Refresh'
 import { fetcher } from '../src/auth'
 import { Modal, ModalKind } from './modal'
 
-export enum KeyModalKind {
-    Closed,
-    Create,
-    Edit,
-    Delete,
-}
-
 interface KeyModalProps {
     kind: ModalKind
     onClose: () => void
@@ -35,6 +28,7 @@ interface KeyModalProps {
 export function KeyModal({ kind, onClose, apiKey = undefined }: KeyModalProps) {
     const [state, setState] = useState<ApiKey>({
         domains: ['*'],
+        name: '',
         enabled: true,
         id: '',
         key: '',
@@ -45,8 +39,9 @@ export function KeyModal({ kind, onClose, apiKey = undefined }: KeyModalProps) {
 
     const formControlStyle = { marginTop: 10 }
     const rolesError = state.roles == 0 ? 'You need at least one role' : undefined
+    const nameError = state.name == '' ? 'Name is required' : undefined
     const disabled = state.system
-    const canSubmit = !rolesError && !disabled
+    const canSubmit = (!rolesError && !nameError && !disabled) || kind === ModalKind.Delete
 
     const submit = async () => {
         try {
@@ -70,6 +65,7 @@ export function KeyModal({ kind, onClose, apiKey = undefined }: KeyModalProps) {
         else if (apiKey == undefined && state.id)
             setState({
                 domains: ['*'],
+                name: '',
                 enabled: true,
                 id: '',
                 key: randomString(32),
@@ -115,9 +111,22 @@ export function KeyModal({ kind, onClose, apiKey = undefined }: KeyModalProps) {
                         </DialogContentText>
 
                         <TextField
+                            id="name"
+                            label="Name"
+                            value={state.name}
+                            onChange={(e) => setState(v => ({ ...v, name: e.target.value }))}
+                            variant="filled"
+                            fullWidth
+                            disabled={disabled}
+                            error={nameError !== undefined}
+                            helperText={nameError || "What is the name of this key, this is just for a user to recognize the purpose of a key"}
+                        />
+
+                        <TextField
                             id="domains"
                             label="Domains"
                             multiline
+                            fullWidth
                             value={state.domains.join('\n')}
                             onChange={(e) => setState(v => ({ ...v, domains: e.target.value.split('\n') }))}
                             variant="filled"
