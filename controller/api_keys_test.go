@@ -77,10 +77,12 @@ func TestApiKeyRoutes(t *testing.T) {
 
 	// Try to insert key
 	randomKey := string(random.GenerateKey())
+	name := "test example key"
 	trueVal := true
 	roles := models.APIKeyRoleScraper
 	keyToInsert := apiKeyModifyCreateData{
 		Enabled: &trueVal,
+		Name:    &name,
 		Domains: []string{"example.com"},
 		Key:     &randomKey,
 		Roles:   &roles,
