@@ -91,15 +91,15 @@ class CV {
     createdAt = jsonParseDate(json['createdAt']);
     lastChanged = jsonParseDate(json['lastChanged']);
 
-    List<Education> parseEducations = json['educations']
+    List<Education>? parseEducations = json['educations']
         ?.map((entry) => Education.fromJson(entry))
         ?.toList()
         ?.cast<Education>();
     educations = parseEducations
-        .where((e) => e.educationIs != EducationIs.Course)
+        ?.where((e) => e.educationIs != EducationIs.Course)
         .toList();
     courses = parseEducations
-        .where((e) => e.educationIs == EducationIs.Course)
+        ?.where((e) => e.educationIs == EducationIs.Course)
         .toList();
 
     workExperiences = json['workExperiences']

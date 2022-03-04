@@ -5,36 +5,38 @@ import (
 	"time"
 
 	"github.com/script-development/RT-CV/helpers/jsonHelpers"
+	"github.com/script-development/RT-CV/mock"
 	"github.com/script-development/RT-CV/models"
 	. "github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func MustMatchSingle(t *testing.T, p models.Profile, cv models.CV) {
-	p.Domains = []string{"werk.nl"}
+	p.AllowedScrapers = []primitive.ObjectID{mock.Key2.ID}
 	p.Active = true
 
-	matches := Match([]string{"werk.nl"}, []*models.Profile{&p}, cv)
+	matches := Match(mock.Key2, []*models.Profile{&p}, cv)
 	Equal(t, 1, len(matches), matches)
 }
 
 func MustNotMatchSingle(t *testing.T, p models.Profile, cv models.CV) {
-	p.Domains = []string{"werk.nl"}
+	p.AllowedScrapers = []primitive.ObjectID{mock.Key2.ID}
 	p.Active = true
 
-	matches := Match([]string{"werk.nl"}, []*models.Profile{&p}, cv)
+	matches := Match(mock.Key2, []*models.Profile{&p}, cv)
 	Equal(t, 0, len(matches), matches)
 }
 
 func TestMatchSiteMismatch(t *testing.T) {
-	matches := Match([]string{"werk.nl"}, []*models.Profile{{
-		Domains: []string{"gangster_at_work.crib"},
-		Active:  true,
+	matches := Match(mock.Key2, []*models.Profile{{
+		AllowedScrapers: []primitive.ObjectID{mock.Key1.ID},
+		Active:          true,
 	}}, models.CV{})
 	Equal(t, 0, len(matches), matches)
 }
 
 func TestMatchNonActive(t *testing.T) {
-	matches := Match([]string{"werk.nl"}, []*models.Profile{{Active: false}}, models.CV{})
+	matches := Match(mock.Key2, []*models.Profile{{Active: false}}, models.CV{})
 	Equal(t, 0, len(matches), matches)
 }
 
@@ -289,7 +291,6 @@ func TestGetMatchSentence(t *testing.T) {
 	sentence = (&models.Match{YearsSinceWork: &yearsSinceWork, YearsSinceEducation: &yearsSinceWork}).GetMatchSentence()
 	Equal(t, "3 jaren sinds laatste werk ervaaring en 3 jaren sinds laatste opleiding", sentence)
 
-	domain := "*.example.com"
 	zipCode := models.ProfileDutchZipcode{
 		From: 2000,
 		To:   5000,
@@ -298,7 +299,6 @@ func TestGetMatchSentence(t *testing.T) {
 	profession := "gangster"
 
 	sentence = (&models.Match{
-		Domain:                &domain,
 		YearsSinceWork:        &yearsSinceWork,
 		YearsSinceEducation:   &yearsSinceWork,
 		Education:             &education,

@@ -86,7 +86,7 @@ var routeScraperScanCV = routeBuilder.R{
 		}
 
 		// Try to match a profile to a CV
-		matchedProfiles := match.Match(key.Domains, profiles, body.CV)
+		matchedProfiles := match.Match(key, profiles, body.CV)
 
 		MatchesProcess.AppendMatchesToProcess(ProcessMatches{
 			Debug:           body.Debug,
@@ -95,6 +95,7 @@ var routeScraperScanCV = routeBuilder.R{
 			Logger:          *logger,
 			DBConn:          dbConn,
 			KeyID:           key.ID,
+			KeyName:         key.Name,
 			RequestID:       requestID,
 		})
 
@@ -157,6 +158,7 @@ type ProcessMatches struct {
 	Logger           log.Entry
 	DBConn           db.Connection
 	KeyID, RequestID primitive.ObjectID
+	KeyName          string
 }
 
 // Process processes the matches made to a CV
@@ -214,7 +216,7 @@ func (args ProcessMatches) Process() {
 		cv := args.CV
 		onMatch := aMatch.Profile.OnMatch
 		if len(onMatch.SendMail) == 0 {
-			aMatch.HandleMatch(cv, nil)
+			aMatch.HandleMatch(cv, nil, args.KeyName)
 		}
 
 		if onMatch.HasPDFOptions() {
@@ -224,7 +226,7 @@ func (args ProcessMatches) Process() {
 				log.WithError(err).Error("mail attachment creation error")
 			}
 
-			aMatch.HandleMatch(cv, customPDFFile)
+			aMatch.HandleMatch(cv, customPDFFile, args.KeyName)
 
 			customPDFFile.Close()
 			os.Remove(customPDFFile.Name())
@@ -237,7 +239,7 @@ func (args ProcessMatches) Process() {
 				}
 			}
 
-			aMatch.HandleMatch(cv, defaultPdf)
+			aMatch.HandleMatch(cv, defaultPdf, args.KeyName)
 		}
 	}
 	if defaultPdf != nil {

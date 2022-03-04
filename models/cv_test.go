@@ -51,12 +51,11 @@ func TestGetEmailHTML(t *testing.T) {
 
 	profileObjectID := primitive.NewObjectID()
 	profile := Profile{
-		M:       db.M{ID: profileObjectID},
-		Name:    "profile name",
-		Domains: []string{"test.com"},
+		M:    db.M{ID: profileObjectID},
+		Name: "profile name",
 	}
 
-	htmlBuff, err := cv.GetEmailHTML(profile, matchTest)
+	htmlBuff, err := cv.GetEmailHTML(profile, matchTest, "example.org")
 	NoError(t, err)
 
 	html := htmlBuff.String()
@@ -67,45 +66,7 @@ func TestGetEmailHTML(t *testing.T) {
 	Contains(t, html, profile.Name)
 	Contains(t, html, cv.ReferenceNumber)
 	Contains(t, html, profile.ID.Hex())
-}
-
-func TestGetEmailAttachmentHTML(t *testing.T) {
-	cv := ExampleCV()
-
-	htmlBuff, err := cv.GetEmailAttachmentHTML()
-	NoError(t, err)
-
-	html := htmlBuff.String()
-
-	Contains(t, html, cv.FullName())
-	Contains(t, html, "Referentie: #"+cv.ReferenceNumber)
-	Contains(t, html, "Laatst gewijzigd: ")
-	Contains(t, html, cv.PersonalDetails.Gender)
-	Contains(t, html, cv.PersonalDetails.StreetName+" "+cv.PersonalDetails.HouseNumber+" "+cv.PersonalDetails.HouseNumberSuffix)
-	Contains(t, html, cv.PersonalDetails.Zip+" "+cv.PersonalDetails.City)
-	Contains(t, html, cv.PersonalDetails.Email)
-	Contains(t, html, cv.PersonalDetails.PhoneNumber.String())
-	Contains(t, html, cv.PersonalPresentation)
-
-	Contains(t, html, cv.WorkExperiences[0].Profession)
-	Contains(t, html, cv.WorkExperiences[0].Employer)
-	Contains(t, html, " - heden")
-	Contains(t, html, cv.WorkExperiences[0].Description)
-
-	Contains(t, html, cv.Educations[0].Institute)
-	Contains(t, html, cv.Educations[0].Description)
-
-	Contains(t, html, "<th>Taal</th>")
-	Contains(t, html, "<th>Mondeling</th>")
-	Contains(t, html, "<th>Schriftelijk</th>")
-	Contains(t, html, cv.Languages[0].Name)
-	Contains(t, html, cv.Languages[0].LevelSpoken.String())
-	Contains(t, html, cv.Languages[0].LevelWritten.String())
-
-	Contains(t, html, cv.DriversLicenses[0].String())
-
-	Contains(t, html, cv.Interests[0].Name)
-	Contains(t, html, cv.Interests[0].Description)
+	Contains(t, html, "example.org")
 }
 
 func getBaseProjectPath() string {
@@ -216,12 +177,11 @@ func TestSendMail(t *testing.T) {
 
 	cv := ExampleCV()
 	profile := Profile{
-		M:       db.M{ID: primitive.NewObjectID()},
-		Name:    "profile name",
-		Domains: []string{"test.com"},
+		M:    db.M{ID: primitive.NewObjectID()},
+		Name: "profile name",
 	}
 
-	emailBody, err := cv.GetEmailHTML(profile, "on data from the void")
+	emailBody, err := cv.GetEmailHTML(profile, "on data from the void", "example.org")
 	NoError(t, err)
 
 	emailToSendData := &ProfileSendEmailData{Email: "example@localhost"}

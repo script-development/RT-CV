@@ -31,9 +31,8 @@ type Match struct {
 	// The result of the match is stored in the value of the field
 
 	// The profile domain match that was found
-	Domain              *string `bson:",omitempty" json:"domains"`
-	YearsSinceWork      *int    `bson:",omitempty" json:"yearsSinceWork"`
-	YearsSinceEducation *int    `bson:",omitempty" json:"yearsSinceEducation"`
+	YearsSinceWork      *int `bson:",omitempty" json:"yearsSinceWork"`
+	YearsSinceEducation *int `bson:",omitempty" json:"yearsSinceEducation"`
 	// the education name of the profile that was matched
 	Education *string `bson:",omitempty" json:"education"`
 	// The profile desired profession match that was found

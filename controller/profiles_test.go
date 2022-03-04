@@ -6,8 +6,10 @@ import (
 	"testing"
 
 	"github.com/script-development/RT-CV/helpers/routeBuilder"
+	"github.com/script-development/RT-CV/mock"
 	"github.com/script-development/RT-CV/models"
 	. "github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func TestProfileRoutes(t *testing.T) {
@@ -116,7 +118,7 @@ func TestRouteUpdateProfile(t *testing.T) {
 			func(t *testing.T, before, after models.Profile) {
 				Equal(t, before.Name, after.Name)
 				Equal(t, before.Active, after.Active)
-				Equal(t, before.Domains, after.Domains)
+				Equal(t, before.AllowedScrapers, after.AllowedScrapers)
 				Equal(t, before.MustDesiredProfession, after.MustDesiredProfession)
 				Equal(t, before.DesiredProfessions, after.DesiredProfessions)
 				Equal(t, before.YearsSinceWork, after.YearsSinceWork)
@@ -147,10 +149,10 @@ func TestRouteUpdateProfile(t *testing.T) {
 			},
 		},
 		{
-			"Set Domains",
-			M{"domains": []string{"updated.domain.com"}},
+			"Set Allowed scraper keys",
+			M{"allowedScrapers": []string{mock.Key3.ID.Hex()}},
 			func(t *testing.T, before, after models.Profile) {
-				Equal(t, []string{"updated.domain.com"}, after.Domains)
+				Equal(t, []primitive.ObjectID{mock.Key3.ID}, after.AllowedScrapers)
 			},
 		},
 		{

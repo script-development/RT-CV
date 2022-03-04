@@ -96,13 +96,15 @@ var routeCreateProfile = routeBuilder.R{
 	Res:         models.Profile{},
 	Body:        models.Profile{},
 	Fn: func(c *fiber.Ctx) error {
+		conn := ctx.GetDbConn(c)
+
 		var profile models.Profile
 		err := c.BodyParser(&profile)
 		if err != nil {
 			return err
 		}
 
-		err = profile.ValidateCreateNewProfile()
+		err = profile.ValidateCreateNewProfile(conn)
 		if err != nil {
 			return err
 		}
@@ -127,9 +129,9 @@ var routeCreateProfile = routeBuilder.R{
 // UpdateProfileReq are all the fields that can be updated in a profile
 // All the top level fields are optional and if null should not be updated
 type UpdateProfileReq struct {
-	Name    *string  `json:"name"`
-	Active  *bool    `json:"active"`
-	Domains []string `json:"domains"`
+	Name            *string  `json:"name"`
+	Active          *bool    `json:"active"`
+	AllowedScrapers []string `json:"allowedScrapers" description:"the scraper IDs that can be used to match this profile, if null/undefined this value won't be updated, if empty array all scrapers will be allowed"`
 
 	MustDesiredProfession *bool                      `json:"mustDesiredProfession"`
 	DesiredProfessions    []models.ProfileProfession `json:"desiredProfessions"`
@@ -177,8 +179,21 @@ var routeModifyProfile = routeBuilder.R{
 		if body.Active != nil {
 			profile.Active = *body.Active
 		}
-		if body.Domains != nil {
-			profile.Domains = body.Domains
+		if body.AllowedScrapers != nil {
+			allowedScrapersIDs := make([]primitive.ObjectID, len(body.AllowedScrapers))
+			for idx, id := range body.AllowedScrapers {
+				bsonID, err := primitive.ObjectIDFromHex(id)
+				if err != nil {
+					return err
+				}
+				allowedScrapersIDs[idx] = bsonID
+			}
+
+			err = models.CheckAPIKeysExists(dbConn, allowedScrapersIDs)
+			if err != nil {
+				return err
+			}
+			profile.AllowedScrapers = allowedScrapersIDs
 		}
 		if body.MustDesiredProfession != nil {
 			profile.MustDesiredProfession = *body.MustDesiredProfession

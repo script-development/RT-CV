@@ -13,7 +13,6 @@ import (
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/emailservice"
 	"github.com/script-development/RT-CV/helpers/jsonHelpers"
-	"github.com/script-development/RT-CV/helpers/validation"
 	"github.com/valyala/fasthttp"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -23,10 +22,10 @@ import (
 
 // Profile contains all the information about a search profile
 type Profile struct {
-	db.M    `bson:",inline"`
-	Name    string   `json:"name"`
-	Active  bool     `json:"active"`
-	Domains []string `json:"domains" description:"Filter which domains the profile we want to match CVs with. If empty, unset or null the all domains are accepted. Wildcards are also allwed for example *.foo.com will match CV from bar.foo.com, baz.foo.com and foo.com"`
+	db.M            `bson:",inline"`
+	Name            string               `json:"name"`
+	Active          bool                 `json:"active"`
+	AllowedScrapers []primitive.ObjectID `json:"allowedScrapers" bson:"allowedScrapers" description:"Define a list of scraper keys that can use this profile, if value is undefined or empty all keys are allowed"`
 
 	MustDesiredProfession bool                `json:"mustDesiredProfession" bson:"mustDesiredProfession"`
 	DesiredProfessions    []ProfileProfession `json:"desiredProfessions" bson:"desiredProfessions"`
@@ -296,18 +295,40 @@ func (d *ProfileHTTPCallData) MakeRequest(profile Profile, match Match) {
 	var _ = fasthttp.Do(req, resp)
 }
 
+// CheckAPIKeysExists checks if apiKeys are valid IDs of existing keys
+func CheckAPIKeysExists(conn db.Connection, apiKeys []primitive.ObjectID) error {
+	if len(apiKeys) == 0 {
+		return nil
+	}
+
+	apiKeysInDB, err := GetAPIKeys(conn)
+	if err != nil {
+		return err
+	}
+outer:
+	for _, allowedKey := range apiKeys {
+		for _, apiKey := range apiKeysInDB {
+			if allowedKey == apiKey.ID {
+				continue outer
+			}
+		}
+		return fmt.Errorf("unknown api key id %s", allowedKey.Hex())
+	}
+	return nil
+}
+
 // ValidateCreateNewProfile validates a new profile to create
-func (p *Profile) ValidateCreateNewProfile() error {
+func (p *Profile) ValidateCreateNewProfile(conn db.Connection) error {
 	// TODO this needs more validation
 
 	if p.Name == "" {
 		return errors.New("name must be set")
 	}
 
-	if len(p.Domains) > 0 {
-		err := validation.ValidDomainListAndFormat(&p.Domains, true)
+	if len(p.AllowedScrapers) > 0 {
+		err := CheckAPIKeysExists(conn, p.AllowedScrapers)
 		if err != nil {
-			return fmt.Errorf("domains are invalid: %s", err.Error())
+			return err
 		}
 	}
 

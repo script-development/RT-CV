@@ -59,6 +59,7 @@ func init() {
 	Profile1 = &models.Profile{
 		M:                     db.NewM(),
 		Name:                  "Mock profile 1",
+		AllowedScrapers:       []primitive.ObjectID{Key2.ID},
 		YearsSinceWork:        nil,
 		Active:                true,
 		MustExpProfession:     true,
@@ -66,7 +67,6 @@ func init() {
 		MustEducation:         true,
 		MustEducationFinished: true,
 		MustDriversLicense:    true,
-		Domains:               []string{"werk.nl"},
 		YearsSinceEducation:   1,
 		DesiredProfessions: []models.ProfileProfession{{
 			Name: "Rapper",
@@ -95,6 +95,7 @@ func init() {
 	Profile2 = &models.Profile{
 		M:                     db.NewM(),
 		Name:                  "Mock profile 2",
+		AllowedScrapers:       []primitive.ObjectID{Key2.ID},
 		YearsSinceWork:        nil,
 		Active:                true,
 		MustExpProfession:     false,
@@ -102,7 +103,6 @@ func init() {
 		MustEducation:         false,
 		MustEducationFinished: false,
 		MustDriversLicense:    false,
-		Domains:               []string{"werk.nl"},
 		YearsSinceEducation:   0,
 		DesiredProfessions:    nil,
 		ProfessionExperienced: nil,
@@ -128,7 +128,6 @@ func init() {
 		YearsSinceEducation:   &yearsSinceEducation,
 		Education:             &matchedEducation,
 		DriversLicense:        true,
-		Domain:                &werkDotNL,
 	}
 	mockMatch2 = &models.Match{
 		M:           db.NewM(),
@@ -137,7 +136,6 @@ func init() {
 		KeyID:       Key2.ID,
 		When:        jsonHelpers.RFC3339Nano(time.Now().Add(-(time.Minute * 7))),
 		ReferenceNr: "b",
-		Domain:      &werkDotNL,
 	}
 }
 
@@ -159,7 +157,6 @@ var (
 	Profile2 *models.Profile
 )
 
-var werkDotNL = "werk.nl"
 var yearsSinceEducation = 2
 var matchedEducation = "MBO 4 ict"
 var matchedCourse = "Typecursus"

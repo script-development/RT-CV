@@ -20,13 +20,8 @@ type FoundMatch struct {
 }
 
 // Match tries to match a profile to a CV
-func Match(domains []string, profiles []*models.Profile, cv models.CV) []FoundMatch {
+func Match(scraperKey *models.APIKey, profiles []*models.Profile, cv models.CV) []FoundMatch {
 	res := []FoundMatch{}
-
-	formattedDomains := make([][]string, len(domains))
-	for idx, domain := range domains {
-		formattedDomains[idx] = strings.Split(domain, ".")
-	}
 
 	now := time.Now()
 
@@ -48,56 +43,12 @@ func Match(domains []string, profiles []*models.Profile, cv models.CV) []FoundMa
 		}
 
 		// Check domain
-		if len(profile.Domains) > 0 && len(domains) > 0 {
+		if len(profile.AllowedScrapers) > 0 {
 			foundMatch := false
-			if profile.DomainPartsCache == nil {
-				profile.DomainPartsCache = make([][]string, len(profile.Domains))
-				for idx, domain := range profile.Domains {
-					profile.DomainPartsCache[idx] = strings.Split(domain, ".")
-				}
-			}
-			for domainIdx, domain := range profile.Domains {
-				if domain == "*" {
-					// This is a match all domain name
-					// We can just match the first formatted domain name
-					match.Domain = &domains[0]
+			for _, id := range profile.AllowedScrapers {
+				if id == scraperKey.ID {
 					foundMatch = true
-				}
-
-				domainParts := profile.DomainPartsCache[domainIdx]
-				domainPartsLen := len(domainParts)
-
-				for formattedDomainsIdx, formattedDomain := range formattedDomains {
-					if len(formattedDomain) == 1 && formattedDomain[0] == "*" {
-						// This is match all domain name *
-						match.Domain = &domains[formattedDomainsIdx]
-						foundMatch = true
-						break
-					}
-
-					if len(formattedDomain) != domainPartsLen {
-						continue
-					}
-
-					matched := true
-					for i := 0; i < domainPartsLen; i++ {
-						domainPart := domainParts[i]
-						formattedDomainPart := formattedDomain[i]
-
-						if formattedDomainPart == "*" || domainPart == "*" {
-							continue
-						}
-						if domainPart != formattedDomainPart {
-							matched = false
-							break
-						}
-					}
-
-					if matched {
-						match.Domain = &domains[formattedDomainsIdx]
-						foundMatch = true
-						break
-					}
+					break
 				}
 			}
 			if !foundMatch {
@@ -349,7 +300,7 @@ func Match(domains []string, profiles []*models.Profile, cv models.CV) []FoundMa
 }
 
 // HandleMatch sends a match to the desired destination based on the OnMatch field in the profile
-func (match FoundMatch) HandleMatch(cv models.CV, pdfFile *os.File) {
+func (match FoundMatch) HandleMatch(cv models.CV, pdfFile *os.File, keyName string) {
 	onMatch := match.Profile.OnMatch
 
 	for _, http := range onMatch.HTTPCall {
@@ -360,7 +311,7 @@ func (match FoundMatch) HandleMatch(cv models.CV, pdfFile *os.File) {
 
 	emailsLen := len(onMatch.SendMail)
 	if emailsLen != 0 {
-		emailBody, err := cv.GetEmailHTML(match.Profile, match.Matches.GetMatchSentence())
+		emailBody, err := cv.GetEmailHTML(match.Profile, match.Matches.GetMatchSentence(), keyName)
 		if err != nil {
 			log.WithError(err).Error("unable to generate email body from CV")
 		} else {

@@ -10,7 +10,6 @@ import (
 	"os/exec"
 	"path"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/mjarkk/jsonschema"
@@ -166,75 +165,11 @@ func getTemplateFromFile(funcs template.FuncMap, filename string) (*template.Tem
 	return tmpl, nil
 }
 
-// ToString is a wrapper for the .String() method
-type ToString interface {
-	String() string
-}
-
-// GetEmailAttachmentHTML returns the html for the email attachment
-func (cv *CV) GetEmailAttachmentHTML() (*bytes.Buffer, error) {
-	tmplFuncs := template.FuncMap{
-		"mod": func(i, j int) bool { return i%j == 0 },
-		"formatDate": func(value *jsonHelpers.RFC3339Nano) string {
-			if value == nil {
-				return ""
-			}
-			return value.Time().Format("2006-01-02")
-		},
-		"formatDateTime": func(value *jsonHelpers.RFC3339Nano) string {
-			if value == nil {
-				return ""
-			}
-			return value.Time().Format("2006-01-02 15:04:05")
-		},
-		"string": func(value ToString) string {
-			if value == nil {
-				return ""
-			}
-			return value.String()
-		},
-	}
-
-	tmpl, err := getTemplateFromFile(tmplFuncs, "email-attachment-template.html")
-	if err != nil {
-		return nil, err
-	}
-
-	input := struct {
-		Cv       *CV
-		FullName string
-
-		HeaderURL        string
-		JobIconURL       string
-		EducationIconURL string
-		CourseIconURL    string
-		LanguageIconURL  string
-	}{
-		Cv:       cv,
-		FullName: cv.FullName(),
-
-		HeaderURL:        os.Getenv("EMAIL_PDF_HEADER_URL"),
-		JobIconURL:       os.Getenv("EMAIL_PDF_JOB_ICON_URL"),
-		EducationIconURL: os.Getenv("EMAIL_EDUCATION_ICON_URL"),
-		CourseIconURL:    os.Getenv("EMAIL_COURSE_ICON_URL"),
-		LanguageIconURL:  os.Getenv("EMAIL_LANGUAGE_ICON_URL"),
-	}
-
-	buff := bytes.NewBuffer(nil)
-	err = tmpl.Execute(buff, input)
-	return buff, err
-}
-
 // GetEmailHTML generates a HTML document that is used as email body
-func (cv *CV) GetEmailHTML(profile Profile, matchText string) (*bytes.Buffer, error) {
+func (cv *CV) GetEmailHTML(profile Profile, matchText, domain string) (*bytes.Buffer, error) {
 	tmpl, err := getTemplateFromFile(template.FuncMap{}, "email-template.html")
 	if err != nil {
 		return nil, err
-	}
-
-	domains := "onbekend"
-	if len(profile.Domains) > 0 {
-		domains = strings.Join(profile.Domains, ", ")
 	}
 
 	input := struct {
@@ -242,7 +177,7 @@ func (cv *CV) GetEmailHTML(profile Profile, matchText string) (*bytes.Buffer, er
 		Cv        *CV
 		MatchText string
 		LogoURL   string
-		Domains   string
+		Domain    string
 
 		// The normal `Profile.ID.String()`` is more of a debug value than a real id value so we add the hex to this field
 		ProfileIDHex string
@@ -252,7 +187,7 @@ func (cv *CV) GetEmailHTML(profile Profile, matchText string) (*bytes.Buffer, er
 		Cv:           cv,
 		MatchText:    matchText,
 		LogoURL:      os.Getenv("EMAIL_LOGO_URL"),
-		Domains:      domains,
+		Domain:       domain,
 	}
 
 	buff := bytes.NewBuffer(nil)
