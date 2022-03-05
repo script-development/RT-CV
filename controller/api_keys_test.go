@@ -34,7 +34,7 @@ func TestApiKeyRoutes(t *testing.T) {
 	Equal(t, string(allKeysInDBJson), string(res))
 
 	// Get scraper keys
-	_, scraperKeysResp := app.MakeRequest(routeBuilder.Get, `/api/v1/keys/scraperKeys`, TestReqOpts{})
+	_, scraperKeysResp := app.MakeRequest(routeBuilder.Get, `/api/v1/keys/scrapers`, TestReqOpts{})
 	scraperKeys := []models.APIKey{}
 	err = json.Unmarshal(scraperKeysResp, &scraperKeys)
 	NoError(t, err)
