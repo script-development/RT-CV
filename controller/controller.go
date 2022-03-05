@@ -90,7 +90,7 @@ func Routes(app *fiber.App, appVersion string, dbConn db.Connection, testing boo
 
 		b.Group(`/keys`, func(b *routeBuilder.Router) {
 			b.Get(``, routeGetKeys)
-			b.Get(`/scraperKeys`, routeGetScraperKeys)
+			b.Get(`/scrapers`, routeGetScraperKeys)
 			b.Post(``, routeCreateKey)
 			b.Group(`/:keyID`, func(b *routeBuilder.Router) {
 				b.Get(``, routeGetKey)
