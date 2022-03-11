@@ -6,7 +6,6 @@ import (
 
 	"github.com/apex/log"
 	"github.com/gofiber/fiber/v2"
-	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/routeBuilder"
 	"github.com/script-development/RT-CV/models"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -16,7 +15,7 @@ import (
 type IMap map[string]interface{}
 
 // Routes defines the routes used
-func Routes(app *fiber.App, appVersion string, dbConn db.Connection, testing bool) {
+func Routes(app *fiber.App, appVersion string, testing bool) {
 	b := routeBuilder.New(app)
 
 	b.Group(`/api/v1`, func(b *routeBuilder.Router) {

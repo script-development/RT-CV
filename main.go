@@ -138,7 +138,7 @@ func main() {
 	app.Use(requestLogger.New())
 
 	// Setup the app routes
-	controller.Routes(app, AppVersion, dbConn, false)
+	controller.Routes(app, AppVersion, false)
 
 	testingDieAfterInit := os.Getenv("TESTING_DIE_AFTER_INIT")
 	if testingDieAfterInit == "true" || testingDieAfterInit == "TRUE" {

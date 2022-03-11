@@ -28,7 +28,8 @@ func newTestingRouter(t *testing.T) *testingRouter {
 	app := fiber.New(fiber.Config{
 		ErrorHandler: FiberErrorHandler,
 	})
-	Routes(app, "TESTING", db, true)
+	app.Use(InsertData(db))
+	Routes(app, "TESTING", true)
 
 	return &testingRouter{
 		t:          t,
