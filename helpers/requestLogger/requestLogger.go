@@ -24,6 +24,13 @@ func New() fiber.Handler {
 	}()
 
 	return func(c *fiber.Ctx) (err error) {
+		path := c.Path()
+		if path == "/api/v1/health" {
+			// This URL is request a lot it and there isn't much value logging it
+			// If anything it bloats the logs
+			return c.Next()
+		}
+
 		start := time.Now()
 		err = c.Next()
 		reqDuration := time.Since(start).Microseconds()
@@ -67,7 +74,7 @@ func New() fiber.Handler {
 		fmt.Print(method)
 		fmt.Print(strings.Repeat(" ", 7-len(method)))
 		fmt.Print("| ")
-		fmt.Print(c.Path())
+		fmt.Print(path)
 		if err != nil {
 			fmt.Print(" | ERR: ")
 			fmt.Print(err)
