@@ -12,7 +12,6 @@ import (
 	"github.com/apex/log"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/joho/godotenv"
 	"github.com/script-development/RT-CV/controller"
@@ -21,6 +20,7 @@ import (
 	"github.com/script-development/RT-CV/db/mongo/backup"
 	"github.com/script-development/RT-CV/helpers/emailservice"
 	"github.com/script-development/RT-CV/helpers/random"
+	"github.com/script-development/RT-CV/helpers/requestLogger"
 	"github.com/script-development/RT-CV/mock"
 	"github.com/script-development/RT-CV/models"
 )
@@ -129,12 +129,13 @@ func main() {
 	})
 	app.Use(recover.New())
 	app.Use(cors.New())
-	app.Use(logger.New())
 	app.Use(func(c *fiber.Ctx) error {
 		err = c.Next()
 		c.Set("X-App-Version", AppVersion)
 		return err
 	})
+	app.Use(controller.InsertData(dbConn))
+	app.Use(requestLogger.New())
 
 	// Setup the app routes
 	controller.Routes(app, AppVersion, dbConn, false)

@@ -104,7 +104,7 @@ func Routes(app *fiber.App, appVersion string, dbConn db.Connection, testing boo
 			routeGetExampleAttachmentPDF,
 			requiresAuth(models.APIKeyRoleController|models.APIKeyRoleDashboard),
 		)
-	}, InsertData(dbConn))
+	})
 
 	_, err := os.Stat("./dashboard/out")
 	if err == os.ErrNotExist {

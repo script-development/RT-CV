@@ -8,12 +8,11 @@ import (
 	"github.com/script-development/RT-CV/controller/ctx"
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/auth"
-	"github.com/script-development/RT-CV/helpers/routeBuilder"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // InsertData adds the profiles to every route
-func InsertData(dbConn db.Connection) routeBuilder.M {
+func InsertData(dbConn db.Connection) fiber.Handler {
 	requestContext := ctx.SetDbConn(context.Background(), dbConn)
 
 	requestContext = ctx.ResetMatcherProfilesCache(requestContext)
@@ -28,23 +27,21 @@ func InsertData(dbConn db.Connection) routeBuilder.M {
 		Logger: log.Log.(*log.Logger),
 	}
 
-	return routeBuilder.M{
-		Fn: func(c *fiber.Ctx) error {
-			requestID := primitive.NewObjectID()
-			c.Response().Header.Add("X-Request-ID", requestID.Hex())
+	return func(c *fiber.Ctx) error {
+		requestID := primitive.NewObjectID()
+		c.Response().Header.Add("X-Request-ID", requestID.Hex())
 
-			loggerEntity = log.WithField("request_id", requestID.Hex())
+		loggerEntity = log.WithField("request_id", requestID.Hex())
 
-			c.SetUserContext(
-				ctx.SetRequestID(
-					ctx.SetLogger(
-						requestContext,
-						loggerEntity,
-					),
-					requestID,
+		c.SetUserContext(
+			ctx.SetRequestID(
+				ctx.SetLogger(
+					requestContext,
+					loggerEntity,
 				),
-			)
-			return c.Next()
-		},
+				requestID,
+			),
+		)
+		return c.Next()
 	}
 }
