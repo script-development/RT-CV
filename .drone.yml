@@ -6,6 +6,9 @@ trigger:
   branch:
     - main
 
+node:
+  location: staging
+
 steps:
   - name: Test
     pull: if-not-exists
