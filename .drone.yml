@@ -69,3 +69,6 @@ volumes:
   - name: dockerRunScript
     host:
       path: /root/rtcv.sh
+
+node:
+  location: staging
