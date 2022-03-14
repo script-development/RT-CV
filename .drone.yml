@@ -6,6 +6,7 @@ trigger:
   branch:
     - main
   event:
+    - push
     - tag
 
 node:
