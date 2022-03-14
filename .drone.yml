@@ -1,6 +1,10 @@
 kind: pipeline
-name: default
+name: test
 type: docker
+
+trigger:
+  branch:
+    - main
 
 steps:
   - name: Test
@@ -18,6 +22,27 @@ steps:
       - name: cache
         path: /tmp/cache
 
+volumes:
+  - name: cache
+    host:
+      path: /root/.buildcache
+
+---
+kind: pipeline
+name: deploy_staging
+type: docker
+
+node:
+  location: staging
+
+depends_on:
+  - test
+
+trigger:
+  branch:
+    - main
+
+steps:
   - name: Build Docker container
     pull: if-not-exists
     image: docker
@@ -52,17 +77,10 @@ steps:
         from_secret: slack_webhook_channel
       username: drone
 
-trigger:
-  branch:
-    - main
-
 volumes:
   - name: dockerSocket
     host:
       path: /var/run/docker.sock
-  - name: cache
-    host:
-      path: /root/.buildcache
   - name: dockerRunEnv
     host:
       path: /root/rtcv.env
@@ -70,5 +88,63 @@ volumes:
     host:
       path: /root/rtcv.sh
 
+---
+kind: pipeline
+name: deploy_production
+type: docker
+
 node:
-  location: staging
+  location: production
+
+depends_on:
+  - test
+
+trigger:
+  branch:
+    - main
+
+steps:
+  - name: Build Docker container
+    pull: if-not-exists
+    image: docker
+    environment:
+      DOCKER_BUILDKIT: 1 # This enables the docker build cache (this is NOT the dockerfile layers cache)
+    commands:
+      - docker build --memory 1.5GB -t rtcv:latest .
+    volumes:
+      - name: dockerSocket
+        path: /var/run/docker.sock
+
+  - name: Deploy Docker container
+    pull: if-not-exists
+    image: docker
+    commands:
+      - docker rm -f rtcv # Remove the old container
+      - /root/dockerRunScript # Run the script to deploy the container
+    volumes:
+      - name: dockerSocket
+        path: /var/run/docker.sock
+      - name: dockerRunEnv
+        path: /root/rtcv.env
+      - name: dockerRunScript
+        path: /root/dockerRunScript
+
+  - name: slack
+    image: plugins/slack
+    settings:
+      webhook:
+        from_secret: slack_webhook
+      channel:
+        from_secret: slack_webhook_channel
+      username: drone
+
+volumes:
+  - name: dockerSocket
+    host:
+      path: /var/run/docker.sock
+  - name: dockerRunEnv
+    host:
+      path: /root/rtcv.env
+  - name: dockerRunScript
+    host:
+      path: /root/rtcv.sh
