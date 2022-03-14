@@ -5,6 +5,8 @@ type: docker
 trigger:
   branch:
     - main
+  event:
+    - tag
 
 node:
   location: staging
@@ -103,8 +105,8 @@ depends_on:
   - test
 
 trigger:
-  branch:
-    - main
+  event:
+    - tag
 
 steps:
   - name: Build Docker container
