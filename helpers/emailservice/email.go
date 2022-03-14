@@ -1,11 +1,11 @@
 package emailservice
 
 import (
+	"crypto/tls"
 	"errors"
 	"net/smtp"
 	"os"
 	"strconv"
-	"time"
 
 	"github.com/apex/log"
 	"github.com/jordan-wright/email"
@@ -76,17 +76,12 @@ func Setup(conf EmailServerConfiguration, onMailSend func(err error)) error {
 
 	poolSize := 4
 
-	p, err := email.NewPool(
-		conf.Host+":"+conf.Port,
-		poolSize,
-		smtp.PlainAuth(conf.Identity, conf.Username, conf.Password, conf.Host),
-	)
-	if err != nil {
-		return err
-	}
+	auth := smtp.PlainAuth(conf.Identity, conf.Username, conf.Password, conf.Host)
+	tlsConfig := tls.Config{ServerName: conf.Host}
+	address := conf.Host + ":" + conf.Port
 
 	for i := 0; i < poolSize; i++ {
-		go func(from string) {
+		go func(from string, auth smtp.Auth, tlsConfig tls.Config, address string) {
 			for e := range ch {
 				retryCount := 0
 				for retryCount < 4 {
@@ -97,7 +92,8 @@ func Setup(conf EmailServerConfiguration, onMailSend func(err error)) error {
 					}
 
 					e.From = from
-					err := p.Send(e, 10*time.Second)
+
+					err := e.SendWithStartTLS(address, auth, &tlsConfig)
 					if onMailSend != nil {
 						onMailSend(err)
 					}
@@ -109,7 +105,7 @@ func Setup(conf EmailServerConfiguration, onMailSend func(err error)) error {
 					retryCount++
 				}
 			}
-		}(conf.From)
+		}(conf.From, auth, tlsConfig, address)
 	}
 
 	log.Info("Email service running..")
