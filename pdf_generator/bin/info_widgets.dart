@@ -15,8 +15,8 @@ class ClientInfo extends StatelessWidget {
   final List<String>? driversLicenses;
 
   final TextStyle labelStyle = TextStyle(
-    fontSize: 8,
-    color: PdfColors.grey,
+    fontSize: 10,
+    color: PdfColors.grey800,
   );
   final TextStyle valueStyle = TextStyle(
     fontSize: 10,
@@ -44,7 +44,7 @@ class ClientInfo extends StatelessWidget {
   @override
   Widget build(Context context) {
     children = [];
-    tryAddToList("Email", personalInformation.email);
+    tryAddToList("E-mail", personalInformation.email);
     tryAddToList("Telefoon", personalInformation.phoneNumber);
     if (driversLicenses != null) {
       switch (driversLicenses!.length) {
@@ -59,6 +59,8 @@ class ClientInfo extends StatelessWidget {
       }
     }
 
+    final EdgeInsets verticalPadding = EdgeInsets.symmetric(vertical: 20);
+
     if (!personalInformation.hasAddress) {
       if (personalInformation.zip != null) {
         String? postalCodePlace =
@@ -70,51 +72,58 @@ class ClientInfo extends StatelessWidget {
         else
           tryAddToList("Postcode", personalInformation.zip);
       }
-      return Wrap(children: children, spacing: 10);
+
+      return Padding(
+        padding: verticalPadding,
+        child: Wrap(children: children, spacing: 10),
+      );
     }
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          constraints: BoxConstraints(
-            minWidth: 150,
-          ),
-          child: Padding(
-            padding: EdgeInsets.only(right: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text("Stad: ", style: labelStyle),
-                    Text(personalInformation.city!, style: valueStyle),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Text("Address: ", style: labelStyle),
-                    Text(
-                        "${personalInformation.streetName} ${personalInformation.houseNumber} ${personalInformation.houseNumberSuffix}",
-                        style: valueStyle),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Text("Postcode: ", style: labelStyle),
-                    Text(personalInformation.zip!, style: valueStyle),
-                  ],
-                ),
-              ],
+    return Padding(
+      padding: verticalPadding,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            constraints: BoxConstraints(
+              minWidth: 150,
+            ),
+            child: Padding(
+              padding: EdgeInsets.only(right: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text("Plaats: ", style: labelStyle),
+                      Text(personalInformation.city!, style: valueStyle),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Text("Adres: ", style: labelStyle),
+                      Text(
+                          "${personalInformation.streetName} ${personalInformation.houseNumber} ${personalInformation.houseNumberSuffix}",
+                          style: valueStyle),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Text("Postcode: ", style: labelStyle),
+                      Text(personalInformation.zip!, style: valueStyle),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: children,
-        ),
-      ],
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: children,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -126,12 +135,15 @@ class WorkExpWidget extends StatelessWidget {
 
   @override
   Widget build(Context context) {
-    return ListEntry(
-      exp.profession ?? '??',
-      company: exp.employer,
-      description: exp.description,
-      from: exp.startDate,
-      to: exp.endDate,
+    return Padding(
+      padding: EdgeInsets.only(bottom: 10),
+      child: ListEntry(
+        exp.profession ?? '??',
+        company: exp.employer,
+        description: exp.description,
+        from: exp.startDate,
+        to: exp.endDate,
+      ),
     );
   }
 }
@@ -143,12 +155,15 @@ class EducationWidget extends StatelessWidget {
 
   @override
   Widget build(Context context) {
-    return ListEntry(
-      education.name,
-      company: education.institute,
-      from: education.startDate,
-      to: education.endDate,
-      description: education.description,
+    return Padding(
+      padding: EdgeInsets.only(bottom: 10),
+      child: ListEntry(
+        education.name,
+        company: education.institute,
+        from: education.startDate,
+        to: education.endDate,
+        description: education.description,
+      ),
     );
   }
 }
@@ -177,24 +192,27 @@ class ListEntry extends StatelessWidget {
           overflow: TextOverflow.clip,
           style: TextStyle(
             fontSize: 10,
+            fontWeight: FontWeight.bold,
+            lineSpacing: 2,
           ),
         ),
       ),
     ];
 
     TextStyle contentStyle = TextStyle(
-      fontSize: 8,
+      fontSize: 10,
       color: PdfColors.grey800,
+      lineSpacing: 2,
     );
-    TextStyle labelStyle = TextStyle(
+    TextStyle dateStyle = TextStyle(
       fontSize: 8,
       color: PdfColors.grey600,
+      lineSpacing: 2,
     );
 
     if (company != null && company!.isNotEmpty) {
       children.add(
         Row(children: [
-          Text("Bij: ", style: labelStyle),
           Text(
             company!,
             overflow: TextOverflow.clip,
@@ -210,17 +228,15 @@ class ListEntry extends StatelessWidget {
       if (toStr == null || fromStr == null) {
         children.add(
           Row(children: [
-            Text("Op ", style: labelStyle),
-            Text(fromStr ?? toStr ?? '??', style: contentStyle),
+            Text(fromStr ?? toStr ?? '??', style: dateStyle),
           ]),
         );
       } else {
         children.add(
           Row(children: [
-            Text("Vanaf ", style: labelStyle),
-            Text(fromStr, style: contentStyle),
-            Text(" tot ", style: labelStyle),
-            Text(toStr, style: contentStyle),
+            Text(fromStr, style: dateStyle),
+            Text(" - ", style: dateStyle),
+            Text(toStr, style: dateStyle),
           ]),
         );
       }
