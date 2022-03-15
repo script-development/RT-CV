@@ -192,6 +192,7 @@ func CheckDashboardKeyExists(conn db.Connection) {
 	log.Info("System dashboard key does not yet exists, creating one..")
 	key := &APIKey{
 		M:       db.NewM(),
+		Name:    "Dashboard key",
 		Enabled: true,
 		Domains: []string{"*"},
 		Key:     string(random.GenerateKey()),
