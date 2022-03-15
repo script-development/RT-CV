@@ -77,7 +77,10 @@ func Setup(conf EmailServerConfiguration, onMailSend func(err error)) error {
 	poolSize := 4
 
 	auth := smtp.PlainAuth(conf.Identity, conf.Username, conf.Password, conf.Host)
-	tlsConfig := tls.Config{ServerName: conf.Host}
+	tlsConfig := tls.Config{
+		ServerName:         conf.Host,
+		InsecureSkipVerify: true,
+	}
 	address := conf.Host + ":" + conf.Port
 
 	for i := 0; i < poolSize; i++ {
