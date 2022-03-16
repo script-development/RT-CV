@@ -7,7 +7,7 @@ String? formatDate(DateTime? input) {
   String month = input.month.toString().padLeft(2, '0');
   String day = input.day.toString().padLeft(2, '0');
 
-  return "${year}-${month}-${day}";
+  return "$day/$month/$year";
 }
 
 String? formatDateTime(DateTime? input) {
