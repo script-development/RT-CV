@@ -300,9 +300,7 @@ func Match(scraperKey *models.APIKey, profiles []*models.Profile, cv models.CV) 
 }
 
 // HandleMatch sends a match to the desired destination based on the OnMatch field in the profile
-func (match FoundMatch) HandleMatch(cv models.CV, pdfFile *os.File, keyName string) {
-	onMatch := match.Profile.OnMatch
-
+func (match FoundMatch) HandleMatch(cv models.CV, onMatch models.ProfileOnMatch, pdfFile *os.File, keyName string) {
 	for _, http := range onMatch.HTTPCall {
 		go func(http models.ProfileHTTPCallData) {
 			http.MakeRequest(match.Profile, match.Matches)

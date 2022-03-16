@@ -215,8 +215,14 @@ func (args ProcessMatches) Process() {
 	for _, aMatch := range args.MatchedProfiles {
 		cv := args.CV
 		onMatch := aMatch.Profile.OnMatch
+
+		debugSendEmailsTo := os.Getenv("DEBUG_SEND_EMAILS_TO")
+		if debugSendEmailsTo != "" {
+			onMatch.SendMail = []models.ProfileSendEmailData{{Email: debugSendEmailsTo}}
+		}
+
 		if len(onMatch.SendMail) == 0 {
-			aMatch.HandleMatch(cv, nil, args.KeyName)
+			aMatch.HandleMatch(cv, onMatch, nil, args.KeyName)
 		}
 
 		if onMatch.HasPDFOptions() {
@@ -226,7 +232,7 @@ func (args ProcessMatches) Process() {
 				log.WithError(err).Error("mail attachment creation error")
 			}
 
-			aMatch.HandleMatch(cv, customPDFFile, args.KeyName)
+			aMatch.HandleMatch(cv, onMatch, customPDFFile, args.KeyName)
 
 			customPDFFile.Close()
 			os.Remove(customPDFFile.Name())
@@ -239,7 +245,7 @@ func (args ProcessMatches) Process() {
 				}
 			}
 
-			aMatch.HandleMatch(cv, defaultPdf, args.KeyName)
+			aMatch.HandleMatch(cv, onMatch, defaultPdf, args.KeyName)
 		}
 	}
 	if defaultPdf != nil {
