@@ -106,7 +106,10 @@ depends_on:
   - test
 
 trigger:
+  branch:
+    - main
   event:
+    - push
     - tag
 
 steps:
