@@ -104,11 +104,11 @@ func (m *Match) GetMatchSentence() string {
 	if m.YearsSinceWork != nil {
 		switch *m.YearsSinceWork {
 		case 0:
-			addReason("minder dan 1 jaar geleden sinds laatste werk ervaaring")
+			addReason("minder dan 1 jaar geleden sinds laatste werkervaring")
 		case 1:
-			addReason("1 jaar sinds laatste werk ervaaring")
+			addReason("1 jaar sinds laatste werkervaring")
 		default:
-			addReason(strconv.Itoa(*m.YearsSinceWork) + " jaren sinds laatste werk ervaaring")
+			addReason(strconv.Itoa(*m.YearsSinceWork) + " jaren sinds laatste werkervaring")
 		}
 	}
 	if m.YearsSinceEducation != nil {

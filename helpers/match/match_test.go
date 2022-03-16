@@ -286,10 +286,10 @@ func TestGetMatchSentence(t *testing.T) {
 
 	yearsSinceWork := 3
 	sentence = (&models.Match{YearsSinceWork: &yearsSinceWork}).GetMatchSentence()
-	Equal(t, "3 jaren sinds laatste werk ervaaring", sentence)
+	Equal(t, "3 jaren sinds laatste werkervaring", sentence)
 
 	sentence = (&models.Match{YearsSinceWork: &yearsSinceWork, YearsSinceEducation: &yearsSinceWork}).GetMatchSentence()
-	Equal(t, "3 jaren sinds laatste werk ervaaring en 3 jaren sinds laatste opleiding", sentence)
+	Equal(t, "3 jaren sinds laatste werkervaring en 3 jaren sinds laatste opleiding", sentence)
 
 	zipCode := models.ProfileDutchZipcode{
 		From: 2000,
@@ -307,7 +307,7 @@ func TestGetMatchSentence(t *testing.T) {
 		DriversLicense:        true,
 		ZipCode:               &zipCode,
 	}).GetMatchSentence()
-	expectedResult := "3 jaren sinds laatste werk ervaaring" +
+	expectedResult := "3 jaren sinds laatste werkervaring" +
 		", 3 jaren sinds laatste opleiding" +
 		", opleiding beeing smart" +
 		", gewenste werkveld gangster" +
