@@ -264,7 +264,7 @@ func (cv *CV) GetPDF(options *PdfOptions, pdfGeneratorProjectPath *string) (*os.
 	if err != nil {
 		os.Remove(pdfOutFile)
 		if len(out) != 0 {
-			return nil, errors.New(string(out))
+			return nil, fmt.Errorf("%s, data: %s", string(out), string(cvJSON))
 		}
 		return nil, err
 	}
