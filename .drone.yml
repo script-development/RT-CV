@@ -74,15 +74,6 @@ steps:
       - name: dockerRunScript
         path: /root/dockerRunScript
 
-  - name: slack
-    image: plugins/slack
-    settings:
-      webhook:
-        from_secret: slack_webhook
-      channel:
-        from_secret: slack_webhook_channel
-      username: drone
-
 volumes:
   - name: dockerSocket
     host:
@@ -138,15 +129,6 @@ steps:
       - name: dockerRunScript
         path: /root/dockerRunScript
 
-  - name: slack
-    image: plugins/slack
-    settings:
-      webhook:
-        from_secret: slack_webhook
-      channel:
-        from_secret: slack_webhook_channel
-      username: drone
-
 volumes:
   - name: dockerSocket
     host:
@@ -157,3 +139,25 @@ volumes:
   - name: dockerRunScript
     host:
       path: /root/rtcv.sh
+
+---
+kind: pipeline
+name: notify_slack
+type: docker
+
+node:
+  location: staging
+
+depends_on:
+  - deploy_production
+  - deploy_staging
+
+steps:
+  - name: slack
+    image: plugins/slack
+    settings:
+      webhook:
+        from_secret: slack_webhook
+      channel:
+        from_secret: slack_webhook_channel
+      username: drone
