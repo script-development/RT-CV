@@ -135,16 +135,12 @@ class WorkExpWidget extends StatelessWidget {
 
   @override
   Widget build(Context context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 10),
-      child: ListEntry(
-        exp.profession ?? '??',
+    return ListEntry(exp.profession ?? '??',
         company: exp.employer,
         description: exp.description,
         from: exp.startDate,
         to: exp.endDate,
-      ),
-    );
+        padding: EdgeInsets.only(top: 15));
   }
 }
 
@@ -155,15 +151,13 @@ class EducationWidget extends StatelessWidget {
 
   @override
   Widget build(Context context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 10),
-      child: ListEntry(
-        education.name,
-        company: education.institute,
-        from: education.startDate,
-        to: education.endDate,
-        description: education.description,
-      ),
+    return ListEntry(
+      education.name,
+      company: education.institute,
+      from: education.startDate,
+      to: education.endDate,
+      description: education.description,
+      padding: EdgeInsets.only(top: 15),
     );
   }
 }
@@ -175,13 +169,15 @@ class ListEntry extends StatelessWidget {
     this.company,
     this.from,
     this.to,
-  });
+    EdgeInsets? padding,
+  }) : this.padding = padding ?? EdgeInsets.only(top: 5);
 
   final String title;
   final String? company;
   final String? description;
   final DateTime? from;
   final DateTime? to;
+  final EdgeInsets padding;
 
   @override
   Widget build(Context context) {

@@ -57,24 +57,26 @@ Future<void> main(List<String> programArgs) async {
     ),
   );
 
-  final List<ListWithHeader> lists = [];
+  final List<ListWithHeader> largeListLayout = [];
 
   if (cv.workExperiences != null && cv.workExperiences!.isNotEmpty) {
-    lists.add(ListWithHeader(
+    largeListLayout.add(ListWithHeader(
       IconData(0xe943), // Work
       "Werkervaring",
       cv.workExperiences!.map((workExper) => WorkExpWidget(workExper)).toList(),
     ));
   }
+
+  final List<ListWithHeader> unknownLayoutBlocks = [];
   if (cv.educations != null && cv.educations!.isNotEmpty) {
-    lists.add(ListWithHeader(
+    unknownLayoutBlocks.add(ListWithHeader(
       IconData(0xe80c), // School
       "Opleidingen",
       cv.educations!.map((education) => EducationWidget(education)).toList(),
     ));
   }
   if (cv.courses != null && cv.courses!.isNotEmpty) {
-    lists.add(ListWithHeader(
+    unknownLayoutBlocks.add(ListWithHeader(
       IconData(0xe865), // Book
       "Cursussen",
       cv.courses!.map((course) => EducationWidget(course)).toList(),
@@ -82,11 +84,10 @@ Future<void> main(List<String> programArgs) async {
   }
 
   // Determain the layout depending on the amound of items in the lists.
-  List<WrapLayoutBlock> wrapLayoutBlocks = [];
   List<ListWithHeader> remainingLists = [];
-  for (ListWithHeader list in lists) {
-    if (list.length > 4) {
-      wrapLayoutBlocks.add(WrapLayoutBlock(list, style));
+  for (ListWithHeader list in unknownLayoutBlocks) {
+    if (list.length > 3) {
+      largeListLayout.add(list);
     } else {
       remainingLists.add(list);
     }
@@ -107,6 +108,27 @@ Future<void> main(List<String> programArgs) async {
     );
   }
 
+  List<Widget> rootWidgets = [
+    HeaderWidget(cv: cv, style: style),
+  ];
+
+  rootWidgets.add(LayoutBlockBase(
+    child: ClientInfo(
+      personalInformation: cv.personalDetails,
+      driversLicenses: cv.driversLicenses,
+    ),
+  ));
+
+  if (remainingLists.isNotEmpty)
+    rootWidgets.add(ColumnsLayoutBlock(remainingLists, style));
+
+  if (largeListLayout.isNotEmpty)
+    rootWidgets.addAll(largeListLayout.map((list) => ColumnLayoutBlock(
+          list,
+          style,
+          layoutBlockBasePadding.copyWith(top: PdfPageFormat.cm),
+        )));
+
   pdf.addPage(
     MultiPage(
       footer: (Context context) => FooterWidget(
@@ -116,17 +138,7 @@ Future<void> main(List<String> programArgs) async {
         companyAddress: args.companyAddress,
       ),
       margin: const EdgeInsets.only(bottom: PdfPageFormat.cm),
-      build: (Context context) => [
-        HeaderWidget(cv: cv, style: style),
-        LayoutBlockBase(
-          child: ClientInfo(
-            personalInformation: cv.personalDetails,
-            driversLicenses: cv.driversLicenses,
-          ),
-        ),
-        ColumnsLayoutBlock(remainingLists, style),
-        ...wrapLayoutBlocks,
-      ],
+      build: (Context context) => rootWidgets,
     ),
   );
 

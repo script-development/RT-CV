@@ -14,6 +14,36 @@ class ListWithHeader {
   get length => widgets.length;
 }
 
+// class BigListLayoutBlock extends StatelessWidget {
+//   BigListLayoutBlock(this.listWithHeader, this.style);
+
+//   final ListWithHeader listWithHeader;
+//   final Style style;
+
+//   @override
+//   Widget build(Context context) {
+//     return Column(
+//       children: [
+//         ListTitle(
+//           listWithHeader.icon,
+//           listWithHeader.title,
+//           style,
+//         ),
+//         ...listWithHeader.widgets.map((w) => ).toList(),
+//         Padding(
+//           padding: EdgeInsets.only(
+//             left: style.layoutStyle == LayoutStyle.style_3 ? 10 : 0,
+//           ),
+//           child: Column(
+//             crossAxisAlignment: CrossAxisAlignment.start,
+//             children: columnWidgets,
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+// }
+
 class WrapLayoutBlock extends StatelessWidget {
   WrapLayoutBlock(this.listWithHeader, this.style);
 
@@ -104,46 +134,16 @@ class ColumnsLayoutBlock extends StatelessWidget {
     for (int i = 0; i < widgets.length; i++) {
       ListWithHeader widget = widgets[i];
 
-      Widget listEntriesWidget = Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: widget.widgets,
-      );
-
-      Widget listWithHeaderToadd = Padding(
-        padding: EdgeInsets.only(top: i > 1 ? 10 : 0),
-        child: Container(
-          decoration: BoxDecoration(
-            border: style.layoutStyle == LayoutStyle.style_3
-                ? Border(
-                    left: BorderSide(
-                      color: style.subHeaderBackgroundColor,
-                      width: 2,
-                    ),
-                  )
-                : null,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ListTitle(
-                widget.icon,
-                widget.title,
-                style,
-              ),
-              Padding(
-                padding: EdgeInsets.only(
-                    left: style.layoutStyle == LayoutStyle.style_3 ? 10 : 0),
-                child: listEntriesWidget,
-              ),
-            ],
-          ),
-        ),
+      Widget listWithHeaderToAdd = ColumnLayoutBlock(
+        widget,
+        style,
+        EdgeInsets.only(top: i > 1 ? 10 : 0),
       );
 
       if (i % 2 == 0) {
-        left.add(listWithHeaderToadd);
+        left.add(listWithHeaderToAdd);
       } else {
-        right.add(listWithHeaderToadd);
+        right.add(listWithHeaderToAdd);
       }
     }
 
@@ -175,6 +175,64 @@ class ColumnsLayoutBlock extends StatelessWidget {
   }
 }
 
+class ColumnLayoutBlock extends StatelessWidget {
+  ColumnLayoutBlock(this.widget, this.style, [this.padding = EdgeInsets.zero]);
+
+  final ListWithHeader widget;
+  final Style style;
+  final EdgeInsets padding;
+
+  MightApplyStyle3(Widget child) {
+    if (style.layoutStyle != LayoutStyle.style_3) return child;
+
+    return Container(
+      decoration: BoxDecoration(
+        border: style.layoutStyle == LayoutStyle.style_3
+            ? Border(
+                left: BorderSide(
+                  color: style.subHeaderBackgroundColor,
+                  width: 2,
+                ),
+              )
+            : null,
+      ),
+      child: child,
+    );
+  }
+
+  @override
+  Widget build(Context context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: padding,
+          child: MightApplyStyle3(ListTitle(
+            widget.icon,
+            widget.title,
+            style,
+          )),
+        ),
+        ...widget.widgets
+            .map((w) => Padding(
+                padding: padding.copyWith(top: 0, bottom: 0),
+                child: MightApplyStyle3(Padding(
+                    padding: EdgeInsets.only(
+                      left: style.layoutStyle == LayoutStyle.style_3 ? 10 : 0,
+                    ),
+                    child: w))))
+            .toList(),
+      ],
+    );
+  }
+}
+
+const layoutBlockBasePadding = EdgeInsets.only(
+  left: PdfPageFormat.cm,
+  right: PdfPageFormat.cm,
+  top: PdfPageFormat.cm / 2,
+);
+
 class LayoutBlockBase extends StatelessWidget {
   LayoutBlockBase({required this.child});
 
@@ -183,11 +241,7 @@ class LayoutBlockBase extends StatelessWidget {
   @override
   Widget build(Context contex) {
     return Padding(
-      padding: const EdgeInsets.only(
-        left: PdfPageFormat.cm,
-        right: PdfPageFormat.cm,
-        top: PdfPageFormat.cm / 2,
-      ),
+      padding: layoutBlockBasePadding,
       child: child,
     );
   }
