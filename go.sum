@@ -116,8 +116,8 @@ github.com/minio/sha256-simd v0.1.1 h1:5QHSlgo3nt5yKOJrC7W8w7X+NFl8cMPZm96iu8kKU
 github.com/minio/sha256-simd v0.1.1/go.mod h1:B5e1o+1/KgNmWrSQK08Y6Z1Vb5pwIktudl0J58iy0KM=
 github.com/mitchellh/go-homedir v1.1.0 h1:lukF9ziXFxDFPkA1vsr5zpc1XuPDn/wFntq5mG+4E0Y=
 github.com/mitchellh/go-homedir v1.1.0/go.mod h1:SfyaCUpYCn1Vlf4IUYiD9fPX4A5wJrkLzIz1N1q0pr0=
-github.com/mjarkk/fuzzy-matcher v1.1.3 h1:KURfi5PKQ/jAb/0EwcoxwkVIVYwydE8ufyvntiBOJQ4=
-github.com/mjarkk/fuzzy-matcher v1.1.3/go.mod h1:KVotVNpZWtJQtJZ3UL+l4iNcZA2Pex6UaPeOsav6ZF8=
+github.com/mjarkk/fuzzy-matcher v1.1.4 h1:0bTnBlJAoX/+2G8nlpxsr59HvzwavHnPchj3ifCxpek=
+github.com/mjarkk/fuzzy-matcher v1.1.4/go.mod h1:KVotVNpZWtJQtJZ3UL+l4iNcZA2Pex6UaPeOsav6ZF8=
 github.com/mjarkk/jsonschema v1.1.0 h1:d+wMc3lqBY/NqMSKUPo2lj2RwKyIf4hXZehZU3HcuIs=
 github.com/mjarkk/jsonschema v1.1.0/go.mod h1:mec2y2M8N5CP+akxyw/Aiq+6ecrAswSFYbblXvAusyI=
 github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421/go.mod h1:6dJC0mAP4ikYIbvyc7fijjWJddQyLn8Ig3JB5CqoB9Q=
