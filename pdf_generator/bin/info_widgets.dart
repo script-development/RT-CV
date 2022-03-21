@@ -2,16 +2,17 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart';
 
 import 'cv.dart';
+import 'layout.dart';
 import 'utils.dart';
 
 class ClientInfo extends StatelessWidget {
   ClientInfo({
-    required this.personalInformation,
+    required this.personalInfo,
     this.driversLicenses,
   });
 
   List<Widget> children = [];
-  final PersonalDetails personalInformation;
+  final PersonalDetails personalInfo;
   final List<String>? driversLicenses;
 
   final TextStyle labelStyle = TextStyle(
@@ -44,8 +45,9 @@ class ClientInfo extends StatelessWidget {
   @override
   Widget build(Context context) {
     children = [];
-    tryAddToList("E-mail", personalInformation.email);
-    tryAddToList("Telefoon", personalInformation.phoneNumber);
+    tryAddToList("Geboortedatum", formatDate(personalInfo.dob));
+    tryAddToList("E-mail", personalInfo.email);
+    tryAddToList("Telefoon", personalInfo.phoneNumber);
     if (driversLicenses != null) {
       switch (driversLicenses!.length) {
         case 0:
@@ -59,28 +61,30 @@ class ClientInfo extends StatelessWidget {
       }
     }
 
-    final EdgeInsets verticalPadding = EdgeInsets.symmetric(vertical: 20);
+    final EdgeInsets padding = layoutBlockBasePadding.copyWith(
+      top: PdfPageFormat.cm * 1.5,
+      bottom: PdfPageFormat.cm / 2,
+    );
 
-    if (!personalInformation.hasAddress) {
-      if (personalInformation.zip != null) {
-        String? postalCodePlace =
-            guessPostalCodePlace(personalInformation.zip!);
+    if (!personalInfo.hasAddress) {
+      if (personalInfo.zip != null) {
+        String? postalCodePlace = guessPostalCodePlace(personalInfo.zip!);
 
         if (postalCodePlace != null)
-          tryAddToList("Postcode",
-              "${personalInformation.zip} (regio ${postalCodePlace})");
+          tryAddToList(
+              "Postcode", "${personalInfo.zip} (regio ${postalCodePlace})");
         else
-          tryAddToList("Postcode", personalInformation.zip);
+          tryAddToList("Postcode", personalInfo.zip);
       }
 
       return Padding(
-        padding: verticalPadding,
+        padding: padding,
         child: Wrap(children: children, spacing: 10),
       );
     }
 
     return Padding(
-      padding: verticalPadding,
+      padding: padding,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -97,21 +101,21 @@ class ClientInfo extends StatelessWidget {
                   Row(
                     children: [
                       Text("Plaats: ", style: labelStyle),
-                      Text(personalInformation.city!, style: valueStyle),
+                      Text(personalInfo.city!, style: valueStyle),
                     ],
                   ),
                   Row(
                     children: [
                       Text("Adres: ", style: labelStyle),
                       Text(
-                          "${personalInformation.streetName} ${personalInformation.houseNumber} ${personalInformation.houseNumberSuffix}",
+                          "${personalInfo.streetName} ${personalInfo.houseNumber} ${personalInfo.houseNumberSuffix ?? ""}",
                           style: valueStyle),
                     ],
                   ),
                   Row(
                     children: [
                       Text("Postcode: ", style: labelStyle),
-                      Text(personalInformation.zip!, style: valueStyle),
+                      Text(personalInfo.zip!, style: valueStyle),
                     ],
                   ),
                 ],

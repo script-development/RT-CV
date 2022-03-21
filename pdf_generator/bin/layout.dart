@@ -5,11 +5,12 @@ import 'utils.dart';
 import 'args.dart';
 
 class ListWithHeader {
-  ListWithHeader(this.icon, this.title, this.widgets);
+  ListWithHeader(this.icon, this.title, this.widgets, {this.canFitOnPage});
 
   final IconData icon;
   final String title;
   final List<Widget> widgets;
+  final bool? canFitOnPage;
 
   get length => widgets.length;
 }
@@ -202,7 +203,7 @@ class ColumnLayoutBlock extends StatelessWidget {
 
   @override
   Widget build(Context context) {
-    return Column(
+    Widget response = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
@@ -224,6 +225,13 @@ class ColumnLayoutBlock extends StatelessWidget {
             .toList(),
       ],
     );
+
+    return widget.canFitOnPage == true
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [response],
+          )
+        : response;
   }
 }
 

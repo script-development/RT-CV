@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
+
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart';
 import 'package:image/image.dart' as image;
-
 import 'language_widgets.dart';
 import 'info_widgets.dart';
 import 'cv.dart';
@@ -67,36 +67,25 @@ Future<void> main(List<String> programArgs) async {
     ));
   }
 
-  final List<ListWithHeader> unknownLayoutBlocks = [];
   if (cv.educations != null && cv.educations!.isNotEmpty) {
-    unknownLayoutBlocks.add(ListWithHeader(
+    largeListLayout.add(ListWithHeader(
       IconData(0xe80c), // School
       "Opleidingen",
       cv.educations!.map((education) => EducationWidget(education)).toList(),
     ));
   }
   if (cv.courses != null && cv.courses!.isNotEmpty) {
-    unknownLayoutBlocks.add(ListWithHeader(
+    largeListLayout.add(ListWithHeader(
       IconData(0xe865), // Book
       "Cursussen",
       cv.courses!.map((course) => EducationWidget(course)).toList(),
     ));
   }
 
-  // Determain the layout depending on the amound of items in the lists.
-  List<ListWithHeader> remainingLists = [];
-  for (ListWithHeader list in unknownLayoutBlocks) {
-    if (list.length > 3) {
-      largeListLayout.add(list);
-    } else {
-      remainingLists.add(list);
-    }
-  }
-
   if (cv.languages != null && cv.languages!.isNotEmpty) {
     // The language list a very short widget so we can always add it to the remainingLists
     // (The remainingLists only shows small lists)
-    remainingLists.add(
+    largeListLayout.add(
       ListWithHeader(
         IconData(0xe8e2), // Translate
         "Talen",
@@ -104,30 +93,18 @@ Future<void> main(List<String> programArgs) async {
           LanguageLevelInfoWidget(style),
           ...cv.languages!.map((lang) => LanguageWidget(lang)).toList()
         ],
+        canFitOnPage: true,
       ),
     );
   }
 
-  List<Widget> rootWidgets = [
-    HeaderWidget(cv: cv, style: style),
-  ];
-
-  rootWidgets.add(LayoutBlockBase(
-    child: ClientInfo(
-      personalInformation: cv.personalDetails,
-      driversLicenses: cv.driversLicenses,
-    ),
-  ));
-
-  if (remainingLists.isNotEmpty)
-    rootWidgets.add(ColumnsLayoutBlock(remainingLists, style));
-
-  if (largeListLayout.isNotEmpty)
-    rootWidgets.addAll(largeListLayout.map((list) => ColumnLayoutBlock(
-          list,
-          style,
-          layoutBlockBasePadding.copyWith(top: PdfPageFormat.cm),
-        )));
+  final List<Widget> largeListLayoutWidgets = largeListLayout
+      .map((list) => ColumnLayoutBlock(
+            list,
+            style,
+            layoutBlockBasePadding.copyWith(top: PdfPageFormat.cm),
+          ))
+      .toList();
 
   pdf.addPage(
     MultiPage(
@@ -138,7 +115,14 @@ Future<void> main(List<String> programArgs) async {
         companyAddress: args.companyAddress,
       ),
       margin: const EdgeInsets.only(bottom: PdfPageFormat.cm),
-      build: (Context context) => rootWidgets,
+      build: (Context context) => [
+        HeaderWidget(cv: cv, style: style),
+        ClientInfo(
+          personalInfo: cv.personalDetails,
+          driversLicenses: cv.driversLicenses,
+        ),
+        ...largeListLayoutWidgets,
+      ],
     ),
   );
 

@@ -13,7 +13,7 @@ class CV {
         zip: "1234AB",
         streetName: "Straatnaam",
         houseNumber: "15",
-        houseNumberSuffix: "a",
+        // houseNumberSuffix: "a",
         city: "Groningen",
         country: "Nederland",
       ),
