@@ -264,6 +264,9 @@ class ListEntry extends StatelessWidget {
   }
 }
 
+// SafeText makes it less likely to see boxes with "x" inside of them in the result pdf
+// This happends most of the time because characters are not supported by the font
+// This widget filters the text before passing it to the Text widget
 class SafeText extends Text {
   SafeText(
     String text, {
