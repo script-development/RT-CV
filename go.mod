@@ -13,7 +13,7 @@ require (
 	github.com/jordan-wright/email v4.0.1-0.20210109023952-943e75fe5223+incompatible
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/minio/minio-go/v7 v7.0.23
-	github.com/mjarkk/fuzzy-matcher v1.1.5
+	github.com/mjarkk/fuzzy-matcher v1.1.6
 	github.com/mjarkk/jsonschema v1.1.0
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/rogpeppe/go-internal v1.8.1 // indirect
