@@ -1,14 +1,7 @@
 import 'package:pdf/pdf.dart';
 
-String? formatDate(DateTime? input) {
-  if (input == null) return null;
-
-  String year = input.year.toString();
-  String month = input.month.toString().padLeft(2, '0');
-  String day = input.day.toString().padLeft(2, '0');
-
-  return "$day/$month/$year";
-}
+String? formatDate(DateTime? input) =>
+    input != null ? "${input.day}-${input.month}-${input.year}" : null;
 
 String? formatDateTime(DateTime? input) {
   if (input == null) return null;
