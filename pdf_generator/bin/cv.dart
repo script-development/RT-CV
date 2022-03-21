@@ -31,7 +31,8 @@ class CV {
           startDate: DateTime.utc(1995, 2, 1),
           endDate: DateTime.utc(1998, 5, 1),
           description:
-              "Je weet wel die hinderlijke mensen die je opbellen met onzin waar je helemaal geen belang bij hebt",
+              "Je weet wel die hinderlijke mensen die je opbellen met onzin waar je helemaal geen belang bij hebt\n•Motor\n•Motor" +
+                  "\u0020\u00A0\u1680\u2003\u2004\u2005\u2009\u200A\u202F\u205F\u3000\u2028\u2029\uFEFF",
         ),
       ],
       educations: [
@@ -198,13 +199,13 @@ class WorkExperience {
 
   WorkExperience({
     this.profession,
-    this.description,
+    String? description,
     this.startDate,
     this.endDate,
     this.stillEmployed,
     this.employer,
     this.weeklyHoursWorked,
-  });
+  }) : this.description = description != null ? description : "";
 
   late final String? profession;
   late final String? description;
