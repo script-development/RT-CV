@@ -101,7 +101,7 @@ func Routes(app *fiber.App, appVersion string, testing bool) {
 		b.Group(`/onMatchHooks`, func(b *routeBuilder.Router) {
 			b.Get(``, routeGetOnMatchHooks)
 			b.Post(``, routeCreateOnMatchHooks)
-			b.Group(`/:hookID`, func(r *routeBuilder.Router) {
+			b.Group(`/:hookID`, func(b *routeBuilder.Router) {
 				b.Delete(``, routeDeleteOnMatchHook)
 				b.Post(`/test`, routeTestOnMatchHook)
 			}, middlewareBindHook())
