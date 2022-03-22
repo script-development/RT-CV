@@ -161,6 +161,15 @@ type ProcessMatches struct {
 	KeyName          string
 }
 
+// DataSendToHook contains the content for processing a match
+type DataSendToHook struct {
+	MatchedProfiles []match.FoundMatch `json:"matchedProfiles"`
+	CV              models.CV          `json:"cv"`
+	KeyID           primitive.ObjectID `json:"keyId"`
+	KeyName         string             `json:"keyName"`
+	RequestID       primitive.ObjectID `json:"requestId"`
+}
+
 // Process processes the matches made to a CV
 // - notify the dashboard /events page about the new match
 // - safe the matches of this reference number for analytics and for detecting duplicates

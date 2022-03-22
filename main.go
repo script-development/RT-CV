@@ -109,6 +109,7 @@ func main() {
 		&models.Secret{},
 		&models.Match{},
 		&models.Backup{},
+		&models.OnMatchHook{},
 	)
 
 	backupEnabled := strings.ToLower(os.Getenv("MONGODB_BACKUP_ENABLED")) == "true"

@@ -98,6 +98,15 @@ func Routes(app *fiber.App, appVersion string, testing bool) {
 			}, middlewareBindKey())
 		}, requiresAuth(models.APIKeyRoleDashboard))
 
+		b.Group(`/onMatchHooks`, func(b *routeBuilder.Router) {
+			b.Get(``, routeGetOnMatchHooks)
+			b.Post(``, routeCreateOnMatchHooks)
+			b.Group(`/:hookID`, func(r *routeBuilder.Router) {
+				b.Delete(``, routeDeleteOnMatchHook)
+				b.Post(`/test`, routeTestOnMatchHook)
+			}, middlewareBindHook())
+		}, requiresAuth(models.APIKeyRoleController|models.APIKeyRoleInformationObtainer))
+
 		b.Post(
 			`/exampleAttachmentPdf`,
 			routeGetExampleAttachmentPDF,

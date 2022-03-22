@@ -25,6 +25,7 @@ type loggerCtx uint8
 type dbConnCtx uint8
 type requestIDCtx uint8
 type profilesCacheCtx uint8
+type onMatchHookKey uint8
 
 const (
 	profileCtxKey       = profileCtx(0)
@@ -35,6 +36,7 @@ const (
 	dbConnCtxKey        = dbConnCtx(0)
 	requestIDCtxKey     = requestIDCtx(0)
 	profilesCacheCtxKey = profilesCacheCtx(0)
+	onMatchHookCtxKey   = onMatchHookKey(0)
 )
 
 // getCtxValue returns a value from the context
@@ -129,4 +131,14 @@ func GetMatcherProfilesCache(c *fiber.Ctx) *MatcherProfilesCache {
 // ResetMatcherProfilesCache sets the profiles cache to an empty object
 func ResetMatcherProfilesCache(ctx context.Context) context.Context {
 	return context.WithValue(ctx, profilesCacheCtxKey, &MatcherProfilesCache{})
+}
+
+// SetOnMatchHook sets the on match hook in the request context
+func SetOnMatchHook(ctx context.Context, value *models.OnMatchHook) context.Context {
+	return context.WithValue(ctx, onMatchHookCtxKey, value)
+}
+
+// GetOnMatchHook returns the on match hook from the request context
+func GetOnMatchHook(c *fiber.Ctx) *models.OnMatchHook {
+	return getCtxValue(c, onMatchHookCtxKey).(*models.OnMatchHook)
 }
