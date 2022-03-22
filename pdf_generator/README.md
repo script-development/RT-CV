@@ -2,6 +2,10 @@
 
 This dart project will convert CV data into a good looking PDF.
 
+## Requirements
+
+- [Dart](https://dart.dev) (i would personally install [Flutter](https://docs.flutter.dev/get-started/install) as it includes the dart binaries)
+
 ## Install
 
 ```sh
