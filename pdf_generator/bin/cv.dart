@@ -4,6 +4,8 @@ class CV {
       referenceNumber: "d1b77757-144a-4e67-871d-3a3c0f910c9b",
       createdAt: DateTime.now(),
       lastChanged: DateTime.now(),
+      presentation:
+          "this is my description. I Very Stronk!! Do not ask me why I'm so stronk",
       personalDetails: PersonalDetails(
         firstName: "Meneer",
         surName: "banaanmans",
@@ -112,6 +114,7 @@ class CV {
         ?.map((entry) => Language.fromJson(entry))
         ?.toList()
         ?.cast<Language>();
+    presentation = json['presentation'];
     personalDetails = PersonalDetails.fromJson(json['personalDetails']);
     driversLicenses = json['driversLicenses']?.cast<String>();
   }
@@ -125,6 +128,7 @@ class CV {
     this.workExperiences,
     this.preferredJobs,
     this.languages,
+    this.presentation,
     required this.personalDetails,
     this.driversLicenses,
   });
@@ -137,6 +141,7 @@ class CV {
   late final List<WorkExperience>? workExperiences;
   late final List<String>? preferredJobs;
   late final List<Language>? languages;
+  late final String? presentation;
   late final PersonalDetails personalDetails;
   late final List<String>? driversLicenses;
 }

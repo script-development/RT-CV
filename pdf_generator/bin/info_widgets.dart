@@ -5,6 +5,42 @@ import 'cv.dart';
 import 'layout.dart';
 import 'utils.dart';
 
+final TextStyle labelStyle = TextStyle(
+  fontSize: 10,
+  color: PdfColors.grey800,
+);
+final TextStyle valueStyle = TextStyle(
+  fontSize: 10,
+  color: PdfColors.black,
+);
+
+class Presentation extends StatelessWidget {
+  Presentation({this.presentation});
+
+  final String? presentation;
+
+  final EdgeInsets padding = layoutBlockBasePadding.copyWith(
+    top: PdfPageFormat.cm * 1.5,
+    bottom: 0,
+  );
+
+  @override
+  Widget build(Context context) {
+    if (presentation == null || presentation!.isEmpty) return Container();
+
+    return Padding(
+      padding: padding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Over mij", style: labelStyle),
+          SafeText(presentation!, style: valueStyle),
+        ],
+      ),
+    );
+  }
+}
+
 class ClientInfo extends StatelessWidget {
   ClientInfo({
     required this.personalInfo,
@@ -14,15 +50,6 @@ class ClientInfo extends StatelessWidget {
   List<Widget> children = [];
   final PersonalDetails personalInfo;
   final List<String>? driversLicenses;
-
-  final TextStyle labelStyle = TextStyle(
-    fontSize: 10,
-    color: PdfColors.grey800,
-  );
-  final TextStyle valueStyle = TextStyle(
-    fontSize: 10,
-    color: PdfColors.black,
-  );
 
   tryAddToList(String label, String? value) {
     if (value != null) {

@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"os"
 	"sync"
@@ -214,6 +216,44 @@ func (args ProcessMatches) Process() {
 	err = args.DBConn.Insert(analyticsData...)
 	if err != nil {
 		args.Logger.WithField("analytics_entries_count", len(analyticsData)).WithError(err).Error("analytics data insertion failed")
+	}
+
+	hooks := []models.OnMatchHook{}
+	err = args.DBConn.Find(&models.OnMatchHook{}, &hooks, nil)
+	if err != nil {
+		args.Logger.WithError(err).Error("Finding on match hooks failed")
+		return
+	}
+
+	if len(hooks) > 0 {
+		stopRemainder := false
+		hookData, err := json.Marshal(DataSendToHook{})
+		if err != nil {
+			args.Logger.WithError(err).Error("creating hook data failed")
+			return
+		}
+
+		for _, hook := range hooks {
+			if err != nil {
+				args.Logger.WithError(err).Error("creating hook data failed")
+				continue
+			}
+
+			if hook.StopRemainingActions {
+				stopRemainder = true
+			}
+
+			err = hook.Call(bytes.NewBuffer(hookData))
+			if err != nil {
+				args.Logger.WithError(err).Error("creating hook data failed")
+			} else {
+				args.Logger.WithField("hook", hook.URL).WithField("hook_id", hook.ID.Hex()).Info("hook called")
+			}
+		}
+
+		if stopRemainder {
+			return
+		}
 	}
 
 	if args.Debug {

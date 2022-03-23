@@ -117,6 +117,7 @@ Future<void> main(List<String> programArgs) async {
       margin: const EdgeInsets.only(bottom: PdfPageFormat.cm),
       build: (Context context) => [
         HeaderWidget(cv: cv, style: style),
+        Presentation(presentation: cv.presentation),
         ClientInfo(
           personalInfo: cv.personalDetails,
           driversLicenses: cv.driversLicenses,
