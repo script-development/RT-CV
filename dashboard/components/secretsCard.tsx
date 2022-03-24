@@ -14,7 +14,7 @@ import { ModalKind } from './modal'
 import Dynamic from 'next/dynamic'
 import { SecretModalProps } from './secretModal/secretModalProps'
 
-const SecretModal = Dynamic<SecretModalProps>(() => import('./secretModal/secretModal').then(m => m.SecretModal))
+const SecretModal = Dynamic<SecretModalProps>(() => import('./secretModal/modal').then(m => m.SecretModal))
 
 interface SecretsCardArgs { }
 

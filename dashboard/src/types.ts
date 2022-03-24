@@ -46,3 +46,12 @@ export interface DutchZipCode {
     from: number
     to: number
 }
+
+export interface OnMatchHook {
+    id: string
+    keyId: string
+    url: string
+    method: string
+    addHeaders: Array<{ key: string, value: Array<string> }>
+    stopRemainingActions: boolean
+}

@@ -5,6 +5,7 @@ import React from 'react'
 import KeysCard from '../components/keysCard'
 import SecretsCard from '../components/secretsCard'
 import Statistics from '../components/statistics'
+import OnMatchHooksCard from '../components/onMatchHooksCard'
 
 const ButtonStyle = { marginRight: 5, marginBottom: 5 }
 
@@ -31,6 +32,8 @@ export default function Home() {
 				<KeysCard />
 
 				<SecretsCard />
+
+				<OnMatchHooksCard />
 
 				<Statistics />
 			</main>

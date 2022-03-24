@@ -3,7 +3,6 @@ import {
     DialogContentText,
     FormControl,
     InputLabel,
-    ListSubheader,
     Select,
     TextField,
     Tooltip,
@@ -12,7 +11,7 @@ import {
 } from '@material-ui/core'
 import { randomString } from '../../src/random'
 import RefreshIcon from '@material-ui/icons/Refresh'
-import { ModifyState } from './secretModal'
+import { ModifyState } from './modal'
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import { ApiKey } from '../../src/types'
 import ModifyValue from './modifyValue'
