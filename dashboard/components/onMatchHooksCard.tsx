@@ -10,6 +10,7 @@ import Card from './card'
 import { ModalKind } from './modal'
 import Dynamic from 'next/dynamic'
 import { ModalProps } from './onMatchHookModal/props'
+import { PlayArrow } from '@material-ui/icons'
 
 const Modal = Dynamic<ModalProps>(() => import('./onMatchHookModal/modal').then(m => m.SecretModal))
 
@@ -69,6 +70,7 @@ export default function OnMatchHooksCard({ }: OnMatchHooksCardArgs) {
 
             {onMatchHooks?.map((value, idx) => {
                 return (<Line
+                    key={value.id}
                     value={value}
                     isLastRow={onMatchHooks.length - 1 == idx}
                     openModal={kind => setModal({ kind, value })}
@@ -85,6 +87,8 @@ interface LineProps {
 }
 
 function Line({ value, isLastRow, openModal }: LineProps) {
+    const testOnMatchHook = () => fetcher.post(`/api/v1/onMatchHooks/${value.id}/test`)
+
     return (
         <div key={value.id} className={"simpleRow" + (isLastRow ? ' last' : '')}>
             <div className="side">
@@ -92,11 +96,16 @@ function Line({ value, isLastRow, openModal }: LineProps) {
                 <span style={{ paddingLeft: 5 }}>{value.url}</span>
             </div>
             <div className="side">
-                {/* <Tooltip title="Edit on match hook">
+                <Tooltip title="Test on match hook">
+                    <Button onClick={testOnMatchHook}>
+                        <PlayArrow fontSize="small" />
+                    </Button>
+                </Tooltip>
+                <Tooltip title="Edit on match hook">
                     <Button onClick={() => openModal(ModalKind.Edit)}>
                         <Edit fontSize="small" />
                     </Button>
-                </Tooltip> */}
+                </Tooltip>
                 <Tooltip title="Delete on match hook">
                     <Button onClick={() => openModal(ModalKind.Delete)}>
                         <Delete fontSize="small" />

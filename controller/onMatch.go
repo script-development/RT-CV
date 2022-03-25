@@ -33,29 +33,21 @@ var routeGetOnMatchHooks = routeBuilder.R{
 	},
 }
 
-var routeCreateOnMatchHooks = routeBuilder.R{
-	Description: "Set a on match hook, called when a cv is matched with one or more profiles\n\n**The id and keyId fields can be left empty**",
-	Body:        models.OnMatchHook{},
-	Res:         models.OnMatchHook{},
-	Fn: func(c *fiber.Ctx) error {
-		body := models.OnMatchHook{}
-		err := c.BodyParser(&body)
-		if err != nil {
-			return err
-		}
+// CreateOrUpdateOnMatchHookRequestData contains the post data for creating and modifiying a OnMatchHook
+type CreateOrUpdateOnMatchHookRequestData struct {
+	Method               *string         `json:"method"`
+	URL                  *string         `json:"url"`
+	AddHeaders           []models.Header `json:"addHeaders"`
+	StopRemainingActions *bool           `json:"stopRemainingActions"`
+}
 
-		body.ID = primitive.NewObjectID()
-		if !strings.HasPrefix(body.URL, "https://") && !strings.HasPrefix(body.URL, "http://") {
-			return errors.New("url should start with http(s)://")
-		}
-
-		body.KeyID = ctx.GetKey(c).ID
-
-		body.Method = strings.ToUpper(body.Method)
+func (data *CreateOrUpdateOnMatchHookRequestData) applyToHook(hook *models.OnMatchHook, isCreate bool) error {
+	if data.Method != nil {
+		method := *data.Method
 		allowedMethods := []string{"GET", "POST", "PUT", "PATCH", "DELETE"}
 		methodAllowed := false
 		for _, allowedMethod := range allowedMethods {
-			if body.Method == allowedMethod {
+			if method == allowedMethod {
 				methodAllowed = true
 				break
 			}
@@ -63,8 +55,60 @@ var routeCreateOnMatchHooks = routeBuilder.R{
 		if !methodAllowed {
 			return errors.New("method should be one of GET, POST, PUT, PATCH, DELETE")
 		}
+		hook.Method = method
+	} else if isCreate {
+		hook.Method = "GET"
+	}
 
-		err = ctx.GetDbConn(c).Insert(&body)
+	if data.URL != nil {
+		url := *data.URL
+		if !strings.HasPrefix(url, "https://") && !strings.HasPrefix(url, "http://") {
+			return errors.New("url should start with http(s)://")
+		}
+		hook.URL = url
+	} else if isCreate {
+		return errors.New("url is required")
+	}
+
+	if data.AddHeaders != nil {
+		hook.AddHeaders = []models.Header{}
+		for _, extraHeader := range data.AddHeaders {
+			if extraHeader.Key != "" {
+				hook.AddHeaders = append(hook.AddHeaders, extraHeader)
+			}
+		}
+	} else if isCreate {
+		hook.AddHeaders = []models.Header{}
+	}
+
+	if data.StopRemainingActions != nil {
+		hook.StopRemainingActions = *data.StopRemainingActions
+	}
+
+	return nil
+}
+
+var routeCreateOnMatchHooks = routeBuilder.R{
+	Description: "Set a on match hook, called when a cv is matched with one or more profiles",
+	Body:        CreateOrUpdateOnMatchHookRequestData{},
+	Res:         models.OnMatchHook{},
+	Fn: func(c *fiber.Ctx) error {
+		body := CreateOrUpdateOnMatchHookRequestData{}
+		err := c.BodyParser(&body)
+		if err != nil {
+			return err
+		}
+
+		hook := models.OnMatchHook{
+			M:     db.NewM(),
+			KeyID: ctx.GetKey(c).ID,
+		}
+		err = body.applyToHook(&hook, true)
+		if err != nil {
+			return err
+		}
+
+		err = ctx.GetDbConn(c).Insert(&hook)
 		if err != nil {
 			return err
 		}
@@ -83,6 +127,31 @@ var routeDeleteOnMatchHook = routeBuilder.R{
 			return err
 		}
 		return c.JSON(onMatchHook)
+	},
+}
+
+var routeUpdateOnMatchHook = routeBuilder.R{
+	Description: "Update a on match hook",
+	Body:        CreateOrUpdateOnMatchHookRequestData{},
+	Res:         models.OnMatchHook{},
+	Fn: func(c *fiber.Ctx) error {
+		body := CreateOrUpdateOnMatchHookRequestData{}
+		err := c.BodyParser(&body)
+		if err != nil {
+			return err
+		}
+
+		hook := ctx.GetOnMatchHook(c)
+		err = body.applyToHook(hook, false)
+		if err != nil {
+			return err
+		}
+
+		err = ctx.GetDbConn(c).UpdateByID(hook)
+		if err != nil {
+			return err
+		}
+		return c.JSON(hook)
 	},
 }
 

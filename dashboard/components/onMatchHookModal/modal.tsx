@@ -8,11 +8,12 @@ import {
     FormControlLabel,
     Radio,
     ButtonGroup,
+    Checkbox,
 } from '@material-ui/core'
 import { DataGrid } from '@material-ui/data-grid'
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Modal, ModalKind } from '../modal'
-import { SecretValueStructure, ApiKey } from '../../src/types'
+import { SecretValueStructure } from '../../src/types'
 import { ModalProps } from './props'
 import { fetcher } from '../../src/auth'
 
@@ -33,6 +34,7 @@ export function SecretModal({ kind, onClose: onCloseArg, hook }: ModalProps) {
     const [headers, setHeaders] = useState<Array<{ key: string, value: string }>>([])
     const [method, setMethod] = useState('POST')
     const [url, setUrl] = useState('https://')
+    const [stopRemainingActions, setStopRemainingActions] = useState(false)
 
     const canSubmit = url.length != 0
     const viewState = { value: undefined }
@@ -53,12 +55,14 @@ export function SecretModal({ kind, onClose: onCloseArg, hook }: ModalProps) {
         })
         setSelectedHeaders([])
     }
+    const formatHeadersToApi = () => headers.filter(h => h.key.length > 0).map(h => ({ key: h.key, value: [h.value] }))
 
     const onClose = () => {
         setApiError('')
         setHeaders([])
         setMethod('POST')
         setUrl('https://')
+        setStopRemainingActions(false)
         onCloseArg()
     }
 
@@ -69,7 +73,15 @@ export function SecretModal({ kind, onClose: onCloseArg, hook }: ModalProps) {
                     await fetcher.post(`/api/v1/onMatchHooks`, {
                         method,
                         url,
-                        addHeaders: headers.filter(h => h.key.length > 0).map(h => ({ key: h.key, value: [h.value] })),
+                        addHeaders: formatHeadersToApi(),
+                    })
+                    onClose()
+                    break
+                case ModalKind.Edit:
+                    await fetcher.put(`/api/v1/onMatchHooks/${hook?.id}`, {
+                        method,
+                        url,
+                        addHeaders: formatHeadersToApi(),
                     })
                     onClose()
                     break
@@ -85,6 +97,15 @@ export function SecretModal({ kind, onClose: onCloseArg, hook }: ModalProps) {
             setApiError(e?.message || e)
         }
     }
+
+    useEffect(() => {
+        if (kind == ModalKind.Edit && hook) {
+            setHeaders((hook.addHeaders || []).map(h => ({ key: h.key, value: h.value.join(',') })) || [])
+            setMethod(hook.method)
+            setUrl(hook.url)
+            setStopRemainingActions(hook.stopRemainingActions)
+        }
+    }, [kind, hook])
 
     return (
         <Modal
@@ -125,9 +146,7 @@ export function SecretModal({ kind, onClose: onCloseArg, hook }: ModalProps) {
                     return (
                         <></>
                     )
-            else if (kind == ModalKind.Edit)
-                return (<h1>TODO</h1>)
-            else if (kind == ModalKind.Create)
+            else if (kind == ModalKind.Edit || kind == ModalKind.Create)
                 return (
                     <div>
                         <FormControl component="fieldset" fullWidth>
@@ -175,12 +194,16 @@ export function SecretModal({ kind, onClose: onCloseArg, hook }: ModalProps) {
                             />
                         </div>
                         <div className='padTop'>
-
                             <ButtonGroup color="primary" variant="contained">
                                 <Button onClick={addHeader}>Add header</Button>
                                 <Button onClick={removeHeader} disabled={selectedHeaders.length == 0}>Remove selected</Button>
                             </ButtonGroup>
                         </div>
+
+                        <FormControlLabel
+                            control={<Checkbox checked={stopRemainingActions} onChange={() => setStopRemainingActions(!stopRemainingActions)} name="stopRemainingActions" />}
+                            label="Stop further actions after the hooks are executed, this stop the sending of emails"
+                        />
 
                         <style jsx>{`
                             .padTop {
