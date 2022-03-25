@@ -26,10 +26,9 @@ type RouteScraperScanCVBody struct {
 
 // RouteScraperScanCVRes contains the response data of routeScraperScanCV
 type RouteScraperScanCVRes struct {
-	Success bool `json:"success"`
-
-	// Matches is only set if the debug property is set
-	Matches []match.FoundMatch `json:"matches" jsonSchema:"hidden"`
+	Success    bool               `json:"success"`
+	HasMatches bool               `json:"hasMatches"`
+	Matches    []match.FoundMatch `json:"matches" jsonSchema:"hidden" description:"Only contains matches if the debug property is set to true"`
 }
 
 var routeScraperScanCV = routeBuilder.R{
@@ -38,9 +37,6 @@ var routeScraperScanCV = routeBuilder.R{
 	Body:        RouteScraperScanCVBody{},
 	Fn: func(c *fiber.Ctx) error {
 		key := ctx.GetKey(c)
-		requestID := ctx.GetRequestID(c)
-		dbConn := ctx.GetDbConn(c)
-		logger := ctx.GetLogger(c)
 
 		body := RouteScraperScanCVBody{}
 		err := c.BodyParser(&body)
@@ -66,6 +62,8 @@ var routeScraperScanCV = routeBuilder.R{
 			)
 		}
 
+		logger := ctx.GetLogger(c)
+
 		// Get the profiles we can use for matching
 		// If they are not cached yet or the cache it outdated, set the cache
 		matcherProfilesCache := ctx.GetMatcherProfilesCache(c)
@@ -73,7 +71,7 @@ var routeScraperScanCV = routeBuilder.R{
 		if profiles == nil || matcherProfilesCache.InsertionTime.Add(time.Hour*24).Before(time.Now()) {
 			logger.Info("updating the profiles cache")
 			// Update the cache
-			profilesFromDB, err := models.GetActualActiveProfiles(dbConn)
+			profilesFromDB, err := models.GetActualActiveProfiles(ctx.GetDbConn(c))
 			if err != nil {
 				return err
 			}
@@ -90,21 +88,27 @@ var routeScraperScanCV = routeBuilder.R{
 		// Try to match a profile to a CV
 		matchedProfiles := match.Match(key, profiles, body.CV)
 
+		resp := RouteScraperScanCVRes{Success: true, Matches: []match.FoundMatch{}}
+		if len(matchedProfiles) == 0 {
+			return c.JSON(resp)
+		}
+
+		resp.HasMatches = true
 		MatchesProcess.AppendMatchesToProcess(ProcessMatches{
 			Debug:           body.Debug,
 			MatchedProfiles: matchedProfiles,
 			CV:              body.CV,
 			Logger:          *logger,
-			DBConn:          dbConn,
+			DBConn:          ctx.GetDbConn(c),
 			KeyID:           key.ID,
 			KeyName:         key.Name,
-			RequestID:       requestID,
+			RequestID:       ctx.GetRequestID(c),
 		})
-
 		if body.Debug {
-			return c.JSON(RouteScraperScanCVRes{Success: true, Matches: matchedProfiles})
+			resp.Matches = matchedProfiles
 		}
-		return c.JSON(RouteScraperScanCVRes{Success: true})
+
+		return c.JSON(resp)
 	},
 }
 
