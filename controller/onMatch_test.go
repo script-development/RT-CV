@@ -13,19 +13,22 @@ func TestOnMatchHooks(t *testing.T) {
 	r := newTestingRouter(t)
 
 	// Create a new hook
-	createHookBody, err := json.Marshal(models.OnMatchHook{
-		URL:    "https://localhost",
-		Method: "get",
+	method := "get"
+	url := "http://localhost"
+	createHookBody, err := json.Marshal(CreateOrUpdateOnMatchHookRequestData{
+		URL:    &url,
+		Method: &method,
 		AddHeaders: []models.Header{{
 			Key:   "X-Test",
 			Value: []string{"test"},
 		}},
 	})
 	NoError(t, err)
-	r.MakeRequest(routeBuilder.Post, "/api/v1/onMatchHooks", TestReqOpts{Body: createHookBody})
+	res, body := r.MakeRequest(routeBuilder.Post, "/api/v1/onMatchHooks", TestReqOpts{Body: createHookBody})
+	Equal(t, res.StatusCode, 200, string(body))
 
 	// Check if the just inserted hook is actually inserted
-	res, body := r.MakeRequest(routeBuilder.Get, "/api/v1/onMatchHooks", TestReqOpts{})
+	res, body = r.MakeRequest(routeBuilder.Get, "/api/v1/onMatchHooks", TestReqOpts{})
 	Equal(t, res.StatusCode, 200, string(body))
 	hooks := []models.OnMatchHook{}
 	err = json.Unmarshal(body, &hooks)
@@ -33,7 +36,7 @@ func TestOnMatchHooks(t *testing.T) {
 	Len(t, hooks, 1)
 
 	firstHook := hooks[0]
-	Equal(t, firstHook.URL, "https://localhost")
+	Equal(t, firstHook.URL, "http://localhost")
 	Equal(t, firstHook.Method, "GET")
 	Len(t, firstHook.AddHeaders, 1)
 

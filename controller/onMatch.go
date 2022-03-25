@@ -43,7 +43,7 @@ type CreateOrUpdateOnMatchHookRequestData struct {
 
 func (data *CreateOrUpdateOnMatchHookRequestData) applyToHook(hook *models.OnMatchHook, isCreate bool) error {
 	if data.Method != nil {
-		method := *data.Method
+		method := strings.ToUpper(*data.Method)
 		allowedMethods := []string{"GET", "POST", "PUT", "PATCH", "DELETE"}
 		methodAllowed := false
 		for _, allowedMethod := range allowedMethods {
