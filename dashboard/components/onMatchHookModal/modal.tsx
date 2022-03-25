@@ -74,6 +74,7 @@ export function SecretModal({ kind, onClose: onCloseArg, hook }: ModalProps) {
                         method,
                         url,
                         addHeaders: formatHeadersToApi(),
+                        stopRemainingActions,
                     })
                     onClose()
                     break
@@ -82,6 +83,7 @@ export function SecretModal({ kind, onClose: onCloseArg, hook }: ModalProps) {
                         method,
                         url,
                         addHeaders: formatHeadersToApi(),
+                        stopRemainingActions,
                     })
                     onClose()
                     break
