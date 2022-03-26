@@ -6,7 +6,7 @@ require (
 	github.com/agnivade/levenshtein v1.1.1
 	github.com/apex/log v1.9.0
 	github.com/go-stack/stack v1.8.1 // indirect
-	github.com/gofiber/fiber/v2 v2.29.0
+	github.com/gofiber/fiber/v2 v2.30.0
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/joho/godotenv v1.4.0
