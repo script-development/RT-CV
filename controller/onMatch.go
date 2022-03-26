@@ -185,10 +185,10 @@ var routeTestOnMatchHook = routeBuilder.R{
 				},
 				Profile: *mock.Profile1,
 			}},
-			CV:        cv,
-			KeyID:     mock.Key1.ID,
-			KeyName:   "example.com",
-			RequestID: requestID,
+			CV:      cv,
+			KeyID:   mock.Key1.ID,
+			KeyName: "example.com",
+			IsTest:  true,
 		}
 
 		dummyDataAsJSON, err := json.Marshal(dummyData)

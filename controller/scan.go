@@ -171,9 +171,9 @@ type ProcessMatches struct {
 type DataSendToHook struct {
 	MatchedProfiles []match.FoundMatch `json:"matchedProfiles"`
 	CV              models.CV          `json:"cv"`
-	KeyID           primitive.ObjectID `json:"keyId"`
-	KeyName         string             `json:"keyName"`
-	RequestID       primitive.ObjectID `json:"requestId"`
+	KeyID           primitive.ObjectID `json:"keyId" description:"The ID of the API key that was used to upload this CV"`
+	KeyName         string             `json:"keyName" description:"The Name of the API key that was used to upload this CV"`
+	IsTest          bool               `json:"isTest" description:"True if this hook call was manually triggered"`
 }
 
 // Process processes the matches made to a CV
@@ -231,7 +231,12 @@ func (args ProcessMatches) Process() {
 
 	if len(hooks) > 0 {
 		stopRemainder := false
-		hookData, err := json.Marshal(DataSendToHook{})
+		hookData, err := json.Marshal(DataSendToHook{
+			MatchedProfiles: args.MatchedProfiles,
+			CV:              args.CV,
+			KeyID:           args.KeyID,
+			KeyName:         args.KeyName,
+		})
 		if err != nil {
 			args.Logger.WithError(err).Error("creating hook data failed")
 			return
