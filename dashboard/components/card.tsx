@@ -1,4 +1,4 @@
-import { LinearProgress } from '@material-ui/core'
+import { LinearProgress } from '@mui/material'
 import { ReactNode } from 'react'
 
 interface CardArgs {

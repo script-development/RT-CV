@@ -1,30 +1,32 @@
 import type { AppProps } from 'next/app'
 import Head from 'next/head'
-import CssBaseline from '@material-ui/core/CssBaseline'
-import { ThemeProvider } from '@material-ui/core/styles'
+import { ThemeProvider, CssBaseline } from '@mui/material'
 import { useEffect, useState } from 'react'
 import { fetcher } from '../src/auth'
 import { useRouter } from 'next/router'
-import { theme } from '../src/theme'
+import { theme, createEmotionCache } from '../src/theme'
+import { CacheProvider, EmotionCache } from '@emotion/react';
 
-export default function MyApp(props: AppProps) {
-  useEffect(() => {
-    // Remove the server-side injected CSS.
-    const jssStyles = document.querySelector('#jss-server-side');
-    if (jssStyles) {
-      jssStyles.parentElement?.removeChild(jssStyles);
-    }
-  }, []);
+interface MyAppProps extends AppProps {
+  emotionCache?: EmotionCache;
+}
+
+const clientSideEmotionCache = createEmotionCache();
+
+export default function MyApp(props: MyAppProps) {
+  const emotionCache = props.emotionCache || clientSideEmotionCache;
 
   return (<>
     <Head>
       <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width" />
       <meta name="theme-color" content={theme.palette.primary.main} />
     </Head>
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <AppContent {...props} />
-    </ThemeProvider>
+    <CacheProvider value={emotionCache}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <AppContent {...props} />
+      </ThemeProvider>
+    </CacheProvider>
     <style jsx global>{`
       * {
         padding: 0;

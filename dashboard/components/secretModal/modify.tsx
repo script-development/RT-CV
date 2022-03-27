@@ -8,9 +8,9 @@ import {
     Tooltip,
     MenuItem,
     FormHelperText,
-} from '@material-ui/core'
+} from '@mui/material'
 import { randomString } from '../../src/random'
-import RefreshIcon from '@material-ui/icons/Refresh'
+import RefreshIcon from '@mui/icons-material/Refresh'
 import { ModifyState } from './modal'
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import { ApiKey } from '../../src/types'

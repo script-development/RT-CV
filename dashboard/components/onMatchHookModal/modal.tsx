@@ -9,8 +9,8 @@ import {
     Radio,
     ButtonGroup,
     Checkbox,
-} from '@material-ui/core'
-import { DataGrid } from '@material-ui/data-grid'
+} from '@mui/material'
+import { DataGrid } from '@mui/x-data-grid'
 import React, { useState, useEffect } from 'react'
 import { Modal, ModalKind } from '../modal'
 import { SecretValueStructure } from '../../src/types'

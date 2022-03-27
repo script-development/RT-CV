@@ -3,8 +3,8 @@ import {
     TextField,
     Button,
     Breadcrumbs,
-} from '@material-ui/core'
-import Edit from '@material-ui/icons/Edit'
+} from '@mui/material'
+import Edit from '@mui/icons-material/Edit'
 import dynamic from 'next/dynamic'
 import React, { useState, useEffect, useMemo } from 'react'
 import { fetcher, getKeys } from '../../src/auth'

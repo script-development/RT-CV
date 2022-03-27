@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react"
 import { primaryColor, secondaryColor } from '../src/theme'
-import { Tooltip } from '@material-ui/core'
+import { Tooltip } from '@mui/material'
 import { BarChartProps } from './chartProps'
 
 export function BarChart({ data, singleTooltip, multipleTooltip }: BarChartProps) {

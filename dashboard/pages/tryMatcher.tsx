@@ -2,8 +2,8 @@ import Head from "next/head";
 import Dynamic from "next/dynamic"
 import Link from 'next/link'
 import React, { useEffect, useState } from "react"
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@material-ui/core"
-import Info from '@material-ui/icons/Info'
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material"
+import Info from '@mui/icons-material/Info'
 import Header from '../components/header'
 
 const MatchEditor = Dynamic(

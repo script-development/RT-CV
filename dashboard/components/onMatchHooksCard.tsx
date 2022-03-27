@@ -1,7 +1,7 @@
-import { Breadcrumbs, Button, ButtonGroup, Tooltip } from '@material-ui/core'
-import Add from '@material-ui/icons/Add'
-import Delete from '@material-ui/icons/Delete'
-import Edit from '@material-ui/icons/Edit'
+import { Breadcrumbs, Button, ButtonGroup, Tooltip } from '@mui/material'
+import Add from '@mui/icons-material/Add'
+import Delete from '@mui/icons-material/Delete'
+import Edit from '@mui/icons-material/Edit'
 import React, { useState, useEffect } from 'react'
 
 import { fetcher } from '../src/auth'
@@ -10,7 +10,7 @@ import Card from './card'
 import { ModalKind } from './modal'
 import Dynamic from 'next/dynamic'
 import { ModalProps } from './onMatchHookModal/props'
-import { PlayArrow } from '@material-ui/icons'
+import { PlayArrow } from '@mui/icons-material'
 
 const Modal = Dynamic<ModalProps>(() => import('./onMatchHookModal/modal').then(m => m.SecretModal))
 

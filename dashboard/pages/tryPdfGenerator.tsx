@@ -3,7 +3,7 @@ import dynamic from 'next/dynamic'
 import Header from '../components/header'
 import { useEffect, useRef, useState } from 'react'
 import { fetcher } from '../src/auth'
-import { Checkbox, FormControl, FormLabel, Select, MenuItem, InputLabel, CircularProgress, Tooltip, TextField } from "@material-ui/core"
+import { Checkbox, FormControl, FormLabel, Select, MenuItem, InputLabel, CircularProgress, Tooltip, TextField } from "@mui/material"
 
 const JSONCode = dynamic(() => import('../components/jsonCode'), { ssr: false })
 

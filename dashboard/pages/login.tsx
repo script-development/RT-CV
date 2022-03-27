@@ -1,6 +1,8 @@
-import Button from '@material-ui/core/Button'
-import LinearProgress from '@material-ui/core/LinearProgress'
-import TextField from '@material-ui/core/TextField'
+import {
+	Button,
+	LinearProgress,
+	TextField,
+} from '@mui/material'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import React, { useEffect, useState } from 'react'
@@ -78,7 +80,7 @@ export default function Home() {
 						disabled={loading}
 					>Login</Button>
 				</div>
-				<LinearProgress hidden={!loading} />
+				{loading ? <LinearProgress /> : undefined}
 			</form>
 			<style jsx>{`
 				.container {

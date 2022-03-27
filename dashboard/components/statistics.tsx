@@ -4,7 +4,7 @@ import { formatRFC3339, subDays, startOfDay } from 'date-fns'
 import React, { useEffect, useMemo, useState } from 'react'
 import { Match } from '../src/types'
 import { BarChartProps } from './chartProps'
-import { CircularProgress, Tooltip } from '@material-ui/core'
+import { CircularProgress, Tooltip } from '@mui/material'
 
 const BarChart = dynamic<BarChartProps>(() =>
     import('./chart').then(m => m.BarChart),

@@ -1,4 +1,4 @@
-import { Button, Icon } from '@material-ui/core'
+import { Button, Icon } from '@mui/material'
 import Head from 'next/head'
 import Link from 'next/link'
 import React from 'react'

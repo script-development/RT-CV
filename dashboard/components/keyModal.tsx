@@ -8,12 +8,12 @@ import {
     FormControl,
     FormHelperText,
     FormLabel,
-} from '@material-ui/core'
+} from '@mui/material'
 import React, { useState, useEffect } from 'react'
 import { ApiKey } from '../src/types'
 import { allRoles, Roles, roleInfo } from '../src/roles'
 import { randomString } from '../src/random'
-import RefreshIcon from '@material-ui/icons/Refresh'
+import RefreshIcon from '@mui/icons-material/Refresh'
 import { fetcher } from '../src/auth'
 import { Modal, ModalKind } from './modal'
 

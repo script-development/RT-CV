@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Snackbar } from '@material-ui/core'
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Snackbar } from '@mui/material'
 import React, { useState, useEffect } from 'react'
 
 export enum ModalKind {

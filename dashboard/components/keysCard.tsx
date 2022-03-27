@@ -7,11 +7,11 @@ import {
     ButtonGroup,
     Divider,
     Tooltip,
-} from '@material-ui/core'
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
-import Edit from '@material-ui/icons/Edit'
-import Add from '@material-ui/icons/Add'
-import Delete from '@material-ui/icons/Delete'
+} from '@mui/material'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import Edit from '@mui/icons-material/Edit'
+import Add from '@mui/icons-material/Add'
+import Delete from '@mui/icons-material/Delete'
 import React, { useEffect, useState } from 'react'
 import Card from './card'
 import { getKeys } from '../src/auth'

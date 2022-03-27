@@ -1,7 +1,7 @@
 import Header from '../components/header'
 import { useEffect, useState } from "react"
 import Dynamic from 'next/dynamic'
-import { LinearProgress } from '@material-ui/core'
+import { LinearProgress } from '@mui/material'
 import { fetcher } from '../src/auth'
 
 import '@stoplight/elements/styles.min.css'

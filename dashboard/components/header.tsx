@@ -1,5 +1,5 @@
-import { Link, ButtonBase } from "@material-ui/core"
-import ArrowBack from "@material-ui/icons/ArrowBack"
+import { Link, ButtonBase } from "@mui/material"
+import ArrowBack from "@mui/icons-material/ArrowBack"
 import React, { CSSProperties } from "react"
 
 interface HeaderProps {

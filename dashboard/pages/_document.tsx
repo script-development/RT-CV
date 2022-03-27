@@ -1,6 +1,8 @@
 import React from 'react'
 import Document, { Html, Head, Main, NextScript } from 'next/document'
-import { ServerStyleSheets } from '@material-ui/core/styles'
+import { ServerStyleSheets } from '@mui/styles'
+import { createEmotionCache } from '../src/theme';
+import createEmotionServer from '@emotion/server/create-instance';
 
 export default class MyDocument extends Document {
     render() {
@@ -20,22 +22,33 @@ export default class MyDocument extends Document {
     }
 }
 
-// Copied over from https://github.com/mui-org/material-ui/blob/v4.x/examples/nextjs/pages/_document.js
+// Copied over from https://dev.to/hajhosein/nextjs-mui-v5-typescript-tutorial-and-starter-3pab
 MyDocument.getInitialProps = async (ctx) => {
-    const sheets = new ServerStyleSheets();
     const originalRenderPage = ctx.renderPage;
+    const cache = createEmotionCache();
+    const { extractCriticalToChunks } = createEmotionServer(cache);
 
-    ctx.renderPage = () => originalRenderPage({
-        enhanceApp: App => props => sheets.collect(<App {...props} />),
-    });
+    ctx.renderPage = () =>
+        originalRenderPage({
+            enhanceApp: (App: any) => (props) =>
+                <App emotionCache={cache} {...props} />,
+        });
 
     const initialProps = await Document.getInitialProps(ctx);
+    const emotionStyles = extractCriticalToChunks(initialProps.html);
+    const emotionStyleTags = emotionStyles.styles.map((style) => (
+        <style
+            data-emotion={`${style.key} ${style.ids.join(' ')}`}
+            key={style.key}
+            dangerouslySetInnerHTML={{ __html: style.css }}
+        />
+    ));
 
     return {
         ...initialProps,
         styles: [
             ...React.Children.toArray(initialProps.styles),
-            sheets.getStyleElement(),
+            ...emotionStyleTags,
         ],
     };
 };

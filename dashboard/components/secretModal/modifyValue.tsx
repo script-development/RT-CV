@@ -1,10 +1,10 @@
-import { Button, DialogContentText, TextField, Tooltip, FormHelperText, FormControlLabel, Switch } from "@material-ui/core"
-import FormatIndentIncrease from "@material-ui/icons/FormatIndentIncrease"
-import Code from '@material-ui/icons/Code'
-import People from '@material-ui/icons/People'
-import Person from '@material-ui/icons/Person'
-import Delete from '@material-ui/icons/Delete'
-import PersonAdd from '@material-ui/icons/PersonAdd'
+import { Button, DialogContentText, TextField, Tooltip, FormHelperText, FormControlLabel, Switch } from "@mui/material"
+import FormatIndentIncrease from "@mui/icons-material/FormatIndentIncrease"
+import Code from '@mui/icons-material/Code'
+import People from '@mui/icons-material/People'
+import Person from '@mui/icons-material/Person'
+import Delete from '@mui/icons-material/Delete'
+import PersonAdd from '@mui/icons-material/PersonAdd'
 import React, { ReactNode, useEffect, useMemo, useState } from "react"
 import { SecretValueStructure } from '../../src/types'
 

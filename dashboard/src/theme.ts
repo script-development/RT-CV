@@ -1,17 +1,19 @@
-import { createTheme } from '@material-ui/core/styles'
-import { red } from '@material-ui/core/colors'
-
-export const primaryColor = '#ff9800'
-export const secondaryColor = '#ff6e40'
+import { createTheme } from '@mui/material/styles'
+import { red, orange, deepOrange } from '@mui/material/colors';
+import createCache from '@emotion/cache';
 
 export const theme = createTheme({
     palette: {
-        type: 'dark',
+        mode: 'dark',
         // https://material-ui.com/customization/color/#playground
-        primary: { main: primaryColor }, // orange
-        secondary: { main: secondaryColor }, // red
+        primary: orange, // orange
+        secondary: { main: deepOrange.A200 }, // red
         error: {
             main: red.A400,
         },
     },
 });
+
+export const createEmotionCache = () => createCache({ key: 'css' });
+export const primaryColor = orange[500];
+export const secondaryColor = deepOrange.A200;
