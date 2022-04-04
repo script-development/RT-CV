@@ -105,7 +105,7 @@ func TestRouteUpdateProfile(t *testing.T) {
 	NoError(t, err)
 	Len(t, allProfiles, 2, "The mock data contains 2 profiles")
 
-	type M map[string]interface{}
+	type M map[string]any
 
 	tests := []struct {
 		name   string

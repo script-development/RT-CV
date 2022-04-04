@@ -27,7 +27,7 @@ type Connection interface {
 
 	// Find finds multiple entries in the database
 	// The entry argument is to determain on which collection we execute the query
-	Find(entry Entry, results interface{}, filters bson.M, opts ...FindOptions) error
+	Find(entry Entry, results any, filters bson.M, opts ...FindOptions) error
 
 	// Insert inserts an entry into the database
 	Insert(data ...Entry) error

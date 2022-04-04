@@ -20,9 +20,9 @@ type R struct {
 	Description string
 
 	// Res gives the routes
-	Res interface{}
+	Res any
 	// OR use res map if there are multiple possible responses
-	ResMap map[string]interface{}
+	ResMap map[string]any
 	// OR use a completely custom OpenAPIResponse type
 	CustomResponse *OpenAPIResponse
 
@@ -31,7 +31,7 @@ type R struct {
 
 	// Optional
 	// Body can be set to hint the route builder what kind of body this request expects
-	Body interface{}
+	Body any
 	Tags []Tag
 }
 

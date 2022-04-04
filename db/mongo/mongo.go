@@ -73,7 +73,7 @@ func (c *Connection) FindOne(e db.Entry, filter bson.M, optionalOpts ...db.FindO
 }
 
 // Find finds entries based on the filter
-func (c *Connection) Find(e db.Entry, results interface{}, filter bson.M, optionalOpts ...db.FindOptions) error {
+func (c *Connection) Find(e db.Entry, results any, filter bson.M, optionalOpts ...db.FindOptions) error {
 	opts := db.FindOptions{}
 	if len(optionalOpts) > 0 {
 		opts = optionalOpts[0]
@@ -112,9 +112,9 @@ func (c *Connection) Insert(e ...db.Entry) error {
 		_, err := c.collection(e[0]).InsertOne(dbHelpers.Ctx(), e[0])
 		return err
 	default:
-		// Convert e to a slice of interface{}
+		// Convert e to a slice of any
 		// Fixes: panic: interface conversion: interface {} is []db.Entry, not []interface {}
-		eAsInterf := []interface{}{}
+		eAsInterf := []any{}
 		for _, entry := range e {
 			eAsInterf = append(eAsInterf, entry)
 		}

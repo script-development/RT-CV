@@ -41,7 +41,7 @@ const (
 
 // getCtxValue returns a value from the context
 // Will panic if the key is not found
-func getCtxValue(c *fiber.Ctx, key interface{}) interface{} {
+func getCtxValue(c *fiber.Ctx, key any) any {
 	return c.UserContext().Value(key)
 }
 

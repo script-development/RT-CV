@@ -279,7 +279,7 @@ func (d *ProfileHTTPCallData) MakeRequest(profile Profile, match Match) {
 
 	// FIXME set request timeout
 	// FIXME url data in case of get request
-	value, err := json.Marshal(map[string]interface{}{
+	value, err := json.Marshal(map[string]any{
 		"profileId": profile.ID.Hex(),
 		"match":     match,
 	})

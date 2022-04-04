@@ -11,8 +11,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// IMap is a wrapper around map[string]interface{} that's faster to use
-type IMap map[string]interface{}
+// IMap is a wrapper around map[string]any that's faster to use
+type IMap map[string]any
 
 // Routes defines the routes used
 func Routes(app *fiber.App, appVersion string, testing bool) {

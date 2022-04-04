@@ -9,7 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func FilterMatches(filter bson.M, data interface{}) bool {
+func FilterMatches(filter bson.M, data any) bool {
 	return newFilter(filter).matches(data)
 }
 
@@ -24,7 +24,7 @@ func TestFilter(t *testing.T) {
 		name              string
 		matchingFilter    bson.M
 		nonMatchingFilter bson.M
-		data              interface{}
+		data              any
 	}{
 		{
 			"empty filter",
@@ -230,7 +230,7 @@ func TestFilterType(t *testing.T) {
 	scenarios := []struct {
 		typeID      int
 		typeName    string
-		dataToMatch interface{}
+		dataToMatch any
 	}{
 		{1, "double", 1.0},
 		{2, "string", "foo"},
@@ -257,8 +257,8 @@ func TestFilterType(t *testing.T) {
 
 	for _, s := range scenarios {
 		t.Run(s.typeName, func(t *testing.T) {
-			True(t, FilterMatches(bson.M{"foo": bson.M{"$type": s.typeName}}, struct{ Foo interface{} }{Foo: s.dataToMatch}))
-			True(t, FilterMatches(bson.M{"foo": bson.M{"$type": s.typeID}}, struct{ Foo interface{} }{Foo: s.dataToMatch}))
+			True(t, FilterMatches(bson.M{"foo": bson.M{"$type": s.typeName}}, struct{ Foo any }{Foo: s.dataToMatch}))
+			True(t, FilterMatches(bson.M{"foo": bson.M{"$type": s.typeID}}, struct{ Foo any }{Foo: s.dataToMatch}))
 		})
 	}
 }

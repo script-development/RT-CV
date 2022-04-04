@@ -47,7 +47,7 @@ func (c *TestConnection) FindOne(placeInto db.Entry, filters bson.M, optionalOpt
 // The results can be filtered using filters
 // The filters should work equal to MongoDB filters (https://docs.mongodb.com/manual/tutorial/query-documents/)
 // tough this might miss features compared to mongoDB's filters
-func (c *TestConnection) Find(base db.Entry, results interface{}, filters bson.M, optionalOpts ...db.FindOptions) error {
+func (c *TestConnection) Find(base db.Entry, results any, filters bson.M, optionalOpts ...db.FindOptions) error {
 	opts := db.FindOptions{}
 	if len(optionalOpts) > 0 {
 		opts = optionalOpts[0]

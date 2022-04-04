@@ -17,7 +17,7 @@ func TestRouteGetKeyInfo(t *testing.T) {
 		"/api/v1/auth/keyinfo",
 		TestReqOpts{},
 	)
-	bodyValues := map[string]interface{}{}
+	bodyValues := map[string]any{}
 	err := json.Unmarshal(body, &bodyValues)
 	NoError(t, err)
 

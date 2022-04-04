@@ -24,7 +24,7 @@ func newFilter(filters bson.M) *filter {
 	}
 }
 
-func (f *filter) matches(value interface{}) bool {
+func (f *filter) matches(value any) bool {
 	if f.empty {
 		return true
 	}

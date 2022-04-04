@@ -24,7 +24,7 @@ We intent to make this API GDPR compliant.
 
 Requirements:
 
-- GoLang 1.16+
+- GoLang 1.18+
 - Nodejs 15+
 
 ```bash

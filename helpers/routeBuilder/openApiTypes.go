@@ -16,7 +16,7 @@ type OpenAPI struct {
 // OpenAPIComponents implements the OpenAPI Components
 // Ref: https://swagger.io/specification/#components-object
 type OpenAPIComponents struct {
-	Schemas map[string]interface{} `json:"schemas,omitempty"`
+	Schemas map[string]any `json:"schemas,omitempty"`
 	// Responses map[string] `json:"responses,omitempty"`
 	// Parameters map[string] `json:"parameters,omitempty"`
 	// Examples map[string] `json:"examples,omitempty"`
@@ -77,12 +77,12 @@ type OpenAPIOperation struct {
 	Tags        []string `json:"tags,omitempty"`
 	Summary     string   `json:"summary,omitempty"`
 	Description string   `json:"description,omitempty"`
-	// ExternalDocs interface{} `json:"externalDocs,omitempty"` // TODO
+	// ExternalDocs any `json:"externalDocs,omitempty"` // TODO
 	OperationID string                     `json:"operationId,omitempty"`
 	Parameters  []OpenAPIParameter         `json:"parameters,omitempty"`
 	RequestBody *OpenAPIRequestBody        `json:"requestBody,omitempty"`
 	Responses   map[string]OpenAPIResponse `json:"responses,omitempty"`
-	// Callbacks interface{} `json:"callbacks,omitempty"` // TODO
+	// Callbacks any `json:"callbacks,omitempty"` // TODO
 	Deprecated bool `json:"deprecated,omitempty"`
 	// Security   []OpenAPISecurityRequirement `json:"security,omitempty"` // TODO
 	Servers []OpenAPIServer `json:"servers,omitempty"`
@@ -123,19 +123,19 @@ type OpenAPIParameter struct {
 	Deprecated      bool   `json:"deprecated,omitempty"`
 	AllowEmptyValue bool   `json:"allowEmptyValue,omitempty"`
 	//
-	Style         string      `json:"style,omitempty"`
-	Explode       bool        `json:"explode,omitempty"`
-	AllowReserved bool        `json:"allowReserved,omitempty"`
-	Schema        interface{} `json:"schema,omitempty"`
-	Example       interface{} `json:"example,omitempty"`
-	Examples      interface{} `json:"examples,omitempty"`
+	Style         string `json:"style,omitempty"`
+	Explode       bool   `json:"explode,omitempty"`
+	AllowReserved bool   `json:"allowReserved,omitempty"`
+	Schema        any    `json:"schema,omitempty"`
+	Example       any    `json:"example,omitempty"`
+	Examples      any    `json:"examples,omitempty"`
 }
 
 // OpenAPIMediaType implements the me OpenAPI Media Type Object
 // Ref: https://swagger.io/specification/#media-type-object
 type OpenAPIMediaType struct {
-	Schema   interface{}            `json:"schema,omitempty"`
-	Example  interface{}            `json:"example,omitempty"`
-	Examples map[string]interface{} `json:"examples,omitempty"`
+	Schema   any            `json:"schema,omitempty"`
+	Example  any            `json:"example,omitempty"`
+	Examples map[string]any `json:"examples,omitempty"`
 	// Encoding map[string]OpenAPIEncoding `json:"encoding,omitempty"` // TODO
 }

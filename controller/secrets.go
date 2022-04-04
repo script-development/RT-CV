@@ -109,7 +109,7 @@ var routeUpdateOrCreateSecret = routeBuilder.R{
 
 var routeGetSecret = routeBuilder.R{
 	Description: "Get a secret stored for this API Key and key pair",
-	ResMap: map[string]interface{}{
+	ResMap: map[string]any{
 		"free":  IMap{},
 		"user":  models.SecretValueStructureUserT{},
 		"users": []models.SecretValueStructureUserT{},
