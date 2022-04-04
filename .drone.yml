@@ -15,7 +15,7 @@ node:
 steps:
   - name: Test
     pull: if-not-exists
-    image: golang:1.17-alpine
+    image: golang:1.18-alpine
     environment:
       CGO_ENABLED: 0
       GOCACHE: /tmp/cache/go-build # Change the go build cache to a persistent folder

@@ -1,5 +1,5 @@
 # build backend
-FROM golang:1.17-buster AS backend
+FROM golang:1.18-buster AS backend
 
 RUN mkdir /project
 WORKDIR /project
