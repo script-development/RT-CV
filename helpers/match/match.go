@@ -1,6 +1,7 @@
 package match
 
 import (
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -24,6 +25,7 @@ func Match(scraperKey *models.APIKey, profiles []*models.Profile, cv models.CV) 
 	res := []FoundMatch{}
 
 	now := time.Now()
+	nowAsMonths := totalMonths(now)
 
 	for _, profile := range profiles {
 		if !profile.Active {
@@ -58,8 +60,7 @@ func Match(scraperKey *models.APIKey, profiles []*models.Profile, cv models.CV) 
 
 		// Check years since education
 		if profile.YearsSinceEducation > 0 {
-			mustBeAfter := now.AddDate(-profile.YearsSinceEducation, 0, 0)
-			lastEducativeYear := time.Date(1980, time.January, 1, 0, 0, 0, 0, time.Local)
+			lastEducation := time.Date(1980, time.January, 1, 0, 0, 0, 0, time.Local)
 
 			for _, cvEducation := range cv.Educations {
 				if len(cvEducation.Name) == 0 || cvEducation.EndDate == nil {
@@ -67,16 +68,16 @@ func Match(scraperKey *models.APIKey, profiles []*models.Profile, cv models.CV) 
 				}
 
 				t := cvEducation.EndDate.Time()
-				if t.After(lastEducativeYear) {
-					lastEducativeYear = t
+				if t.After(lastEducation) {
+					lastEducation = t
 				}
 			}
 
-			if lastEducativeYear.Before(mustBeAfter) {
+			yearsSinceEducation := yearSince(nowAsMonths, totalMonths(lastEducation))
+			if yearsSinceEducation > profile.YearsSinceEducation {
 				continue
 			}
 
-			yearsSinceEducation := now.Year() - lastEducativeYear.Year()
 			match.YearsSinceEducation = &yearsSinceEducation
 		}
 
@@ -189,32 +190,31 @@ func Match(scraperKey *models.APIKey, profiles []*models.Profile, cv models.CV) 
 		// Check years since work
 		if profile.YearsSinceWork != nil && *profile.YearsSinceWork > 0 {
 			profileMustYearsSinceWork := *profile.YearsSinceWork
-			nowYear := now.Year()
-			lastWorkYear := 0
+			lastWorkExp := time.Date(1980, time.January, 1, 0, 0, 0, 0, time.Local)
 
 			for _, cvWorkExp := range cv.WorkExperiences {
 				if cvWorkExp.EndDate == nil {
 					continue
 				}
 
-				endDateYear := cvWorkExp.EndDate.Time().Year()
-				if endDateYear > lastWorkYear {
-					lastWorkYear = endDateYear
+				endDate := cvWorkExp.EndDate.Time()
+				if endDate.After(lastWorkExp) {
+					lastWorkExp = endDate
 				}
 			}
 
 			// Sanity check
-			if lastWorkYear > nowYear {
-				lastWorkYear = nowYear
+			if lastWorkExp.After(now) {
+				lastWorkExp = now
 			}
 
-			yearsSinceLastWork := nowYear - lastWorkYear
-			if yearsSinceLastWork > profileMustYearsSinceWork {
+			yearsSinceLastWorkExp := yearSince(nowAsMonths, totalMonths(lastWorkExp))
+			if yearsSinceLastWorkExp > profileMustYearsSinceWork {
 				// To long ago since last work
 				continue
 			}
 
-			match.YearsSinceWork = &yearsSinceLastWork
+			match.YearsSinceWork = &yearsSinceLastWorkExp
 		}
 
 		// Check drivers license
@@ -321,4 +321,12 @@ func (match FoundMatch) HandleMatch(cv models.CV, onMatch models.ProfileOnMatch,
 			}
 		}
 	}
+}
+
+func totalMonths(t time.Time) int {
+	return t.Year()*12 + int(t.Month()) - 1
+}
+
+func yearSince(nowInMonths int, comparedToMonths int) int {
+	return int(math.Round(float64(nowInMonths-comparedToMonths) / 12))
 }

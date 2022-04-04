@@ -316,3 +316,32 @@ func TestGetMatchSentence(t *testing.T) {
 		" en postcode in range 2000 - 5000"
 	Equal(t, expectedResult, sentence)
 }
+
+func TestTotalMonths(t *testing.T) {
+	now := time.Now()
+	totalMonths := totalMonths(now)
+	Greater(t, totalMonths, now.Year()*12)
+}
+
+func TestYearSince(t *testing.T) {
+	now := time.Now()
+	testCases := []struct {
+		comparedTo time.Time
+		expect     int
+	}{
+		{now, 0},
+		{now.AddDate(-1, 0, 0), 1},
+		{now.AddDate(-2, 0, 0), 2},
+		{now.AddDate(-5, 0, 0), 5},
+		{now.AddDate(-1, -6, 0), 2},
+		{now.AddDate(0, -6, 0), 1},
+	}
+
+	for _, testCase := range testCases {
+		Equal(
+			t,
+			testCase.expect,
+			yearSince(totalMonths(now), totalMonths(testCase.comparedTo)),
+		)
+	}
+}
