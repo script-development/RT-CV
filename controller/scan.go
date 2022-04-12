@@ -93,8 +93,7 @@ var routeScraperScanCV = routeBuilder.R{
 			return c.JSON(resp)
 		}
 
-		resp.HasMatches = true
-		MatchesProcess.AppendMatchesToProcess(ProcessMatches{
+		ProcessMatches{
 			Debug:           body.Debug,
 			MatchedProfiles: matchedProfiles,
 			CV:              body.CV,
@@ -103,7 +102,8 @@ var routeScraperScanCV = routeBuilder.R{
 			KeyID:           key.ID,
 			KeyName:         key.Name,
 			RequestID:       ctx.GetRequestID(c),
-		})
+		}.Process()
+		resp.HasMatches = true
 		if body.Debug {
 			resp.Matches = matchedProfiles
 		}
