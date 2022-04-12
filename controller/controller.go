@@ -68,6 +68,7 @@ func Routes(app *fiber.App, appVersion string, testing bool) {
 
 		b.Group(`/analytics`, func(b *routeBuilder.Router) {
 			b.Group(`/matches`, func(b *routeBuilder.Router) {
+				b.Get(`/perProfile/period/:from/:to`, routeGetMatchesPeriodPerProfile)
 				profileAndNonProfileRoutes := func(b *routeBuilder.Router) {
 					b.Get(`/period/:from/:to`, routeGetMatchesPeriod)
 				}

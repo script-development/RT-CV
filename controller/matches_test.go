@@ -23,13 +23,24 @@ func TestRouteGetMatchesWithinRegion(t *testing.T) {
 		fmt.Sprintf("/api/v1/analytics/matches/period/%s/%s", from, to),
 		TestReqOpts{},
 	)
-
 	bodyMatches := []models.Match{}
 	err := json.Unmarshal(body, &bodyMatches)
 	NoError(t, err)
 
 	// There are 2 dummy matches in the database
 	Len(t, bodyMatches, 2)
+
+	_, body = r.MakeRequest(
+		routeBuilder.Get,
+		fmt.Sprintf("/api/v1/analytics/matches/perProfile/period/%s/%s", from, to),
+		TestReqOpts{},
+	)
+	bodyMatchesPerProfile := MatchesPerProfile{}
+	err = json.Unmarshal(body, &bodyMatchesPerProfile)
+	NoError(t, err)
+
+	// There are 2 dummy matches in the database
+	Len(t, bodyMatchesPerProfile, 2)
 
 	_, body = r.MakeRequest(
 		routeBuilder.Get,
