@@ -30,6 +30,7 @@ var routeQueryProfiles = routeBuilder.R{
 		"make a MongoDB query directly against the database.",
 		"For more info about mongodb queries you can take a look at: https://www.mongodb.com/docs/manual/tutorial/query-documents/#std-label-read-operations-query-argument",
 		"An example query would be something like: `" + exampleQuery + "`",
+		"Note that you can't filter for the _id field",
 	}, "\n\n"),
 	Body: primitive.M{},
 	Res:  []models.Profile{},
