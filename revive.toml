@@ -23,6 +23,8 @@ enableAllRules = true
   Disabled = true
 [rule.banned-characters]
   Disabled = true
+[rule.nested-structs]
+  Disabled = true
 
 [rule.line-length-limit]
   Disabled = true
