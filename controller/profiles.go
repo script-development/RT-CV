@@ -23,10 +23,16 @@ var routeAllProfiles = routeBuilder.R{
 	},
 }
 
+const exampleQuery = `{"labels": {"key": "value", "other_key": {"$exists": true}}}`
+
 var routeQueryProfiles = routeBuilder.R{
-	Description: "make a MongoDB query directly against the database, For more info about mongodb queries you can take a look at: https://www.mongodb.com/docs/manual/tutorial/query-documents/#std-label-read-operations-query-argument",
-	Body:        primitive.M{},
-	Res:         []models.Profile{},
+	Description: strings.Join([]string{
+		"make a MongoDB query directly against the database.",
+		"For more info about mongodb queries you can take a look at: https://www.mongodb.com/docs/manual/tutorial/query-documents/#std-label-read-operations-query-argument",
+		"An example query would be something like: `" + exampleQuery + "`",
+	}, "\n\n"),
+	Body: primitive.M{},
+	Res:  []models.Profile{},
 	Fn: func(c *fiber.Ctx) error {
 		body := primitive.M{}
 		err := c.BodyParser(&body)
