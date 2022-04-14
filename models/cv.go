@@ -21,6 +21,7 @@ import (
 type CV struct {
 	Title           string                       `json:"-"` // Not supported yet
 	ReferenceNumber string                       `json:"referenceNumber" description:"The reference number (ID) of this CV on the site it was scraped from. We use this to track duplicated CVs"`
+	Link            string                       `json:"link" description:"A link to the page on the site where this cv was found"`
 	CreatedAt       *jsonHelpers.RFC3339Nano     `json:"createdAt,omitempty"`
 	LastChanged     *jsonHelpers.RFC3339Nano     `json:"lastChanged,omitempty"`
 	Educations      []Education                  `json:"educations,omitempty"`
@@ -333,6 +334,7 @@ func ExampleCV() *CV {
 	return &CV{
 		Title:           "Pilot with experience in farming simulator 2020",
 		ReferenceNumber: "4455-PIETER",
+		Link:            "https://website-this-cv-came-from.ninja/person/4455",
 		CreatedAt:       now,
 		LastChanged:     now,
 
