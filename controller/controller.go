@@ -78,15 +78,22 @@ func Routes(app *fiber.App, appVersion string, testing bool) {
 		}, requiresAuth(models.APIKeyRoleInformationObtainer|models.APIKeyRoleDashboard))
 
 		b.Group(`/profiles`, func(b *routeBuilder.Router) {
-			b.Get(`count`, routeGetProfilesCount, requiresAuth(models.APIKeyRoleInformationObtainer|models.APIKeyRoleDashboard))
-			b.Post(``, routeCreateProfile, requiresAuth(models.APIKeyRoleController))
-			b.Get(``, routeAllProfiles, requiresAuth(models.APIKeyRoleInformationObtainer))
-			b.Post(`query`, routeQueryProfiles, requiresAuth(models.APIKeyRoleInformationObtainer))
-			b.Group(`/:profile`, func(b *routeBuilder.Router) {
-				b.Get(``, routeGetProfile, requiresAuth(models.APIKeyRoleInformationObtainer))
-				b.Put(``, routeModifyProfile, requiresAuth(models.APIKeyRoleController))
-				b.Delete(``, routeDeleteProfile, requiresAuth(models.APIKeyRoleController))
-			}, middlewareBindProfile())
+			// Profile routes that required the information obtainer role
+			b.Group(``, func(r *routeBuilder.Router) {
+				b.Get(`count`, routeGetProfilesCount)
+				b.Get(``, routeAllProfiles)
+				b.Post(`query`, routeQueryProfiles)
+				b.Get(`/:profile`, routeGetProfile, middlewareBindProfile())
+			}, requiresAuth(models.APIKeyRoleInformationObtainer|models.APIKeyRoleDashboard))
+
+			// Profile routes that require the controller role
+			b.Group(``, func(r *routeBuilder.Router) {
+				b.Post(``, routeCreateProfile, requiresAuth(models.APIKeyRoleController))
+				b.Group(`/:profile`, func(b *routeBuilder.Router) {
+					b.Put(``, routeModifyProfile, requiresAuth(models.APIKeyRoleController))
+					b.Delete(``, routeDeleteProfile, requiresAuth(models.APIKeyRoleController))
+				}, middlewareBindProfile())
+			}, requiresAuth(models.APIKeyRoleController|models.APIKeyRoleDashboard))
 		}, requiresAuth(0))
 
 		b.Group(`/keys`, func(b *routeBuilder.Router) {
