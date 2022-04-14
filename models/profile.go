@@ -47,6 +47,8 @@ type Profile struct {
 	// What should happen on a match
 	OnMatch ProfileOnMatch `json:"onMatch" bson:"onMatch" description:"What should happen when a match is made on this profile"`
 
+	Lables map[string]any `json:"labels" description:"custom labels that can be used by API users to identify profiles, the key needs to be a string and the value can be anything"`
+
 	// OldID is used to keep track of converted old profiles
 	OldID *uint64 `bson:"_old_id" json:"-"`
 
@@ -117,9 +119,9 @@ func GetActualActiveProfilesCount(conn db.Connection) (uint64, error) {
 }
 
 // GetProfiles returns all profiles from the database
-func GetProfiles(conn db.Connection) ([]Profile, error) {
+func GetProfiles(conn db.Connection, filters primitive.M) ([]Profile, error) {
 	profiles := []Profile{}
-	err := conn.Find(&Profile{}, &profiles, nil)
+	err := conn.Find(&Profile{}, &profiles, filters)
 	return profiles, err
 }
 

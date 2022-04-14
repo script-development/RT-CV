@@ -85,6 +85,13 @@ func TestProfileRoutes(t *testing.T) {
 	err = json.Unmarshal(res, resProfile)
 	NoError(t, err)
 	Equal(t, profileToInsert.Name, resProfile.Name)
+
+	// Query the newly created profile
+	_, res = app.MakeRequest(routeBuilder.Post, `/api/v1/profiles/query`, TestReqOpts{Body: []byte(`{"name": "` + profileToInsert.Name + `"}`)})
+	resProfiles = []models.Profile{}
+	err = json.Unmarshal(res, &resProfiles)
+	NoError(t, err)
+	Len(t, resProfiles, 1)
 }
 
 func TestRouteGetProfilesCount(t *testing.T) {
@@ -249,6 +256,17 @@ func TestRouteUpdateProfile(t *testing.T) {
 				Equal(t, models.ProfileOnMatch{
 					SendMail: []models.ProfileSendEmailData{{Email: "some-email@f2f.com"}},
 				}, after.OnMatch)
+			},
+		},
+		{
+			"Set label",
+			M{"labels": M{"key": []string{"value_1", "value_2"}}},
+			func(t *testing.T, before, after models.Profile) {
+				jsonify := func(in any) string {
+					out, _ := json.Marshal(in)
+					return string(out)
+				}
+				Equal(t, `{"key":["value_1","value_2"]}`, jsonify(after.Lables))
 			},
 		},
 	}

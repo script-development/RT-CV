@@ -15,7 +15,26 @@ var routeAllProfiles = routeBuilder.R{
 	Description: "get all profiles stored in the database",
 	Res:         []models.Profile{},
 	Fn: func(c *fiber.Ctx) error {
-		profiles, err := models.GetProfiles(ctx.GetDbConn(c))
+		profiles, err := models.GetProfiles(ctx.GetDbConn(c), nil)
+		if err != nil {
+			return err
+		}
+		return c.JSON(profiles)
+	},
+}
+
+var routeQueryProfiles = routeBuilder.R{
+	Description: "make a MongoDB query directly against the database, For more info about mongodb queries you can take a look at: https://www.mongodb.com/docs/manual/tutorial/query-documents/#std-label-read-operations-query-argument",
+	Body:        primitive.M{},
+	Res:         []models.Profile{},
+	Fn: func(c *fiber.Ctx) error {
+		body := primitive.M{}
+		err := c.BodyParser(&body)
+		if err != nil {
+			return err
+		}
+
+		profiles, err := models.GetProfiles(ctx.GetDbConn(c), body)
 		if err != nil {
 			return err
 		}
@@ -153,6 +172,8 @@ type UpdateProfileReq struct {
 
 	Zipcodes []models.ProfileDutchZipcode `json:"zipCodes"`
 
+	Lables map[string]any `json:"labels" description:"custom labels that can be used by API users to identify profiles, the key needs to be a string and the value can be anything"`
+
 	OnMatch *models.ProfileOnMatch `json:"onMatch"`
 }
 
@@ -237,6 +258,9 @@ var routeModifyProfile = routeBuilder.R{
 		}
 		if body.OnMatch != nil {
 			profile.OnMatch = *body.OnMatch
+		}
+		if body.Lables != nil {
+			profile.Lables = body.Lables
 		}
 
 		err = dbConn.UpdateByID(profile)

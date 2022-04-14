@@ -81,6 +81,7 @@ func Routes(app *fiber.App, appVersion string, testing bool) {
 			b.Get(`count`, routeGetProfilesCount, requiresAuth(models.APIKeyRoleInformationObtainer|models.APIKeyRoleDashboard))
 			b.Post(``, routeCreateProfile, requiresAuth(models.APIKeyRoleController))
 			b.Get(``, routeAllProfiles, requiresAuth(models.APIKeyRoleInformationObtainer))
+			b.Post(`query`, routeQueryProfiles, requiresAuth(models.APIKeyRoleInformationObtainer))
 			b.Group(`/:profile`, func(b *routeBuilder.Router) {
 				b.Get(``, routeGetProfile, requiresAuth(models.APIKeyRoleInformationObtainer))
 				b.Put(``, routeModifyProfile, requiresAuth(models.APIKeyRoleController))
