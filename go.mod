@@ -13,7 +13,6 @@ require (
 	github.com/mjarkk/jsonschema v1.1.0
 	github.com/stretchr/testify v1.7.1
 	github.com/tj/assert v0.0.3
-	github.com/valyala/fasthttp v1.34.0
 	go.mongodb.org/mongo-driver v1.8.4
 	jaytaylor.com/html2text v0.0.0-20211105163654-bc68cce691ba
 )
@@ -47,6 +46,7 @@ require (
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	github.com/valyala/fasthttp v1.34.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.0.2 // indirect
