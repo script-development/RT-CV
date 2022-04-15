@@ -22,7 +22,7 @@ type FoundMatch struct {
 }
 
 // Match tries to match a profile to a CV
-func Match(scraperKeyID primitive.ObjectID, profiles []*models.Profile, cv models.CV) []FoundMatch {
+func Match(scraperKeyID, requestID primitive.ObjectID, profiles []*models.Profile, cv models.CV) []FoundMatch {
 	res := []FoundMatch{}
 
 	now := time.Now()
@@ -40,9 +40,12 @@ func Match(scraperKeyID primitive.ObjectID, profiles []*models.Profile, cv model
 		}
 
 		match := models.Match{
-			M:         db.NewM(),
-			ProfileID: profile.ID,
-			When:      jsonHelpers.RFC3339Nano(now),
+			M:           db.NewM(),
+			RequestID:   requestID,
+			ProfileID:   profile.ID,
+			KeyID:       scraperKeyID,
+			When:        jsonHelpers.RFC3339Nano(now),
+			ReferenceNr: cv.ReferenceNumber,
 		}
 
 		// Check domain

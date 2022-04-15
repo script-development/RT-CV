@@ -83,7 +83,7 @@ var routeScraperScanCV = routeBuilder.R{
 		}
 
 		// Try to match a profile to a CV
-		matchedProfiles := match.Match(ctx.Key.ID, profiles, body.CV)
+		matchedProfiles := match.Match(ctx.Key.ID, ctx.RequestID, profiles, body.CV)
 
 		resp := RouteScraperScanCVRes{Success: true, Matches: []match.FoundMatch{}}
 		if len(matchedProfiles) == 0 {
@@ -98,7 +98,6 @@ var routeScraperScanCV = routeBuilder.R{
 			DBConn:          ctx.DBConn,
 			KeyID:           ctx.Key.ID,
 			KeyName:         ctx.Key.Name,
-			RequestID:       ctx.RequestID,
 		})
 
 		resp.HasMatches = true
@@ -156,13 +155,13 @@ func (p *MatchesProcessor) processMatches() {
 
 // ProcessMatches contains the content for processing a match
 type ProcessMatches struct {
-	Debug            bool
-	MatchedProfiles  []match.FoundMatch
-	CV               models.CV
-	Logger           log.Entry
-	DBConn           db.Connection
-	KeyID, RequestID primitive.ObjectID
-	KeyName          string
+	Debug           bool
+	MatchedProfiles []match.FoundMatch
+	CV              models.CV
+	Logger          log.Entry
+	DBConn          db.Connection
+	KeyID           primitive.ObjectID
+	KeyName         string
 }
 
 // DataSendToHook contains the content for processing a match
@@ -208,11 +207,7 @@ func (args ProcessMatches) Process() {
 
 	analyticsData := make([]db.Entry, len(args.MatchedProfiles))
 	for idx := range args.MatchedProfiles {
-		args.MatchedProfiles[idx].Matches.RequestID = args.RequestID
-		args.MatchedProfiles[idx].Matches.KeyID = args.KeyID
 		args.MatchedProfiles[idx].Matches.Debug = args.Debug
-		args.MatchedProfiles[idx].Matches.ReferenceNr = args.CV.ReferenceNumber
-
 		analyticsData[idx] = &args.MatchedProfiles[idx].Matches
 	}
 	err = args.DBConn.Insert(analyticsData...)
@@ -228,7 +223,7 @@ func (args ProcessMatches) Process() {
 	}
 
 	if len(hooks) > 0 {
-		stopRemainder := false
+		stopRemainingActions := false
 		hookData, err := json.Marshal(DataSendToHook{
 			MatchedProfiles: args.MatchedProfiles,
 			CV:              args.CV,
@@ -247,7 +242,7 @@ func (args ProcessMatches) Process() {
 			}
 
 			if hook.StopRemainingActions {
-				stopRemainder = true
+				stopRemainingActions = true
 			}
 
 			err = hook.Call(bytes.NewBuffer(hookData))
@@ -258,7 +253,7 @@ func (args ProcessMatches) Process() {
 			}
 		}
 
-		if stopRemainder {
+		if stopRemainingActions {
 			return
 		}
 	}
