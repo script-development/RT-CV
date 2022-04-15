@@ -12,6 +12,7 @@ import (
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/jsonHelpers"
 	"github.com/script-development/RT-CV/models"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // FoundMatch contains a match and why something is matched
@@ -21,7 +22,7 @@ type FoundMatch struct {
 }
 
 // Match tries to match a profile to a CV
-func Match(scraperKey *models.APIKey, profiles []*models.Profile, cv models.CV) []FoundMatch {
+func Match(scraperKeyID primitive.ObjectID, profiles []*models.Profile, cv models.CV) []FoundMatch {
 	res := []FoundMatch{}
 
 	now := time.Now()
@@ -48,7 +49,7 @@ func Match(scraperKey *models.APIKey, profiles []*models.Profile, cv models.CV) 
 		if len(profile.AllowedScrapers) > 0 {
 			foundMatch := false
 			for _, id := range profile.AllowedScrapers {
-				if id == scraperKey.ID {
+				if id == scraperKeyID {
 					foundMatch = true
 					break
 				}

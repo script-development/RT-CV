@@ -83,7 +83,7 @@ var routeScraperScanCV = routeBuilder.R{
 		}
 
 		// Try to match a profile to a CV
-		matchedProfiles := match.Match(ctx.Key, profiles, body.CV)
+		matchedProfiles := match.Match(ctx.Key.ID, profiles, body.CV)
 
 		resp := RouteScraperScanCVRes{Success: true, Matches: []match.FoundMatch{}}
 		if len(matchedProfiles) == 0 {

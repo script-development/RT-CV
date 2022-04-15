@@ -15,7 +15,7 @@ func MustMatchSingle(t *testing.T, p models.Profile, cv models.CV) {
 	p.AllowedScrapers = []primitive.ObjectID{mock.Key2.ID}
 	p.Active = true
 
-	matches := Match(mock.Key2, []*models.Profile{&p}, cv)
+	matches := Match(mock.Key2.ID, []*models.Profile{&p}, cv)
 	Equal(t, 1, len(matches), matches)
 }
 
@@ -23,12 +23,12 @@ func MustNotMatchSingle(t *testing.T, p models.Profile, cv models.CV) {
 	p.AllowedScrapers = []primitive.ObjectID{mock.Key2.ID}
 	p.Active = true
 
-	matches := Match(mock.Key2, []*models.Profile{&p}, cv)
+	matches := Match(mock.Key2.ID, []*models.Profile{&p}, cv)
 	Equal(t, 0, len(matches), matches)
 }
 
 func TestMatchSiteMismatch(t *testing.T) {
-	matches := Match(mock.Key2, []*models.Profile{{
+	matches := Match(mock.Key2.ID, []*models.Profile{{
 		AllowedScrapers: []primitive.ObjectID{mock.Key1.ID},
 		Active:          true,
 	}}, models.CV{})
@@ -36,7 +36,7 @@ func TestMatchSiteMismatch(t *testing.T) {
 }
 
 func TestMatchNonActive(t *testing.T) {
-	matches := Match(mock.Key2, []*models.Profile{{Active: false}}, models.CV{})
+	matches := Match(mock.Key2.ID, []*models.Profile{{Active: false}}, models.CV{})
 	Equal(t, 0, len(matches), matches)
 }
 
