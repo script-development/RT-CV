@@ -69,11 +69,9 @@ func Routes(app *fiber.App, appVersion string, testing bool) {
 		b.Group(`/analytics`, func(b *routeBuilder.Router) {
 			b.Group(`/matches`, func(b *routeBuilder.Router) {
 				b.Get(`/perProfile/period/:from/:to`, routeGetMatchesPeriodPerProfile)
-				profileAndNonProfileRoutes := func(b *routeBuilder.Router) {
-					b.Get(`/period/:from/:to`, routeGetMatchesPeriod)
-				}
-				b.Group(`/profile/:profile`, profileAndNonProfileRoutes, middlewareBindProfile())
-				b.Group(``, profileAndNonProfileRoutes)
+				b.Get(`/period/:from/:to`, routeGetMatchesPeriod)
+				b.Get(`/profile/:profile/period/:from/:to`, routeGetMatchesPeroidForProfile, middlewareBindProfile())
+				b.Post(`/profilesQuery/period/:from/:to`, routeGetMatchesPeroidForProfilesQuery)
 			})
 		}, requiresAuth(models.APIKeyRoleInformationObtainer|models.APIKeyRoleDashboard))
 
