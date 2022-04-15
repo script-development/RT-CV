@@ -273,7 +273,7 @@ func (args ProcessMatches) Process() {
 		}
 
 		if len(onMatch.SendMail) == 0 {
-			aMatch.HandleMatch(cv, onMatch, nil, args.KeyName)
+			continue
 		}
 
 		if onMatch.HasPDFOptions() {

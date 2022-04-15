@@ -1,10 +1,8 @@
 package models
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"net/url"
 	"os"
 	"regexp"
 
@@ -13,7 +11,6 @@ import (
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/emailservice"
 	"github.com/script-development/RT-CV/helpers/jsonHelpers"
-	"github.com/valyala/fasthttp"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -77,7 +74,6 @@ func (*Profile) Indexes() []mongo.IndexModel {
 		{Keys: bson.M{"educations": 1}},
 		{Keys: bson.M{"zipCodes": 1}},
 		{Keys: bson.M{"onMatch.sendMail": 1}},
-		{Keys: bson.M{"onMatch.httpCall": 1}},
 	}
 }
 
@@ -94,12 +90,7 @@ func actualActiveProfilesFilter() bson.M {
 					{"educations": isArrayWContent},
 				},
 			},
-			{
-				"$or": []bson.M{
-					{"onMatch.sendMail": isArrayWContent},
-					{"onMatch.httpCall": isArrayWContent},
-				},
-			},
+			{"onMatch.sendMail": isArrayWContent},
 		},
 	}
 }
@@ -140,15 +131,6 @@ func GetProfile(conn db.Connection, id primitive.ObjectID) (Profile, error) {
 // ProfileProfession contains information about a proffession
 type ProfileProfession struct {
 	Name string `json:"name"`
-
-	// TODO find out what this is about?
-	// HeadFunctionID int
-	// SubsectorLevel1ID int
-	// SubsectorLevel2ID int
-	// SubsectorLevel3ID int
-	// SubsectorLevel4ID int
-	// SubsectorLevel5ID int
-	// SubsectorLevel6ID int
 }
 
 // ProfileDriversLicense contains the drivers license name
@@ -159,15 +141,7 @@ type ProfileDriversLicense struct {
 // ProfileEducation contains information about an education
 type ProfileEducation struct {
 	Name string `json:"name"`
-	// HeadEducationID int
-	// SubsectorID     int
 }
-
-// type ProfileProfession struct {
-// 	ID        int `gorm:"primaryKey"`
-// 	ProfileID int
-// 	Name      string
-// }
 
 // ProfileDutchZipcode is dutch zipcode range limited to the number
 type ProfileDutchZipcode struct {
@@ -192,7 +166,6 @@ func (p *ProfileDutchZipcode) IsWithinCithAndArea(cityAndArea uint16) bool {
 // ProfileOnMatch defines what should happen when a profile is matched to a CV
 type ProfileOnMatch struct {
 	SendMail   []ProfileSendEmailData `json:"sendMail" bson:"sendMail"`
-	HTTPCall   []ProfileHTTPCallData  `json:"httpCall" bson:"httpCall"`
 	PdfOptions *PdfOptions            `json:"pdfOptions" bson:"pdfOptions" description:"Options for customizing the PDF, for more info about this object look at the /tryPdfGenerator page"`
 }
 
@@ -266,37 +239,6 @@ func (d *ProfileSendEmailData) SendEmail(profile Profile, htmlBody []byte, pdfFi
 	return nil
 }
 
-// ProfileHTTPCallData defines a http address that should be called when a match was made
-type ProfileHTTPCallData struct {
-	URI    string `json:"uri"`
-	Method string `json:"method"`
-}
-
-// MakeRequest creates a http request
-func (d *ProfileHTTPCallData) MakeRequest(profile Profile, match Match) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	req.SetRequestURI(d.URI)
-	req.Header.SetMethod(d.Method)
-
-	// FIXME set request timeout
-	// FIXME url data in case of get request
-	value, err := json.Marshal(map[string]any{
-		"profileId": profile.ID.Hex(),
-		"match":     match,
-	})
-	if err != nil {
-		req.ResetBody()
-		req.AppendBody(value)
-	}
-
-	resp := fasthttp.AcquireResponse()
-	defer fasthttp.ReleaseResponse(resp)
-
-	// We don't care about the error returned here as it's not our task to keep the endpoint running
-	var _ = fasthttp.Do(req, resp)
-}
-
 // CheckAPIKeysExists checks if apiKeys are valid IDs of existing keys
 func CheckAPIKeysExists(conn db.Connection, apiKeys []primitive.ObjectID) error {
 	if len(apiKeys) == 0 {
@@ -334,9 +276,6 @@ func (p *Profile) ValidateCreateNewProfile(conn db.Connection) error {
 		}
 	}
 
-	if len(p.OnMatch.SendMail) == 0 && len(p.OnMatch.HTTPCall) == 0 {
-		return errors.New("at least on of the profile onMatch options be set")
-	}
 	emailRegex := regexp.MustCompile(
 		"^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@" +
 			"[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?" +
@@ -345,30 +284,6 @@ func (p *Profile) ValidateCreateNewProfile(conn db.Connection) error {
 	for idx, mail := range p.OnMatch.SendMail {
 		if len(mail.Email) < 3 || len(mail.Email) > 254 || !emailRegex.MatchString(mail.Email) {
 			return fmt.Errorf("onMatch.sendMail[%d].email: invalid email address", idx)
-		}
-	}
-	for idx, call := range p.OnMatch.HTTPCall {
-		uri, err := url.Parse(call.URI)
-		if err != nil {
-			return fmt.Errorf("onMatch.httpCall[%d].uri: %s", idx, err.Error())
-		}
-		if uri.Scheme != "http" && uri.Scheme != "https" {
-			return fmt.Errorf("onMatch.httpCall[%d].uri: url schema must be set to http or https", idx)
-		}
-		if uri.User != nil {
-			return fmt.Errorf("onMatch.httpCall[%d].uri: user information is not allowed", idx)
-		}
-		if uri.Host == "" && uri.Opaque == "" {
-			return fmt.Errorf("onMatch.httpCall[%d].uri: host must be set", idx)
-		}
-		switch call.Method {
-		case "", "GET", "POST", "PATCH", "PUT", "DELETE":
-		default:
-			return fmt.Errorf(
-				"onMatch.httpCall[%d].method: not a valid method, must be one of "+
-					`"GET", "POST", "PATCH", "PUT", "DELETE" or empty to default to GET`,
-				idx,
-			)
 		}
 	}
 

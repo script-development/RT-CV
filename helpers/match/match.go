@@ -305,23 +305,18 @@ func Match(scraperKeyID, requestID primitive.ObjectID, profiles []*models.Profil
 
 // HandleMatch sends a match to the desired destination based on the OnMatch field in the profile
 func (match FoundMatch) HandleMatch(cv models.CV, onMatch models.ProfileOnMatch, pdfFile *os.File, keyName string) {
-	for _, http := range onMatch.HTTPCall {
-		go func(http models.ProfileHTTPCallData) {
-			http.MakeRequest(match.Profile, match.Matches)
-		}(http)
+	if len(onMatch.SendMail) == 0 {
+		return
 	}
 
-	emailsLen := len(onMatch.SendMail)
-	if emailsLen != 0 {
-		emailBody, err := cv.GetEmailHTML(match.Profile, match.Matches.GetMatchSentence(), keyName)
-		if err != nil {
-			log.WithError(err).Error("unable to generate email body from CV")
-		} else {
-			for _, email := range onMatch.SendMail {
-				err := email.SendEmail(match.Profile, emailBody.Bytes(), pdfFile)
-				if err != nil {
-					log.WithError(err).Error("unable to send email")
-				}
+	emailBody, err := cv.GetEmailHTML(match.Profile, match.Matches.GetMatchSentence(), keyName)
+	if err != nil {
+		log.WithError(err).Error("unable to generate email body from CV")
+	} else {
+		for _, email := range onMatch.SendMail {
+			err := email.SendEmail(match.Profile, emailBody.Bytes(), pdfFile)
+			if err != nil {
+				log.WithError(err).Error("unable to send email")
 			}
 		}
 	}
