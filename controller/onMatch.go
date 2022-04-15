@@ -9,7 +9,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/script-development/RT-CV/controller/ctx"
-	ctxPkg "github.com/script-development/RT-CV/controller/ctx"
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/jsonHelpers"
 	"github.com/script-development/RT-CV/helpers/match"
@@ -98,7 +97,7 @@ var routeCreateOnMatchHooks = routeBuilder.R{
 		if err != nil {
 			return err
 		}
-		ctx := ctxPkg.Get(c)
+		ctx := ctx.Get(c)
 
 		hook := models.OnMatchHook{
 			M:     db.NewM(),
@@ -122,7 +121,7 @@ var routeDeleteOnMatchHook = routeBuilder.R{
 	Description: "Delete a on match hook",
 	Res:         models.OnMatchHook{},
 	Fn: func(c *fiber.Ctx) error {
-		ctx := ctxPkg.Get(c)
+		ctx := ctx.Get(c)
 		err := ctx.DBConn.DeleteByID(ctx.OnMatchHook)
 		if err != nil {
 			return err
@@ -141,7 +140,7 @@ var routeUpdateOnMatchHook = routeBuilder.R{
 		if err != nil {
 			return err
 		}
-		ctx := ctxPkg.Get(c)
+		ctx := ctx.Get(c)
 
 		err = body.applyToHook(ctx.OnMatchHook, false)
 		if err != nil {
@@ -165,7 +164,7 @@ var routeTestOnMatchHook = routeBuilder.R{
 	Description: "Test a on match hook",
 	Res:         ExplainDataSendToHook{},
 	Fn: func(c *fiber.Ctx) error {
-		ctx := ctxPkg.Get(c)
+		ctx := ctx.Get(c)
 		cv := *models.ExampleCV()
 
 		yearsSinceWork := 3
@@ -214,7 +213,7 @@ func middlewareBindHook() routeBuilder.M {
 			if err != nil {
 				return err
 			}
-			ctx := ctxPkg.Get(c)
+			ctx := ctx.Get(c)
 			hook := models.OnMatchHook{}
 			query := bson.M{"_id": hookID}
 			args := db.FindOptions{NoDefaultFilters: true}
