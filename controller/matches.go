@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/script-development/RT-CV/controller/ctx"
+	ctxPkg "github.com/script-development/RT-CV/controller/ctx"
 	"github.com/script-development/RT-CV/helpers/routeBuilder"
 	"github.com/script-development/RT-CV/models"
 	"go.mongodb.org/mongo-driver/bson"
@@ -19,7 +19,7 @@ the from and to param should be in the RFC 3339 format
 _RFC 3339 is basically an extension to iso 8601_`,
 	Res: []models.Match{},
 	Fn: func(c *fiber.Ctx) error {
-		db := ctx.GetDbConn(c)
+		ctx := ctxPkg.Get(c)
 
 		fromParam, toParam := c.Params("from"), c.Params("to")
 		from, err := time.Parse(time.RFC3339, fromParam)
@@ -51,11 +51,11 @@ _RFC 3339 is basically an extension to iso 8601_`,
 		}
 
 		if c.Params(`profile`) != "" {
-			query["profileId"] = ctx.GetProfile(c).ID
+			query["profileId"] = ctx.Profile.ID
 		}
 
 		matches := []models.Match{}
-		err = db.Find(&models.Match{}, &matches, query)
+		err = ctx.DBConn.Find(&models.Match{}, &matches, query)
 		if err != nil {
 			return err
 		}
@@ -80,7 +80,7 @@ The from and to param should be in the RFC 3339 format
 _RFC 3339 is basically an extension to iso 8601_`,
 	Res: MatchesPerProfile{},
 	Fn: func(c *fiber.Ctx) error {
-		db := ctx.GetDbConn(c)
+		ctx := ctxPkg.Get(c)
 
 		fromParam, toParam := c.Params("from"), c.Params("to")
 		from, err := time.Parse(time.RFC3339, fromParam)
@@ -112,11 +112,11 @@ _RFC 3339 is basically an extension to iso 8601_`,
 		}
 
 		if c.Params(`profile`) != "" {
-			query["profileId"] = ctx.GetProfile(c).ID
+			query["profileId"] = ctx.Profile.ID
 		}
 
 		matches := []models.Match{}
-		err = db.Find(&models.Match{}, &matches, query)
+		err = ctx.DBConn.Find(&models.Match{}, &matches, query)
 		if err != nil {
 			return err
 		}

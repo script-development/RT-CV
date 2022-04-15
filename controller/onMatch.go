@@ -9,6 +9,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/script-development/RT-CV/controller/ctx"
+	ctxPkg "github.com/script-development/RT-CV/controller/ctx"
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/jsonHelpers"
 	"github.com/script-development/RT-CV/helpers/match"
@@ -23,9 +24,8 @@ var routeGetOnMatchHooks = routeBuilder.R{
 	Description: "Get the entries for what to do on a match",
 	Res:         []models.OnMatchHook{},
 	Fn: func(c *fiber.Ctx) error {
-		db := ctx.GetDbConn(c)
 		results := []models.OnMatchHook{}
-		err := db.Find(&models.OnMatchHook{}, &results, nil)
+		err := ctx.Get(c).DBConn.Find(&models.OnMatchHook{}, &results, nil)
 		if err != nil {
 			return err
 		}
@@ -98,17 +98,18 @@ var routeCreateOnMatchHooks = routeBuilder.R{
 		if err != nil {
 			return err
 		}
+		ctx := ctxPkg.Get(c)
 
 		hook := models.OnMatchHook{
 			M:     db.NewM(),
-			KeyID: ctx.GetKey(c).ID,
+			KeyID: ctx.Key.ID,
 		}
 		err = body.applyToHook(&hook, true)
 		if err != nil {
 			return err
 		}
 
-		err = ctx.GetDbConn(c).Insert(&hook)
+		err = ctx.DBConn.Insert(&hook)
 		if err != nil {
 			return err
 		}
@@ -121,12 +122,12 @@ var routeDeleteOnMatchHook = routeBuilder.R{
 	Description: "Delete a on match hook",
 	Res:         models.OnMatchHook{},
 	Fn: func(c *fiber.Ctx) error {
-		onMatchHook := ctx.GetOnMatchHook(c)
-		err := ctx.GetDbConn(c).DeleteByID(onMatchHook)
+		ctx := ctxPkg.Get(c)
+		err := ctx.DBConn.DeleteByID(ctx.OnMatchHook)
 		if err != nil {
 			return err
 		}
-		return c.JSON(onMatchHook)
+		return c.JSON(ctx.OnMatchHook)
 	},
 }
 
@@ -140,18 +141,18 @@ var routeUpdateOnMatchHook = routeBuilder.R{
 		if err != nil {
 			return err
 		}
+		ctx := ctxPkg.Get(c)
 
-		hook := ctx.GetOnMatchHook(c)
-		err = body.applyToHook(hook, false)
+		err = body.applyToHook(ctx.OnMatchHook, false)
 		if err != nil {
 			return err
 		}
 
-		err = ctx.GetDbConn(c).UpdateByID(hook)
+		err = ctx.DBConn.UpdateByID(ctx.OnMatchHook)
 		if err != nil {
 			return err
 		}
-		return c.JSON(hook)
+		return c.JSON(ctx.OnMatchHook)
 	},
 }
 
@@ -164,7 +165,7 @@ var routeTestOnMatchHook = routeBuilder.R{
 	Description: "Test a on match hook",
 	Res:         ExplainDataSendToHook{},
 	Fn: func(c *fiber.Ctx) error {
-		requestID := ctx.GetRequestID(c)
+		ctx := ctxPkg.Get(c)
 		cv := *models.ExampleCV()
 
 		yearsSinceWork := 3
@@ -173,7 +174,7 @@ var routeTestOnMatchHook = routeBuilder.R{
 			MatchedProfiles: []match.FoundMatch{{
 				Matches: models.Match{
 					M:                 db.NewM(),
-					RequestID:         requestID,
+					RequestID:         ctx.RequestID,
 					ProfileID:         mock.Profile1.ID,
 					KeyID:             mock.Key1.ID,
 					When:              jsonHelpers.RFC3339Nano(time.Now()),
@@ -196,7 +197,7 @@ var routeTestOnMatchHook = routeBuilder.R{
 			return err
 		}
 
-		err = ctx.GetOnMatchHook(c).Call(bytes.NewReader(dummyDataAsJSON))
+		err = ctx.OnMatchHook.Call(bytes.NewReader(dummyDataAsJSON))
 		if err != nil {
 			return err
 		}
@@ -213,21 +214,16 @@ func middlewareBindHook() routeBuilder.M {
 			if err != nil {
 				return err
 			}
-			dbConn := ctx.GetDbConn(c)
+			ctx := ctxPkg.Get(c)
 			hook := models.OnMatchHook{}
 			query := bson.M{"_id": hookID}
 			args := db.FindOptions{NoDefaultFilters: true}
-			err = dbConn.FindOne(&hook, query, args)
+			err = ctx.DBConn.FindOne(&hook, query, args)
 			if err != nil {
 				return err
 			}
 
-			c.SetUserContext(
-				ctx.SetOnMatchHook(
-					c.UserContext(),
-					&hook,
-				),
-			)
+			ctx.OnMatchHook = &hook
 
 			return c.Next()
 		},

@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/script-development/RT-CV/controller/ctx"
+	ctxPkg "github.com/script-development/RT-CV/controller/ctx"
 	"github.com/script-development/RT-CV/helpers/routeBuilder"
 	"github.com/script-development/RT-CV/models"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -38,7 +38,8 @@ var routeUpdateOrCreateSecret = routeBuilder.R{
 	Res:  IMap{},
 	Body: RouteUpdateOrCreateSecret{},
 	Fn: func(c *fiber.Ctx) error {
-		apiKey := ctx.GetAPIKeyFromParam(c)
+		ctx := ctxPkg.Get(c)
+		apiKey := ctx.APIKeyFromParam
 		keyParam := c.Params("key")
 
 		body := RouteUpdateOrCreateSecret{}
@@ -47,7 +48,7 @@ var routeUpdateOrCreateSecret = routeBuilder.R{
 			return err
 		}
 
-		dbConn := ctx.GetDbConn(c)
+		dbConn := ctx.DBConn
 		secret, err := models.GetSecretByKey(dbConn, apiKey.ID, keyParam)
 		if err == mongo.ErrNoDocuments {
 			// Secret does not yet exists, create it
@@ -97,7 +98,7 @@ var routeUpdateOrCreateSecret = routeBuilder.R{
 				return err
 			}
 
-			err = ctx.GetDbConn(c).UpdateByID(secret)
+			err = ctx.DBConn.UpdateByID(secret)
 			if err != nil {
 				return err
 			}
@@ -115,8 +116,9 @@ var routeGetSecret = routeBuilder.R{
 		"users": []models.SecretValueStructureUserT{},
 	},
 	Fn: func(c *fiber.Ctx) error {
-		dbConn := ctx.GetDbConn(c)
-		apiKey := ctx.GetAPIKeyFromParam(c)
+		ctx := ctxPkg.Get(c)
+		dbConn := ctx.DBConn
+		apiKey := ctx.APIKeyFromParam
 		keyParam, encryptionKeyParam := c.Params("key"), c.Params("encryptionKey")
 
 		secret, err := models.GetSecretByKey(dbConn, apiKey.ID, keyParam)
@@ -138,10 +140,9 @@ var routeGetSecrets = routeBuilder.R{
 		"(this is without the secret value)",
 	Res: []models.Secret{},
 	Fn: func(c *fiber.Ctx) error {
-		dbConn := ctx.GetDbConn(c)
-		apiKey := ctx.GetAPIKeyFromParam(c)
+		ctx := ctxPkg.Get(c)
 
-		secrets, err := models.GetSecrets(dbConn, apiKey.ID)
+		secrets, err := models.GetSecrets(ctx.DBConn, ctx.APIKeyFromParam.ID)
 		if err != nil {
 			return err
 		}
@@ -155,9 +156,7 @@ var routeGetAllSecretsFromAllKeys = routeBuilder.R{
 		"(this is without the secret value)",
 	Res: []models.Secret{},
 	Fn: func(c *fiber.Ctx) error {
-		dbConn := ctx.GetDbConn(c)
-
-		secrets, err := models.GetSecretsFromAllKeys(dbConn)
+		secrets, err := models.GetSecretsFromAllKeys(ctxPkg.Get(c).DBConn)
 		if err != nil {
 			return err
 		}
@@ -174,10 +173,10 @@ var routeDeleteSecret = routeBuilder.R{
 	Description: "Delete a secret stored in the database",
 	Res:         RouteDeleteSecretOkRes{},
 	Fn: func(c *fiber.Ctx) error {
-		apiKey := ctx.GetAPIKeyFromParam(c)
+		ctx := ctxPkg.Get(c)
 		keyParam := c.Params("key")
 
-		err := models.DeleteSecretByKey(ctx.GetDbConn(c), apiKey.ID, keyParam)
+		err := models.DeleteSecretByKey(ctx.DBConn, ctx.APIKeyFromParam.ID, keyParam)
 		if err != nil {
 			return err
 		}

@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/script-development/RT-CV/controller/ctx"
+	ctxPkg "github.com/script-development/RT-CV/controller/ctx"
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/routeBuilder"
 	"github.com/script-development/RT-CV/models"
@@ -15,7 +15,7 @@ var routeAllProfiles = routeBuilder.R{
 	Description: "get all profiles stored in the database",
 	Res:         []models.Profile{},
 	Fn: func(c *fiber.Ctx) error {
-		profiles, err := models.GetProfiles(ctx.GetDbConn(c), nil)
+		profiles, err := models.GetProfiles(ctxPkg.Get(c).DBConn, nil)
 		if err != nil {
 			return err
 		}
@@ -41,7 +41,7 @@ var routeQueryProfiles = routeBuilder.R{
 			return err
 		}
 
-		profiles, err := models.GetProfiles(ctx.GetDbConn(c), body)
+		profiles, err := models.GetProfiles(ctxPkg.Get(c).DBConn, body)
 		if err != nil {
 			return err
 		}
@@ -61,14 +61,14 @@ var routeGetProfilesCount = routeBuilder.R{
 	Description: "get the number of profiles stored in the database",
 	Res:         RouteGetProfilesCountRes{},
 	Fn: func(c *fiber.Ctx) error {
-		db := ctx.GetDbConn(c)
+		ctx := ctxPkg.Get(c)
 
-		profilesCount, err := models.GetProfilesCount(db)
+		profilesCount, err := models.GetProfilesCount(ctx.DBConn)
 		if err != nil {
 			return err
 		}
 
-		usableProfilesCount, err := models.GetActualActiveProfilesCount(db)
+		usableProfilesCount, err := models.GetActualActiveProfilesCount(ctx.DBConn)
 		if err != nil {
 			return err
 		}
@@ -91,18 +91,15 @@ func middlewareBindProfile() routeBuilder.M {
 				return err
 			}
 
-			dbConn := ctx.GetDbConn(c)
-			profile, err := models.GetProfile(dbConn, profileID)
+			ctx := ctxPkg.Get(c)
+
+			profile, err := models.GetProfile(ctx.DBConn, profileID)
 			if err != nil {
 				return err
 			}
 
-			c.SetUserContext(
-				ctx.SetProfile(
-					c.UserContext(),
-					&profile,
-				),
-			)
+			ctx.Profile = &profile
+
 			return c.Next()
 		},
 	}
@@ -112,8 +109,7 @@ var routeGetProfile = routeBuilder.R{
 	Description: "get a profile based on it's ID from the database",
 	Res:         models.Profile{},
 	Fn: func(c *fiber.Ctx) error {
-		profile := ctx.GetProfile(c)
-		return c.JSON(profile)
+		return c.JSON(ctxPkg.Get(c).Profile)
 	},
 }
 
@@ -122,7 +118,7 @@ var routeCreateProfile = routeBuilder.R{
 	Res:         models.Profile{},
 	Body:        models.Profile{},
 	Fn: func(c *fiber.Ctx) error {
-		conn := ctx.GetDbConn(c)
+		ctx := ctxPkg.Get(c)
 
 		var profile models.Profile
 		err := c.BodyParser(&profile)
@@ -130,7 +126,7 @@ var routeCreateProfile = routeBuilder.R{
 			return err
 		}
 
-		err = profile.ValidateCreateNewProfile(conn)
+		err = profile.ValidateCreateNewProfile(ctx.DBConn)
 		if err != nil {
 			return err
 		}
@@ -139,14 +135,13 @@ var routeCreateProfile = routeBuilder.R{
 		profile.M = db.NewM()
 
 		// Save the profile to the database
-		dbConn := ctx.GetDbConn(c)
-		err = dbConn.Insert(&profile)
+		err = ctx.DBConn.Insert(&profile)
 		if err != nil {
 			return err
 		}
 
 		// Invalidate profiles cache
-		*ctx.GetMatcherProfilesCache(c) = ctx.MatcherProfilesCache{}
+		ctx.ResetMatcherProfilesCache()
 
 		return c.JSON(profile)
 	},
@@ -192,8 +187,9 @@ var routeModifyProfile = routeBuilder.R{
 	Res:  models.Profile{},
 	Body: UpdateProfileReq{},
 	Fn: func(c *fiber.Ctx) error {
-		profile := ctx.GetProfile(c)
-		dbConn := ctx.GetDbConn(c)
+		ctx := ctxPkg.Get(c)
+		// profile := ctx.GetProfile(c)
+		// dbConn := ctx.GetDbConn(c)
 
 		var body UpdateProfileReq
 		err := c.BodyParser(&body)
@@ -202,10 +198,10 @@ var routeModifyProfile = routeBuilder.R{
 		}
 
 		if body.Name != nil {
-			profile.Name = *body.Name
+			ctx.Profile.Name = *body.Name
 		}
 		if body.Active != nil {
-			profile.Active = *body.Active
+			ctx.Profile.Active = *body.Active
 		}
 		if body.AllowedScrapers != nil {
 			allowedScrapersIDs := make([]primitive.ObjectID, len(body.AllowedScrapers))
@@ -217,68 +213,68 @@ var routeModifyProfile = routeBuilder.R{
 				allowedScrapersIDs[idx] = bsonID
 			}
 
-			err = models.CheckAPIKeysExists(dbConn, allowedScrapersIDs)
+			err = models.CheckAPIKeysExists(ctx.DBConn, allowedScrapersIDs)
 			if err != nil {
 				return err
 			}
-			profile.AllowedScrapers = allowedScrapersIDs
+			ctx.Profile.AllowedScrapers = allowedScrapersIDs
 		}
 		if body.MustDesiredProfession != nil {
-			profile.MustDesiredProfession = *body.MustDesiredProfession
+			ctx.Profile.MustDesiredProfession = *body.MustDesiredProfession
 		}
 		if body.DesiredProfessions != nil {
-			profile.DesiredProfessions = body.DesiredProfessions
+			ctx.Profile.DesiredProfessions = body.DesiredProfessions
 		}
 		if body.UpdateYearsSinceWork != nil {
 			if body.UpdateYearsSinceWork.YearsSinceWork != nil {
-				profile.YearsSinceWork = &*body.UpdateYearsSinceWork.YearsSinceWork
+				ctx.Profile.YearsSinceWork = &*body.UpdateYearsSinceWork.YearsSinceWork
 			} else {
-				profile.YearsSinceWork = nil
+				ctx.Profile.YearsSinceWork = nil
 			}
 		}
 		if body.MustExpProfession != nil {
-			profile.MustExpProfession = *body.MustExpProfession
+			ctx.Profile.MustExpProfession = *body.MustExpProfession
 		}
 		if body.ProfessionExperienced != nil {
-			profile.ProfessionExperienced = body.ProfessionExperienced
+			ctx.Profile.ProfessionExperienced = body.ProfessionExperienced
 		}
 		if body.MustDriversLicense != nil {
-			profile.MustDriversLicense = *body.MustDriversLicense
+			ctx.Profile.MustDriversLicense = *body.MustDriversLicense
 		}
 		if body.DriversLicenses != nil {
-			profile.DriversLicenses = body.DriversLicenses
+			ctx.Profile.DriversLicenses = body.DriversLicenses
 		}
 		if body.MustEducationFinished != nil {
-			profile.MustEducationFinished = *body.MustEducationFinished
+			ctx.Profile.MustEducationFinished = *body.MustEducationFinished
 		}
 		if body.MustEducation != nil {
-			profile.MustEducation = *body.MustEducation
+			ctx.Profile.MustEducation = *body.MustEducation
 		}
 		if body.YearsSinceEducation != nil {
-			profile.YearsSinceEducation = *body.YearsSinceEducation
+			ctx.Profile.YearsSinceEducation = *body.YearsSinceEducation
 		}
 		if body.Educations != nil {
-			profile.Educations = body.Educations
+			ctx.Profile.Educations = body.Educations
 		}
 		if body.Zipcodes != nil {
-			profile.Zipcodes = body.Zipcodes
+			ctx.Profile.Zipcodes = body.Zipcodes
 		}
 		if body.OnMatch != nil {
-			profile.OnMatch = *body.OnMatch
+			ctx.Profile.OnMatch = *body.OnMatch
 		}
 		if body.Lables != nil {
-			profile.Lables = body.Lables
+			ctx.Profile.Lables = body.Lables
 		}
 
-		err = dbConn.UpdateByID(profile)
+		err = ctx.DBConn.UpdateByID(ctx.Profile)
 		if err != nil {
 			return err
 		}
 
 		// Invalidate profiles cache
-		*ctx.GetMatcherProfilesCache(c) = ctx.MatcherProfilesCache{}
+		ctx.ResetMatcherProfilesCache()
 
-		return c.JSON(profile)
+		return c.JSON(ctx.Profile)
 	},
 }
 
@@ -286,16 +282,15 @@ var routeDeleteProfile = routeBuilder.R{
 	Description: "Delete a profile stored in the database",
 	Res:         models.Profile{},
 	Fn: func(c *fiber.Ctx) error {
-		profile := ctx.GetProfile(c)
-		dbConn := ctx.GetDbConn(c)
-		err := dbConn.DeleteByID(profile)
+		ctx := ctxPkg.Get(c)
+		err := ctx.DBConn.DeleteByID(ctx.Profile)
 		if err != nil {
 			return err
 		}
 
 		// Invalidate profiles cache
-		*ctx.GetMatcherProfilesCache(c) = ctx.MatcherProfilesCache{}
+		ctx.ResetMatcherProfilesCache()
 
-		return c.JSON(profile)
+		return c.JSON(ctx.Profile)
 	},
 }

@@ -10,7 +10,7 @@ import (
 
 	"github.com/apex/log"
 	"github.com/gofiber/fiber/v2"
-	"github.com/script-development/RT-CV/controller/ctx"
+	reqPkg "github.com/script-development/RT-CV/controller/ctx"
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/match"
 	"github.com/script-development/RT-CV/helpers/routeBuilder"
@@ -36,7 +36,7 @@ var routeScraperScanCV = routeBuilder.R{
 	Res:         RouteScraperScanCVRes{},
 	Body:        RouteScraperScanCVBody{},
 	Fn: func(c *fiber.Ctx) error {
-		key := ctx.GetKey(c)
+		ctx := reqPkg.Get(c)
 
 		body := RouteScraperScanCVBody{}
 		err := c.BodyParser(&body)
@@ -45,7 +45,7 @@ var routeScraperScanCV = routeBuilder.R{
 		}
 
 		// Debug flag can only be set by the dashboard rule
-		if body.Debug && !key.Roles.ContainsSome(models.APIKeyRoleDashboard) {
+		if body.Debug && !ctx.Key.Roles.ContainsSome(models.APIKeyRoleDashboard) {
 			return ErrorRes(
 				c,
 				fiber.StatusForbidden,
@@ -62,16 +62,13 @@ var routeScraperScanCV = routeBuilder.R{
 			)
 		}
 
-		logger := ctx.GetLogger(c)
-
 		// Get the profiles we can use for matching
 		// If they are not cached yet or the cache it outdated, set the cache
-		matcherProfilesCache := ctx.GetMatcherProfilesCache(c)
-		profiles := matcherProfilesCache.Profiles
-		if profiles == nil || matcherProfilesCache.InsertionTime.Add(time.Hour*24).Before(time.Now()) {
-			logger.Info("updating the profiles cache")
+		profiles := ctx.MatcherProfilesCache.Profiles
+		if profiles == nil || ctx.MatcherProfilesCache.InsertionTime.Add(time.Hour*24).Before(time.Now()) {
+			ctx.Logger.Info("updating the profiles cache")
 			// Update the cache
-			profilesFromDB, err := models.GetActualActiveProfiles(ctx.GetDbConn(c))
+			profilesFromDB, err := models.GetActualActiveProfiles(ctx.DBConn)
 			if err != nil {
 				return err
 			}
@@ -79,30 +76,31 @@ var routeScraperScanCV = routeBuilder.R{
 			for idx := range profilesFromDB {
 				profiles[idx] = &profilesFromDB[idx]
 			}
-			*matcherProfilesCache = ctx.MatcherProfilesCache{
+			*ctx.MatcherProfilesCache = reqPkg.MatcherProfilesCache{
 				Profiles:      profiles,
 				InsertionTime: time.Now(),
 			}
 		}
 
 		// Try to match a profile to a CV
-		matchedProfiles := match.Match(key, profiles, body.CV)
+		matchedProfiles := match.Match(ctx.Key, profiles, body.CV)
 
 		resp := RouteScraperScanCVRes{Success: true, Matches: []match.FoundMatch{}}
 		if len(matchedProfiles) == 0 {
 			return c.JSON(resp)
 		}
 
-		ProcessMatches{
+		MatchesProcess.AppendMatchesToProcess(ProcessMatches{
 			Debug:           body.Debug,
 			MatchedProfiles: matchedProfiles,
 			CV:              body.CV,
-			Logger:          *logger,
-			DBConn:          ctx.GetDbConn(c),
-			KeyID:           key.ID,
-			KeyName:         key.Name,
-			RequestID:       ctx.GetRequestID(c),
-		}.Process()
+			Logger:          *ctx.Logger,
+			DBConn:          ctx.DBConn,
+			KeyID:           ctx.Key.ID,
+			KeyName:         ctx.Key.Name,
+			RequestID:       ctx.RequestID,
+		})
+
 		resp.HasMatches = true
 		if body.Debug {
 			resp.Matches = matchedProfiles

@@ -55,7 +55,7 @@ func New() fiber.Handler {
 			fmt.Print("µs | ")
 		}
 
-		apikey := ctx.GetKey(c)
+		apikey := ctx.Get(c).Key
 		if apikey != nil {
 			nameLen := len(apikey.Name)
 			if nameLen > 15 {

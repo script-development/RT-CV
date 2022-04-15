@@ -39,19 +39,15 @@ func requiresAuth(requiredRoles models.APIKeyRole) routeBuilder.M {
 	return routeBuilder.M{
 		Tags: tags,
 		Fn: func(c *fiber.Ctx) error {
-			key := ctx.GetKey(c)
+			ctx := ctx.Get(c)
 			// Check if the auth header is already checked earlier in the request
 			// If true we only have to check if the roles match
-			if key != nil {
-				if requiredRoles != 0 && !key.Roles.ContainsSome(requiredRoles) {
+			if ctx.Key != nil {
+				if requiredRoles != 0 && !ctx.Key.Roles.ContainsSome(requiredRoles) {
 					return ErrorRes(c, 401, errAuthMissingRoles)
 				}
 				return c.Next()
 			}
-
-			// Get values from context
-			authService := ctx.GetAuth(c)
-			logger := ctx.GetLogger(c)
 
 			// Check auth header
 			authorizationValue := c.Get("Authorization")
@@ -62,7 +58,7 @@ func requiresAuth(requiredRoles models.APIKeyRole) routeBuilder.M {
 				return ErrorRes(c, fiber.StatusBadRequest, auth.ErrNoAuthHeader)
 			}
 
-			key, err := authService.Valid(authorizationValue)
+			key, err := ctx.Auth.Valid(authorizationValue)
 			if err != nil {
 				return ErrorRes(c, fiber.StatusUnauthorized, err)
 			}
@@ -72,17 +68,12 @@ func requiresAuth(requiredRoles models.APIKeyRole) routeBuilder.M {
 				return ErrorRes(c, fiber.StatusForbidden, errAuthMissingRoles)
 			}
 
-			*logger = *logger.WithFields(log.Fields{
+			*ctx.Logger = *ctx.Logger.WithFields(log.Fields{
 				"api_key_id": key.ID.Hex(),
 				"domains":    key.Domains,
 			})
 
-			c.SetUserContext(
-				ctx.SetKey(
-					c.UserContext(),
-					key,
-				),
-			)
+			ctx.Key = key
 
 			return c.Next()
 		},
