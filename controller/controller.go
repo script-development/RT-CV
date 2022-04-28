@@ -115,6 +115,11 @@ func Routes(app *fiber.App, appVersion string, testing bool) {
 			}, middlewareBindHook())
 		}, requiresAuth(models.APIKeyRoleController|models.APIKeyRoleInformationObtainer|models.APIKeyRoleDashboard))
 
+		b.Group(`/matcherTree`, func(r *routeBuilder.Router) {
+			b.Get(``, routeGetMatcherTree)
+			b.Get(`/:id`, routeGetPartOfMatcherTree)
+		}, requiresAuth(models.APIKeyRoleController|models.APIKeyRoleInformationObtainer|models.APIKeyRoleDashboard))
+
 		b.Post(
 			`/exampleAttachmentPdf`,
 			routeGetExampleAttachmentPDF,
