@@ -117,7 +117,8 @@ func Routes(app *fiber.App, appVersion string, testing bool) {
 
 		b.Group(`/matcherTree`, func(r *routeBuilder.Router) {
 			b.Get(``, routeGetMatcherTree)
-			b.Get(`/:id`, routeGetPartOfMatcherTree)
+			b.Get(`:id`, routeGetPartOfMatcherTree)
+			b.Post(`:id/addLeaf`, routeAddMatcherLeaf)
 		}, requiresAuth(models.APIKeyRoleController|models.APIKeyRoleInformationObtainer|models.APIKeyRoleDashboard))
 
 		b.Post(

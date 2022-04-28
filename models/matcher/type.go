@@ -31,7 +31,7 @@ type Branch struct {
 	// In the data we import there are 2 kinds of titles
 	// One that contains a job name
 	// And one that contains a Sector name
-	TitleKind TitleKind `bson:"titleKind" json:"titleKind,omitempty"`
+	TitleKind TitleKind `bson:"titleKind" json:"titleKind"`
 
 	// Branches contains sub branches ontop of this branch
 	Branches []primitive.ObjectID `json:"-"`
@@ -116,4 +116,36 @@ func GetTree(dbConn db.Connection, fromBranch *primitive.ObjectID) (*Branch, err
 	}
 
 	return &parsedBranches[0], nil
+}
+
+// AddLeafProps are the leaf creation arguments for the AddLeaf method
+type AddLeafProps struct {
+	Titles    []string  `json:"titles"`
+	TitleKind TitleKind `json:"titleKind"`
+}
+
+// AddLeaf adds a new branch to
+func (b *Branch) AddLeaf(dbConn db.Connection, props AddLeafProps) (*Branch, error) {
+	newBranch := &Branch{
+		M:              db.NewM(),
+		Titles:         props.Titles,
+		TitleKind:      props.TitleKind,
+		Branches:       []primitive.ObjectID{},
+		ParsedBranches: []Branch{},
+		Parents:        append(b.Parents, b.ID),
+	}
+
+	err := dbConn.Insert(newBranch)
+	if err != nil {
+		return nil, err
+	}
+
+	b.Branches = append(b.Branches, newBranch.ID)
+	b.ParsedBranches = append(b.ParsedBranches, *newBranch)
+	err = dbConn.UpdateByID(b)
+	if err != nil {
+		return nil, err
+	}
+
+	return newBranch, nil
 }

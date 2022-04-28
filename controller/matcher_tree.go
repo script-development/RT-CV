@@ -23,6 +23,39 @@ var routeGetMatcherTree = routeBuilder.R{
 	},
 }
 
+var routeAddMatcherLeaf = routeBuilder.R{
+	Description: "add a leaf to the tree",
+	Res:         matcher.Branch{},
+	Body:        matcher.AddLeafProps{},
+	Fn: func(c *fiber.Ctx) error {
+		idParam := c.Params("id")
+		id, err := primitive.ObjectIDFromHex(idParam)
+		if err != nil {
+			return err
+		}
+
+		body := matcher.AddLeafProps{}
+		err = c.BodyParser(&body)
+		if err != nil {
+			return err
+		}
+
+		ctx := ctx.Get(c)
+
+		tree, err := matcher.GetTree(ctx.DBConn, &id)
+		if err != nil {
+			return err
+		}
+
+		_, err = tree.AddLeaf(ctx.DBConn, body)
+		if err != nil {
+			return err
+		}
+
+		return c.JSON(tree)
+	},
+}
+
 var routeGetPartOfMatcherTree = routeBuilder.R{
 	Description: "get a spesific part of the matcher tree defined by it's id",
 	Res:         matcher.Branch{},
