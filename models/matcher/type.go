@@ -126,6 +126,13 @@ type AddLeafProps struct {
 
 // AddLeaf adds a new branch to
 func (b *Branch) AddLeaf(dbConn db.Connection, props AddLeafProps) (*Branch, error) {
+	if len(props.Titles) == 0 {
+		return nil, errors.New("a title is required to add a leaf to a branch")
+	}
+	if props.TitleKind > 1 {
+		return nil, errors.New("titleKind invalid, must be 0 for a Job title and 1 for a Sector title")
+	}
+
 	newBranch := &Branch{
 		M:              db.NewM(),
 		Titles:         props.Titles,
