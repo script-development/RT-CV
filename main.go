@@ -23,6 +23,7 @@ import (
 	"github.com/script-development/RT-CV/helpers/requestLogger"
 	"github.com/script-development/RT-CV/mock"
 	"github.com/script-development/RT-CV/models"
+	"github.com/script-development/RT-CV/models/matcher"
 )
 
 // AppVersion is used for the X-App-Version header and in the /health route
@@ -110,6 +111,7 @@ func main() {
 		&models.Match{},
 		&models.Backup{},
 		&models.OnMatchHook{},
+		&matcher.Branch{},
 	)
 
 	backupEnabled := strings.ToLower(os.Getenv("MONGODB_BACKUP_ENABLED")) == "true"
