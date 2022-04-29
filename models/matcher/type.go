@@ -56,8 +56,18 @@ func (*Branch) Indexes() []mongo.IndexModel {
 	}
 }
 
-// GetTree returns a db tree from the root or a spesific branch
-func GetTree(dbConn db.Connection, fromBranch *primitive.ObjectID) (*Branch, error) {
+// GetBranch fetches a spesific branch from the database
+func GetBranch(dbConn db.Connection, id primitive.ObjectID) (*Branch, error) {
+	result := &Branch{}
+	err := dbConn.FindOne(result, bson.M{"_id": id})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// GetInTree returns all branches in a list in the tree or from a spesific point in the tree
+func GetInTree(dbConn db.Connection, fromBranch *primitive.ObjectID) ([]Branch, error) {
 	query := bson.M{}
 	if fromBranch != nil {
 		query["$or"] = []bson.M{
@@ -68,6 +78,15 @@ func GetTree(dbConn db.Connection, fromBranch *primitive.ObjectID) (*Branch, err
 
 	branches := []Branch{}
 	err := dbConn.Find(&Branch{}, &branches, query)
+	if err != nil {
+		return nil, err
+	}
+	return branches, nil
+}
+
+// GetTree returns a db tree from the root or a spesific branch
+func GetTree(dbConn db.Connection, fromBranch *primitive.ObjectID, deep int) (*Branch, error) {
+	branches, err := GetInTree(dbConn, fromBranch)
 	if err != nil {
 		return nil, err
 	}
@@ -94,28 +113,30 @@ func GetTree(dbConn db.Connection, fromBranch *primitive.ObjectID) (*Branch, err
 		return nil, errors.New("no branches for spesific branch found")
 	}
 
-	var idsToList func(branchIDs []primitive.ObjectID, path []primitive.ObjectID) []Branch
-	idsToList = func(branchIDs []primitive.ObjectID, path []primitive.ObjectID) []Branch {
+	var idsToList func(branchIDs []primitive.ObjectID, nDeep int) []Branch
+	idsToList = func(branchIDs []primitive.ObjectID, nDeep int) []Branch {
+		if deep > 0 && nDeep == deep {
+			return nil
+		}
 		result := []Branch{}
 		for _, id := range branchIDs {
 			branch, _ := branchesMap[id]
-			branch.ParsedBranches = idsToList(branch.Branches, append(path, id))
+			branch.ParsedBranches = idsToList(branch.Branches, nDeep+1)
 			result = append(result, branch)
 		}
 		return result
 	}
 
-	parsedBranches := idsToList(rootBrancheIDs, []primitive.ObjectID{})
 	if fromBranch == nil {
 		return &Branch{
 			Titles:         nil,
 			TitleKind:      Sector,
-			ParsedBranches: parsedBranches,
+			ParsedBranches: idsToList(rootBrancheIDs, 1),
 			Parents:        []primitive.ObjectID{},
 		}, nil
 	}
 
-	return &parsedBranches[0], nil
+	return &idsToList(rootBrancheIDs, 0)[0], nil
 }
 
 // AddLeafProps are the leaf creation arguments for the AddLeaf method

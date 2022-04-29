@@ -120,6 +120,7 @@ func Routes(app *fiber.App, appVersion string, testing bool) {
 			b.Group(`/:id`, func(b *routeBuilder.Router) {
 				b.Get(``, routeGetPartOfMatcherTree)
 				b.Put(``, routePutMatcherBranch)
+				b.Delete(``, routeDeleteMatcherBranch)
 				b.Post(`/addLeaf`, routeAddMatcherLeaf)
 			})
 		}, requiresAuth(models.APIKeyRoleController|models.APIKeyRoleInformationObtainer|models.APIKeyRoleDashboard))

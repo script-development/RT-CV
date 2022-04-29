@@ -36,7 +36,7 @@ type Connection interface {
 	UpdateByID(data Entry) error
 
 	// DeleteByID deletes an entry from the database
-	DeleteByID(data Entry) error
+	DeleteByID(data ...Entry) error
 
 	// Count counts the number of documents in the database for the specific filter
 	// If filter is nil the number of all the documents is returned
