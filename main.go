@@ -129,6 +129,7 @@ func main() {
 	// do not use fiber Prefork!, this app is not written to support it
 	app := fiber.New(fiber.Config{
 		ErrorHandler: controller.FiberErrorHandler,
+		Immutable:    true,
 	})
 	app.Use(recover.New())
 	app.Use(cors.New())
