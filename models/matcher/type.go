@@ -124,13 +124,21 @@ type AddLeafProps struct {
 	TitleKind TitleKind `json:"titleKind"`
 }
 
-// AddLeaf adds a new branch to
-func (b *Branch) AddLeaf(dbConn db.Connection, props AddLeafProps) (*Branch, error) {
+func (props AddLeafProps) validate() error {
 	if len(props.Titles) == 0 {
-		return nil, errors.New("a title is required to add a leaf to a branch")
+		return errors.New("a title is required to add a leaf to a branch")
 	}
 	if props.TitleKind > 1 {
-		return nil, errors.New("titleKind invalid, must be 0 for a Job title and 1 for a Sector title")
+		return errors.New("titleKind invalid, must be 0 for a Job title and 1 for a Sector title")
+	}
+	return nil
+}
+
+// AddLeaf adds a new branch to
+func (b *Branch) AddLeaf(dbConn db.Connection, props AddLeafProps) (*Branch, error) {
+	err := props.validate()
+	if err != nil {
+		return nil, err
 	}
 
 	newBranch := &Branch{
@@ -142,7 +150,7 @@ func (b *Branch) AddLeaf(dbConn db.Connection, props AddLeafProps) (*Branch, err
 		Parents:        append(b.Parents, b.ID),
 	}
 
-	err := dbConn.Insert(newBranch)
+	err = dbConn.Insert(newBranch)
 	if err != nil {
 		return nil, err
 	}
@@ -155,4 +163,16 @@ func (b *Branch) AddLeaf(dbConn db.Connection, props AddLeafProps) (*Branch, err
 	}
 
 	return newBranch, nil
+}
+
+// Update updates a spesific branches data
+func (b *Branch) Update(dbConn db.Connection, props AddLeafProps) error {
+	err := props.validate()
+	if err != nil {
+		return err
+	}
+
+	b.Titles = props.Titles
+	b.TitleKind = props.TitleKind
+	return dbConn.UpdateByID(b)
 }
