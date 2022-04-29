@@ -162,6 +162,8 @@ func (b *Branch) AddLeaf(dbConn db.Connection, props AddLeafProps, injectIntoSou
 		return nil, err
 	}
 
+	bIsRoot := b.ID.IsZero()
+
 	newBranch := &Branch{
 		M:              db.NewM(),
 		Titles:         props.Titles,
@@ -170,7 +172,7 @@ func (b *Branch) AddLeaf(dbConn db.Connection, props AddLeafProps, injectIntoSou
 		ParsedBranches: []Branch{},
 		Parents:        []primitive.ObjectID{},
 	}
-	if !b.ID.IsZero() {
+	if !bIsRoot {
 		// This is a sub branch of the tree, add the parents property
 		newBranch.Parents = append(b.Parents, b.ID)
 	}
@@ -184,9 +186,11 @@ func (b *Branch) AddLeaf(dbConn db.Connection, props AddLeafProps, injectIntoSou
 	if injectIntoSource {
 		b.ParsedBranches = append(b.ParsedBranches, *newBranch)
 	}
-	err = dbConn.UpdateByID(b)
-	if err != nil {
-		return nil, err
+	if !bIsRoot {
+		err = dbConn.UpdateByID(b)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return newBranch, nil

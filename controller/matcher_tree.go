@@ -118,6 +118,12 @@ var routePutMatcherBranch = routeBuilder.R{
 	},
 }
 
+// RouteDeleteMatcherBranchResult gives some information about the removal process
+type RouteDeleteMatcherBranchResult struct {
+	UpdatedParent   bool `json:"updatedParent"`
+	DeletedBranches int  `json:"deletedBranches"`
+}
+
 var routeDeleteMatcherBranch = routeBuilder.R{
 	Description: `remove a spesific branch and it's children`,
 	Res:         RouteDeleteSecretOkRes{},
@@ -180,6 +186,9 @@ var routeDeleteMatcherBranch = routeBuilder.R{
 			return err
 		}
 
-		return c.JSON(RouteDeleteSecretOkRes{"ok"})
+		return c.JSON(RouteDeleteMatcherBranchResult{
+			UpdatedParent:   !parentID.IsZero(),
+			DeletedBranches: len(branchesToRemove),
+		})
 	},
 }
