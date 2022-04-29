@@ -34,10 +34,9 @@ var routeGetOnMatchHooks = routeBuilder.R{
 
 // CreateOrUpdateOnMatchHookRequestData contains the post data for creating and modifiying a OnMatchHook
 type CreateOrUpdateOnMatchHookRequestData struct {
-	Method               *string         `json:"method"`
-	URL                  *string         `json:"url"`
-	AddHeaders           []models.Header `json:"addHeaders"`
-	StopRemainingActions *bool           `json:"stopRemainingActions"`
+	Method     *string         `json:"method"`
+	URL        *string         `json:"url"`
+	AddHeaders []models.Header `json:"addHeaders"`
 }
 
 func (data *CreateOrUpdateOnMatchHookRequestData) applyToHook(hook *models.OnMatchHook, isCreate bool) error {
