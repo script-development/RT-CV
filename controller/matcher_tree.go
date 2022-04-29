@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"errors"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/script-development/RT-CV/controller/ctx"
 	"github.com/script-development/RT-CV/helpers/routeBuilder"
@@ -24,7 +26,7 @@ var routeGetMatcherTree = routeBuilder.R{
 }
 
 var routeAddMatcherLeaf = routeBuilder.R{
-	Description: "add a leaf to the tree",
+	Description: "add a leaf to a spesific part of the tree",
 	Res:         matcher.Branch{},
 	Body:        matcher.AddLeafProps{},
 	Fn: func(c *fiber.Ctx) error {
@@ -75,4 +77,10 @@ var routeGetPartOfMatcherTree = routeBuilder.R{
 
 		return c.JSON(tree)
 	},
+}
+
+var routePutMatcherBranch = routeBuilder.R{
+	Description: `change `,
+	Res:         matcher.Branch{},
+	Fn:          func(c *fiber.Ctx) error { return errors.New("unimplemented") },
 }

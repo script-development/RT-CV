@@ -77,7 +77,7 @@ func Routes(app *fiber.App, appVersion string, testing bool) {
 
 		b.Group(`/profiles`, func(b *routeBuilder.Router) {
 			// Profile routes that required the information obtainer role
-			b.Group(``, func(r *routeBuilder.Router) {
+			b.Group(``, func(b *routeBuilder.Router) {
 				b.Get(`count`, routeGetProfilesCount)
 				b.Get(``, routeAllProfiles)
 				b.Post(`query`, routeQueryProfiles)
@@ -85,7 +85,7 @@ func Routes(app *fiber.App, appVersion string, testing bool) {
 			}, requiresAuth(models.APIKeyRoleInformationObtainer|models.APIKeyRoleDashboard))
 
 			// Profile routes that require the controller role
-			b.Group(``, func(r *routeBuilder.Router) {
+			b.Group(``, func(b *routeBuilder.Router) {
 				b.Post(``, routeCreateProfile, requiresAuth(models.APIKeyRoleController))
 				b.Group(`/:profile`, func(b *routeBuilder.Router) {
 					b.Put(``, routeModifyProfile, requiresAuth(models.APIKeyRoleController))
@@ -115,10 +115,13 @@ func Routes(app *fiber.App, appVersion string, testing bool) {
 			}, middlewareBindHook())
 		}, requiresAuth(models.APIKeyRoleController|models.APIKeyRoleInformationObtainer|models.APIKeyRoleDashboard))
 
-		b.Group(`/matcherTree`, func(r *routeBuilder.Router) {
+		b.Group(`/matcherTree`, func(b *routeBuilder.Router) {
 			b.Get(``, routeGetMatcherTree)
-			b.Get(`:id`, routeGetPartOfMatcherTree)
-			b.Post(`:id/addLeaf`, routeAddMatcherLeaf)
+			b.Group(`/:id`, func(b *routeBuilder.Router) {
+				b.Get(``, routeGetPartOfMatcherTree)
+				b.Put(``, routePutMatcherBranch)
+				b.Post(`/addLeaf`, routeAddMatcherLeaf)
+			})
 		}, requiresAuth(models.APIKeyRoleController|models.APIKeyRoleInformationObtainer|models.APIKeyRoleDashboard))
 
 		b.Post(
