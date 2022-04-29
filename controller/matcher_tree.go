@@ -1,8 +1,6 @@
 package controller
 
 import (
-	"errors"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/script-development/RT-CV/controller/ctx"
 	"github.com/script-development/RT-CV/helpers/routeBuilder"
@@ -80,7 +78,34 @@ var routeGetPartOfMatcherTree = routeBuilder.R{
 }
 
 var routePutMatcherBranch = routeBuilder.R{
-	Description: `change `,
+	Description: `update a spesific branch`,
+	Body:        matcher.AddLeafProps{},
 	Res:         matcher.Branch{},
-	Fn:          func(c *fiber.Ctx) error { return errors.New("unimplemented") },
+	Fn: func(c *fiber.Ctx) error {
+		idParam := c.Params("id")
+		id, err := primitive.ObjectIDFromHex(idParam)
+		if err != nil {
+			return err
+		}
+
+		body := matcher.AddLeafProps{}
+		err = c.BodyParser(&body)
+		if err != nil {
+			return err
+		}
+
+		ctx := ctx.Get(c)
+
+		tree, err := matcher.GetTree(ctx.DBConn, &id)
+		if err != nil {
+			return err
+		}
+
+		err = tree.Update(ctx.DBConn, body)
+		if err != nil {
+			return err
+		}
+
+		return c.JSON(tree)
+	},
 }
