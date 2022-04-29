@@ -156,7 +156,7 @@ func (props AddLeafProps) validate() error {
 }
 
 // AddLeaf adds a new branch to
-func (b *Branch) AddLeaf(dbConn db.Connection, props AddLeafProps) (*Branch, error) {
+func (b *Branch) AddLeaf(dbConn db.Connection, props AddLeafProps, injectIntoSource bool) (*Branch, error) {
 	err := props.validate()
 	if err != nil {
 		return nil, err
@@ -168,7 +168,11 @@ func (b *Branch) AddLeaf(dbConn db.Connection, props AddLeafProps) (*Branch, err
 		TitleKind:      props.TitleKind,
 		Branches:       []primitive.ObjectID{},
 		ParsedBranches: []Branch{},
-		Parents:        append(b.Parents, b.ID),
+		Parents:        []primitive.ObjectID{},
+	}
+	if !b.ID.IsZero() {
+		// This is a sub branch of the tree, add the parents property
+		newBranch.Parents = append(b.Parents, b.ID)
 	}
 
 	err = dbConn.Insert(newBranch)
@@ -177,7 +181,9 @@ func (b *Branch) AddLeaf(dbConn db.Connection, props AddLeafProps) (*Branch, err
 	}
 
 	b.Branches = append(b.Branches, newBranch.ID)
-	b.ParsedBranches = append(b.ParsedBranches, *newBranch)
+	if injectIntoSource {
+		b.ParsedBranches = append(b.ParsedBranches, *newBranch)
+	}
 	err = dbConn.UpdateByID(b)
 	if err != nil {
 		return nil, err

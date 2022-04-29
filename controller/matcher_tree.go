@@ -31,26 +31,31 @@ var routeAddMatcherLeaf = routeBuilder.R{
 	Res:         matcher.Branch{},
 	Body:        matcher.AddLeafProps{},
 	Fn: func(c *fiber.Ctx) error {
-		idParam := c.Params("id")
-		id, err := primitive.ObjectIDFromHex(idParam)
-		if err != nil {
-			return err
-		}
-
 		body := matcher.AddLeafProps{}
-		err = c.BodyParser(&body)
+		err := c.BodyParser(&body)
 		if err != nil {
 			return err
 		}
 
 		ctx := ctx.Get(c)
 
-		tree, err := matcher.GetTree(ctx.DBConn, &id, c.Context().QueryArgs().GetUintOrZero("deep"))
+		deep := c.Context().QueryArgs().GetUintOrZero("deep")
+
+		idParamStr := c.Params("id")
+		var idParam *primitive.ObjectID
+		if idParamStr != "" {
+			id, err := primitive.ObjectIDFromHex(idParamStr)
+			if err != nil {
+				return err
+			}
+			idParam = &id
+		}
+		tree, err := matcher.GetTree(ctx.DBConn, idParam, deep)
 		if err != nil {
 			return err
 		}
 
-		_, err = tree.AddLeaf(ctx.DBConn, body)
+		_, err = tree.AddLeaf(ctx.DBConn, body, deep != 1)
 		if err != nil {
 			return err
 		}
