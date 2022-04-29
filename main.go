@@ -18,7 +18,6 @@ import (
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/db/mongo"
 	"github.com/script-development/RT-CV/db/mongo/backup"
-	"github.com/script-development/RT-CV/helpers/emailservice"
 	"github.com/script-development/RT-CV/helpers/random"
 	"github.com/script-development/RT-CV/helpers/requestLogger"
 	"github.com/script-development/RT-CV/mock"
@@ -78,13 +77,6 @@ func main() {
 		}
 	} else {
 		log.Info("No .env file found")
-	}
-
-	// Initialize the mail service
-	err = emailservice.Setup(emailservice.EmailServerConfigurationFromEnv(), nil)
-	if err != nil {
-		log.WithError(err).Error("Error initializing email service")
-		os.Exit(1)
 	}
 
 	// Initialize the database

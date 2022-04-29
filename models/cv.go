@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"html/template"
 	"os"
-	"os/exec"
-	"path"
 	"strconv"
 	"time"
 
@@ -194,89 +192,6 @@ func (cv *CV) GetEmailHTML(profile Profile, matchText, domain string) (*bytes.Bu
 	buff := bytes.NewBuffer(nil)
 	err = tmpl.Execute(buff, input)
 	return buff, err
-}
-
-// GetPDF generates a PDF from a cv that can be send
-// the pdfGeneratorProjectPath argument can be used to define the path to the pdf generator project
-func (cv *CV) GetPDF(options *PdfOptions, pdfGeneratorProjectPath *string) (*os.File, error) {
-	cvJSON, err := json.Marshal(cv)
-	if err != nil {
-		return nil, err
-	}
-
-	if pdfGeneratorProjectPath == nil {
-		cwd, err := os.Getwd()
-		if err != nil {
-			return nil, err
-		}
-
-		newPdfGeneratorProjectPath := path.Join(cwd, "pdf_generator")
-		pdfGeneratorProjectPath = &newPdfGeneratorProjectPath
-	}
-
-	pdfGeneratorBin := path.Join(*pdfGeneratorProjectPath, "bin/pdf_generator.exe")
-	f, err := os.CreateTemp(*pdfGeneratorProjectPath, "cv-*.pdf")
-	if err != nil {
-		return nil, err
-	}
-	pdfOutFile := f.Name()
-	f.Close()
-
-	args := []string{
-		"--data", string(cvJSON),
-		"--out", pdfOutFile,
-	}
-
-	emailLogoEnv := os.Getenv("EMAIL_LOGO_URL")
-	if options != nil {
-		if options.FontHeader != nil {
-			args = append(args, "--font-bold", *options.FontHeader)
-		}
-		if options.FontRegular != nil {
-			args = append(args, "--font-regular", *options.FontRegular)
-		}
-		if options.Style != nil {
-			args = append(args, "--style", *options.Style)
-		}
-		if options.HeaderColor != nil {
-			args = append(args, "--header-color", *options.HeaderColor)
-		}
-		if options.SubHeaderColor != nil {
-			args = append(args, "--sub-header-color", *options.SubHeaderColor)
-		}
-		if options.LogoImageURL != nil {
-			args = append(args, "--logo-image-url", *options.LogoImageURL)
-		} else if len(emailLogoEnv) != 0 {
-			args = append(args, "--logo-image-url", emailLogoEnv)
-		}
-		if options.CompanyName != nil {
-			args = append(args, "--company-name", *options.CompanyName)
-		}
-		if options.CompanyAddress != nil {
-			args = append(args, "--company-address", *options.CompanyAddress)
-		}
-	} else if len(emailLogoEnv) != 0 {
-		args = append(args, "--logo-image-url", emailLogoEnv)
-	}
-
-	cmd := exec.Command(pdfGeneratorBin, args...)
-	cmd.Dir = *pdfGeneratorProjectPath
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		os.Remove(pdfOutFile)
-		if len(out) != 0 {
-			return nil, fmt.Errorf("%s, data: %s", string(out), string(cvJSON))
-		}
-		return nil, err
-	}
-
-	pdfFile, err := os.Open(pdfOutFile)
-	if err != nil {
-		os.Remove(pdfOutFile)
-		return nil, err
-	}
-
-	return pdfFile, nil
 }
 
 // Validate validates the cv and returns an error if it's not valid

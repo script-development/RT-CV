@@ -32,6 +32,7 @@ cd dashboard
 npm install
 npm run build
 cd ..
+
 echo USE_TESTING_DB=true > .env
 
 go run .
@@ -46,7 +47,6 @@ _note that this uses an in memory database that resets every time the app restar
 Extra requirements:
 
 - Mongodb _(mongodb compass is a great db viewer)_
-- Dart 2+
 
 Make sure to also create a new mongodb database, the collections are created automatically by this program
 
@@ -54,9 +54,9 @@ Make sure to also create a new mongodb database, the collections are created aut
 cp .env.example .env
 vim .env
 
-cd pdf_generator
-dart pub get
-dart compile exe bin/pdf_generator.dart
+cd dashboard
+npm install
+npm run build
 cd ..
 
 go run .
@@ -71,7 +71,6 @@ Head over to [localhost:4000/docs](http://localhost:4000/docs) to get the api do
 Make sure to read
 
 - [/dashboard](/dashboard)
-- [/pdf_generator](/pdf_generator)
 - [/CONTRIBUTING.md](/CONTRIBUTING.md)
 
 ## Docker

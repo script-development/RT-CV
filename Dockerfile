@@ -17,23 +17,15 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm ci \
     && npm run build
 
-# Build cv pdf generator
-FROM dart as pdf_generator
-
-COPY ./pdf_generator/ .
-RUN dart pub get && dart compile exe bin/pdf_generator.dart
-
 # Setup the runtime
 FROM ubuntu AS runtime
 
 RUN ln -fs /usr/share/zoneinfo/Europe/Amsterdam /etc/localtime \
-    && mkdir -p /project/dashboard /project/pdf_generator/bin \
+    && mkdir -p /project/dashboard \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=backend /project/rtcv /project/rtcv
 COPY --from=dashboard /app/out /project/dashboard/out
-COPY --from=pdf_generator /root/bin/pdf_generator.exe /project/pdf_generator/bin/pdf_generator.exe
-COPY pdf_generator/fonts /project/pdf_generator/fonts
 COPY assets /project/assets
 
 WORKDIR /project

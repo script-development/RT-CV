@@ -80,10 +80,6 @@ func (data *CreateOrUpdateOnMatchHookRequestData) applyToHook(hook *models.OnMat
 		hook.AddHeaders = []models.Header{}
 	}
 
-	if data.StopRemainingActions != nil {
-		hook.StopRemainingActions = *data.StopRemainingActions
-	}
-
 	return nil
 }
 

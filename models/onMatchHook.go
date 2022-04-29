@@ -20,10 +20,9 @@ type OnMatchHook struct {
 	db.M  `bson:",inline"`
 	KeyID primitive.ObjectID `json:"keyId" bson:"keyId"`
 
-	URL                  string   `json:"url"`
-	Method               string   `json:"method" description:"the method to use when calling the url (GET, POST, PUT, PATCH, DELETE)"`
-	AddHeaders           []Header `json:"addHeaders" bson:"addHeaders"`
-	StopRemainingActions bool     `json:"stopRemainingActions" bson:"stopRemainingActions" description:"If true, the hook will stop the remaining actions after this hook such as sending an email"`
+	URL        string   `json:"url"`
+	Method     string   `json:"method" description:"the method to use when calling the url (GET, POST, PUT, PATCH, DELETE)"`
+	AddHeaders []Header `json:"addHeaders" bson:"addHeaders"`
 }
 
 // CollectionName returns the collection name of the Profile

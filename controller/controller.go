@@ -124,12 +124,6 @@ func Routes(app *fiber.App, appVersion string, testing bool) {
 				b.Post(`/addLeaf`, routeAddMatcherLeaf)
 			})
 		}, requiresAuth(models.APIKeyRoleController|models.APIKeyRoleInformationObtainer|models.APIKeyRoleDashboard))
-
-		b.Post(
-			`/exampleAttachmentPdf`,
-			routeGetExampleAttachmentPDF,
-			requiresAuth(models.APIKeyRoleController|models.APIKeyRoleDashboard),
-		)
 	})
 
 	_, err := os.Stat("./dashboard/out")

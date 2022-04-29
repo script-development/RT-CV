@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"os"
 	"sync"
 	"time"
 
@@ -222,85 +221,33 @@ func (args ProcessMatches) Process() {
 		return
 	}
 
-	if len(hooks) > 0 {
-		stopRemainingActions := false
-		hookData, err := json.Marshal(DataSendToHook{
-			MatchedProfiles: args.MatchedProfiles,
-			CV:              args.CV,
-			KeyID:           args.KeyID,
-			KeyName:         args.KeyName,
-		})
-		if err != nil {
-			args.Logger.WithError(err).Error("creating hook data failed")
-			return
-		}
-
-		for _, hook := range hooks {
-			if err != nil {
-				args.Logger.WithError(err).Error("creating hook data failed")
-				continue
-			}
-
-			if hook.StopRemainingActions {
-				stopRemainingActions = true
-			}
-
-			err = hook.Call(bytes.NewBuffer(hookData))
-			if err != nil {
-				args.Logger.WithError(err).Error("creating hook data failed")
-			} else {
-				args.Logger.WithField("hook", hook.URL).WithField("hook_id", hook.ID.Hex()).Info("hook called")
-			}
-		}
-
-		if stopRemainingActions {
-			return
-		}
-	}
-
-	if args.Debug {
+	if len(hooks) == 0 {
+		log.Error("no on match hooks configured")
 		return
 	}
 
-	var defaultPdf *os.File
-	for _, aMatch := range args.MatchedProfiles {
-		cv := args.CV
-		onMatch := aMatch.Profile.OnMatch
+	hookData, err := json.Marshal(DataSendToHook{
+		MatchedProfiles: args.MatchedProfiles,
+		CV:              args.CV,
+		KeyID:           args.KeyID,
+		KeyName:         args.KeyName,
+	})
+	if err != nil {
+		args.Logger.WithError(err).Error("creating hook data failed")
+		return
+	}
 
-		debugSendEmailsTo := os.Getenv("DEBUG_SEND_EMAILS_TO")
-		if debugSendEmailsTo != "" {
-			onMatch.SendMail = []models.ProfileSendEmailData{{Email: debugSendEmailsTo}}
-		}
-
-		if len(onMatch.SendMail) == 0 {
+	for _, hook := range hooks {
+		if err != nil {
+			args.Logger.WithError(err).Error("creating hook data failed")
 			continue
 		}
 
-		if onMatch.HasPDFOptions() {
-			// This pdf has custom options
-			customPDFFile, err := cv.GetPDF(onMatch.PdfOptions, nil)
-			if err != nil {
-				log.WithError(err).Error("mail attachment creation error")
-			}
-
-			aMatch.HandleMatch(cv, onMatch, customPDFFile, args.KeyName)
-
-			customPDFFile.Close()
-			os.Remove(customPDFFile.Name())
+		err = hook.Call(bytes.NewBuffer(hookData))
+		if err != nil {
+			args.Logger.WithError(err).Error("creating hook data failed")
 		} else {
-			if defaultPdf == nil {
-				// If the profile has the deafult PDF options we only have to create the PDF once and reuse it
-				defaultPdf, err = cv.GetPDF(nil, nil)
-				if err != nil {
-					log.WithError(err).Error("mail attachment creation error")
-				}
-			}
-
-			aMatch.HandleMatch(cv, onMatch, defaultPdf, args.KeyName)
+			args.Logger.WithField("hook", hook.URL).WithField("hook_id", hook.ID.Hex()).Info("hook called")
 		}
-	}
-	if defaultPdf != nil {
-		defaultPdf.Close()
-		os.Remove(defaultPdf.Name())
 	}
 }

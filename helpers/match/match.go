@@ -2,12 +2,10 @@ package match
 
 import (
 	"math"
-	"os"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/apex/log"
 	fuzzymatcher "github.com/mjarkk/fuzzy-matcher"
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/jsonHelpers"
@@ -301,25 +299,6 @@ func Match(scraperKeyID, requestID primitive.ObjectID, profiles []*models.Profil
 	}
 
 	return res
-}
-
-// HandleMatch sends a match to the desired destination based on the OnMatch field in the profile
-func (match FoundMatch) HandleMatch(cv models.CV, onMatch models.ProfileOnMatch, pdfFile *os.File, keyName string) {
-	if len(onMatch.SendMail) == 0 {
-		return
-	}
-
-	emailBody, err := cv.GetEmailHTML(match.Profile, match.Matches.GetMatchSentence(), keyName)
-	if err != nil {
-		log.WithError(err).Error("unable to generate email body from CV")
-	} else {
-		for _, email := range onMatch.SendMail {
-			err := email.SendEmail(match.Profile, emailBody.Bytes(), pdfFile)
-			if err != nil {
-				log.WithError(err).Error("unable to send email")
-			}
-		}
-	}
 }
 
 func totalMonths(t time.Time) int {

@@ -3,18 +3,14 @@ package models
 import (
 	"errors"
 	"fmt"
-	"os"
 	"regexp"
 
-	"github.com/jordan-wright/email"
 	fuzzymatcher "github.com/mjarkk/fuzzy-matcher"
 	"github.com/script-development/RT-CV/db"
-	"github.com/script-development/RT-CV/helpers/emailservice"
 	"github.com/script-development/RT-CV/helpers/jsonHelpers"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"jaytaylor.com/html2text"
 )
 
 // Profile contains all the information about a search profile
@@ -165,78 +161,12 @@ func (p *ProfileDutchZipcode) IsWithinCithAndArea(cityAndArea uint16) bool {
 
 // ProfileOnMatch defines what should happen when a profile is matched to a CV
 type ProfileOnMatch struct {
-	SendMail   []ProfileSendEmailData `json:"sendMail" bson:"sendMail"`
-	PdfOptions *PdfOptions            `json:"pdfOptions" bson:"pdfOptions" description:"Options for customizing the PDF, for more info about this object look at the /tryPdfGenerator page"`
-}
-
-// HasPDFOptions returns true if the PdfOptions is set and has at least one option set
-func (onMatch *ProfileOnMatch) HasPDFOptions() bool {
-	options := onMatch.PdfOptions
-	if options == nil {
-		return false
-	}
-
-	for _, entry := range []*string{
-		options.FontHeader,
-		options.FontRegular,
-		options.Style,
-		options.HeaderColor,
-		options.SubHeaderColor,
-		options.LogoImageURL,
-		options.CompanyName,
-		options.CompanyAddress,
-	} {
-		if entry != nil {
-			return true
-		}
-	}
-
-	return false
-}
-
-// PdfOptions contains options for the creation of the pdf
-type PdfOptions struct {
-	// See pdf_generator/bin/fonts.dart > _fontFilesMap for available fonts
-	FontHeader  *string `json:"fontHeader" bson:"fontHeader"`
-	FontRegular *string `json:"fontRegular" bson:"fontRegular"`
-
-	// See pdf_generator/bin/args.dart > LayoutStyle for available styles
-	Style *string `json:"style" bson:"style"`
-
-	// Expected to be a hex value like: #ffffff
-	HeaderColor    *string `json:"headerColor" bson:"headerColor"`
-	SubHeaderColor *string `json:"subHeaderColor" bson:"subHeaderColor"`
-
-	LogoImageURL   *string `json:"logoImageUrl" bson:"logoImageUrl"`
-	CompanyName    *string `json:"companyName" bson:"companyName"`
-	CompanyAddress *string `json:"companyAddress" bson:"companyAddress"`
+	SendMail []ProfileSendEmailData `json:"sendMail" bson:"sendMail"`
 }
 
 // ProfileSendEmailData only contains an email address atm
 type ProfileSendEmailData struct {
 	Email string `json:"email"`
-}
-
-// SendEmail sends an email
-func (d *ProfileSendEmailData) SendEmail(profile Profile, htmlBody []byte, pdfFile *os.File) error {
-	e := email.NewEmail()
-
-	e.To = []string{d.Email}
-	e.Subject = "Nieuwe match voor " + profile.Name
-	e.HTML = htmlBody
-	text, _ := html2text.FromString(string(htmlBody), html2text.Options{})
-	e.Text = []byte(text)
-
-	if pdfFile != nil {
-		pdfFile.Seek(0, 0)
-		_, err := e.Attach(pdfFile, "match.pdf", "application/pdf")
-		if err != nil {
-			return err
-		}
-	}
-
-	emailservice.SendMail(e)
-	return nil
 }
 
 // CheckAPIKeysExists checks if apiKeys are valid IDs of existing keys
