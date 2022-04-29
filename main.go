@@ -129,7 +129,10 @@ func main() {
 	// do not use fiber Prefork!, this app is not written to support it
 	app := fiber.New(fiber.Config{
 		ErrorHandler: controller.FiberErrorHandler,
-		Immutable:    true,
+
+		// We need this as without it API keys are sometimes overwritten while the request is still running.
+		// This causes very wired behavior like matching a cv from one scraper with another scraper's key because 2 scrapers send the cv on the exact same time :/
+		Immutable: true,
 	})
 	app.Use(recover.New())
 	app.Use(cors.New())
