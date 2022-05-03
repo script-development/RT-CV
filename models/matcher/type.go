@@ -37,10 +37,10 @@ type Branch struct {
 	Branches []primitive.ObjectID `json:"-"`
 
 	// ParsedBranches can be set when building a tree that is send to a user over the api in JSON format
-	ParsedBranches []Branch `bson:"-" json:"branches,omitempty"`
+	ParsedBranches []*Branch `bson:"-" json:"branches,omitempty"`
 
 	// Parents of this branch from the bottom of the tree up to this branch
-	Parents []primitive.ObjectID `json:"parents,omitempty"`
+	Parents []primitive.ObjectID `json:"-"`
 }
 
 // CollectionName implements db.Entry
@@ -91,6 +91,42 @@ func GetTree(dbConn db.Connection, fromBranch *primitive.ObjectID, deep int) (*B
 		return nil, err
 	}
 
+	tree := []*Branch{}
+outerLoop:
+	for idx := range branches {
+		branch := branches[idx]
+		searchTree := &Branch{ParsedBranches: tree}
+
+	parentsLoop:
+		for _, id := range branch.Parents {
+			// Reverse in the tree and place the missing entries in the root tree
+
+			for _, searchTreeEntry := range searchTree.ParsedBranches {
+				if searchTreeEntry.ID == id {
+					searchTree = searchTreeEntry
+					continue parentsLoop
+				}
+			}
+
+			searchTree = &Branch{
+				M:              db.M{ID: id},
+				Parents:        append(searchTree.Parents, searchTree.ID),
+				ParsedBranches: []*Branch{},
+			}
+		}
+
+		for _, searchTreeEntry := range searchTree.ParsedBranches {
+			if searchTreeEntry.ID == branch.ID {
+				branch.ParsedBranches = searchTreeEntry.ParsedBranches
+				*searchTreeEntry = branch
+				continue outerLoop
+			}
+		}
+
+		branch.ParsedBranches = []*Branch{}
+		searchTree.ParsedBranches = append(searchTree.ParsedBranches, &branch)
+	}
+
 	rootBrancheIDs := []primitive.ObjectID{}
 	branchesMap := map[primitive.ObjectID]Branch{}
 	for _, v := range branches {
@@ -113,16 +149,16 @@ func GetTree(dbConn db.Connection, fromBranch *primitive.ObjectID, deep int) (*B
 		return nil, errors.New("no branches for spesific branch found")
 	}
 
-	var idsToList func(branchIDs []primitive.ObjectID, nDeep int) []Branch
-	idsToList = func(branchIDs []primitive.ObjectID, nDeep int) []Branch {
+	var idsToList func(branchIDs []primitive.ObjectID, nDeep int) []*Branch
+	idsToList = func(branchIDs []primitive.ObjectID, nDeep int) []*Branch {
 		if deep > 0 && nDeep == deep {
 			return nil
 		}
-		result := []Branch{}
+		result := []*Branch{}
 		for _, id := range branchIDs {
 			branch, _ := branchesMap[id]
 			branch.ParsedBranches = idsToList(branch.Branches, nDeep+1)
-			result = append(result, branch)
+			result = append(result, &branch)
 		}
 		return result
 	}
@@ -136,7 +172,7 @@ func GetTree(dbConn db.Connection, fromBranch *primitive.ObjectID, deep int) (*B
 		}, nil
 	}
 
-	return &idsToList(rootBrancheIDs, 0)[0], nil
+	return idsToList(rootBrancheIDs, 0)[0], nil
 }
 
 // AddLeafProps are the leaf creation arguments for the AddLeaf method
@@ -169,7 +205,7 @@ func (b *Branch) AddLeaf(dbConn db.Connection, props AddLeafProps, injectIntoSou
 		Titles:         props.Titles,
 		TitleKind:      props.TitleKind,
 		Branches:       []primitive.ObjectID{},
-		ParsedBranches: []Branch{},
+		ParsedBranches: []*Branch{},
 		Parents:        []primitive.ObjectID{},
 	}
 	if !bIsRoot {
@@ -184,7 +220,7 @@ func (b *Branch) AddLeaf(dbConn db.Connection, props AddLeafProps, injectIntoSou
 
 	b.Branches = append(b.Branches, newBranch.ID)
 	if injectIntoSource {
-		b.ParsedBranches = append(b.ParsedBranches, *newBranch)
+		b.ParsedBranches = append(b.ParsedBranches, newBranch)
 	}
 	if !bIsRoot {
 		err = dbConn.UpdateByID(b)
