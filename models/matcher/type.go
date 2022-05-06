@@ -1,8 +1,11 @@
 package matcher
 
 import (
+	"encoding/json"
 	"errors"
+	"strconv"
 
+	"github.com/mjarkk/jsonschema"
 	"github.com/script-development/RT-CV/db"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -12,11 +15,48 @@ import (
 // TitleKind defines the kind of the title
 type TitleKind uint8
 
+// JSONSchemaDescribe implements jsonschema.Describe
+func (TitleKind) JSONSchemaDescribe() jsonschema.Property {
+	describe := `0 for a job title
+1 for a sector title
+2 for a education title
+3 for the root of the tree`
+
+	return jsonschema.Property{
+		Title:       "The title kind",
+		Description: describe,
+		Type:        jsonschema.PropertyTypeInteger,
+		Enum: []json.RawMessage{
+			Job.toJSON(),
+			Sector.toJSON(),
+			Education.toJSON(),
+			Root.toJSON(),
+		},
+	}
+}
+
+// Valid returns an error if the tree is valid
+func (k TitleKind) Valid() error {
+	// Note that Root is special and should not be used in the tree
+	if k >= Job && k <= Education {
+		return nil
+	}
+	return errors.New("titleKind not valid")
+}
+
+func (k TitleKind) toJSON() json.RawMessage {
+	return []byte(strconv.FormatUint(uint64(k), 10))
+}
+
 const (
 	// Job name
 	Job TitleKind = iota
 	// Sector name
 	Sector
+	// Education name
+	Education
+	// Root of the tree
+	Root
 )
 
 // Branch contains a branch of the matcher tree
@@ -25,7 +65,7 @@ type Branch struct {
 
 	// The titles of this branch
 	// At least one title should be set
-	Titles []string `json:"titles,omitempty"`
+	Titles []string `bson:"title" json:"titles,omitempty"`
 
 	// The kind of title
 	// In the data we import there are 2 kinds of titles
@@ -34,13 +74,10 @@ type Branch struct {
 	TitleKind TitleKind `bson:"titleKind" json:"titleKind"`
 
 	// Branches contains sub branches ontop of this branch
-	Branches []primitive.ObjectID `json:"-"`
+	Branches []primitive.ObjectID `json:"branchesIds,omitempty"`
 
 	// ParsedBranches can be set when building a tree that is send to a user over the api in JSON format
 	ParsedBranches []*Branch `bson:"-" json:"branches,omitempty"`
-
-	// Parents of this branch from the bottom of the tree up to this branch
-	Parents []primitive.ObjectID `json:"-"`
 }
 
 // CollectionName implements db.Entry
@@ -51,7 +88,6 @@ func (*Branch) CollectionName() string {
 // Indexes implements db.Entry
 func (*Branch) Indexes() []mongo.IndexModel {
 	return []mongo.IndexModel{
-		{Keys: bson.M{"parents": 1}},
 		{Keys: bson.M{"titles": 1}},
 	}
 }
@@ -66,113 +102,11 @@ func GetBranch(dbConn db.Connection, id primitive.ObjectID) (*Branch, error) {
 	return result, nil
 }
 
-// GetInTree returns all branches in a list in the tree or from a spesific point in the tree
-func GetInTree(dbConn db.Connection, fromBranch *primitive.ObjectID) ([]Branch, error) {
-	query := bson.M{}
-	if fromBranch != nil {
-		query["$or"] = []bson.M{
-			{"parents": bson.M{"$exists": true, "$in": []any{*fromBranch}}},
-			{"_id": fromBranch},
-		}
-	}
-
-	branches := []Branch{}
-	err := dbConn.Find(&Branch{}, &branches, query)
-	if err != nil {
-		return nil, err
-	}
-	return branches, nil
-}
-
-// GetTree returns a db tree from the root or a spesific branch
-func GetTree(dbConn db.Connection, fromBranch *primitive.ObjectID, deep int) (*Branch, error) {
-	branches, err := GetInTree(dbConn, fromBranch)
-	if err != nil {
-		return nil, err
-	}
-
-	tree := []*Branch{}
-outerLoop:
-	for idx := range branches {
-		branch := branches[idx]
-		searchTree := &Branch{ParsedBranches: tree}
-
-	parentsLoop:
-		for _, id := range branch.Parents {
-			// Reverse in the tree and place the missing entries in the root tree
-
-			for _, searchTreeEntry := range searchTree.ParsedBranches {
-				if searchTreeEntry.ID == id {
-					searchTree = searchTreeEntry
-					continue parentsLoop
-				}
-			}
-
-			searchTree = &Branch{
-				M:              db.M{ID: id},
-				Parents:        append(searchTree.Parents, searchTree.ID),
-				ParsedBranches: []*Branch{},
-			}
-		}
-
-		for _, searchTreeEntry := range searchTree.ParsedBranches {
-			if searchTreeEntry.ID == branch.ID {
-				branch.ParsedBranches = searchTreeEntry.ParsedBranches
-				*searchTreeEntry = branch
-				continue outerLoop
-			}
-		}
-
-		branch.ParsedBranches = []*Branch{}
-		searchTree.ParsedBranches = append(searchTree.ParsedBranches, &branch)
-	}
-
-	rootBrancheIDs := []primitive.ObjectID{}
-	branchesMap := map[primitive.ObjectID]Branch{}
-	for _, v := range branches {
-		branchesMap[v.ID] = v
-		if fromBranch == nil {
-			if len(v.Parents) == 0 {
-				rootBrancheIDs = append(rootBrancheIDs, v.ID)
-			}
-		} else {
-			if v.ID == *fromBranch {
-				rootBrancheIDs = append(rootBrancheIDs, v.ID)
-			}
-		}
-	}
-
-	if len(rootBrancheIDs) == 0 {
-		if fromBranch == nil {
-			return nil, errors.New("no branches found")
-		}
-		return nil, errors.New("no branches for spesific branch found")
-	}
-
-	var idsToList func(branchIDs []primitive.ObjectID, nDeep int) []*Branch
-	idsToList = func(branchIDs []primitive.ObjectID, nDeep int) []*Branch {
-		if deep > 0 && nDeep == deep {
-			return nil
-		}
-		result := []*Branch{}
-		for _, id := range branchIDs {
-			branch, _ := branchesMap[id]
-			branch.ParsedBranches = idsToList(branch.Branches, nDeep+1)
-			result = append(result, &branch)
-		}
-		return result
-	}
-
-	if fromBranch == nil {
-		return &Branch{
-			Titles:         nil,
-			TitleKind:      Sector,
-			ParsedBranches: idsToList(rootBrancheIDs, 1),
-			Parents:        []primitive.ObjectID{},
-		}, nil
-	}
-
-	return idsToList(rootBrancheIDs, 0)[0], nil
+// FindParents find the branchs that have the id arg as parent
+func FindParents(dbConn db.Connection, id primitive.ObjectID) ([]Branch, error) {
+	results := []Branch{}
+	err := dbConn.Find(&Branch{}, &results, bson.M{"branches": id})
+	return results, err
 }
 
 // AddLeafProps are the leaf creation arguments for the AddLeaf method
@@ -185,10 +119,7 @@ func (props AddLeafProps) validate() error {
 	if len(props.Titles) == 0 {
 		return errors.New("a title is required to add a leaf to a branch")
 	}
-	if props.TitleKind > 1 {
-		return errors.New("titleKind invalid, must be 0 for a Job title and 1 for a Sector title")
-	}
-	return nil
+	return props.TitleKind.Valid()
 }
 
 // AddLeaf adds a new branch to
@@ -206,11 +137,6 @@ func (b *Branch) AddLeaf(dbConn db.Connection, props AddLeafProps, injectIntoSou
 		TitleKind:      props.TitleKind,
 		Branches:       []primitive.ObjectID{},
 		ParsedBranches: []*Branch{},
-		Parents:        []primitive.ObjectID{},
-	}
-	if !bIsRoot {
-		// This is a sub branch of the tree, add the parents property
-		newBranch.Parents = append(b.Parents, b.ID)
 	}
 
 	err = dbConn.Insert(newBranch)
@@ -227,6 +153,12 @@ func (b *Branch) AddLeaf(dbConn db.Connection, props AddLeafProps, injectIntoSou
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if bIsRoot {
+		Tree.AddLeaf(newBranch.ID, nil)
+	} else {
+		Tree.AddLeaf(newBranch.ID, &b.ID)
 	}
 
 	return newBranch, nil

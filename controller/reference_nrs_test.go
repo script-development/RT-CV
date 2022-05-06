@@ -29,7 +29,7 @@ func TestScannedReferenceNrs(t *testing.T) {
 	err := router.db.Find(&models.Match{}, &matchesInDB, nil)
 	NoError(t, err)
 	for _, match := range matchesInDB {
-		err = router.db.DeleteByID(&match)
+		err = router.db.DeleteByID(&models.Match{}, match.ID)
 		NoError(t, err)
 	}
 

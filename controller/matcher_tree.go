@@ -5,7 +5,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/script-development/RT-CV/controller/ctx"
-	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/routeBuilder"
 	"github.com/script-development/RT-CV/models/matcher"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -17,7 +16,8 @@ var routeGetMatcherTree = routeBuilder.R{
 	Fn: func(c *fiber.Ctx) error {
 		ctx := ctx.Get(c)
 
-		tree, err := matcher.GetTree(ctx.DBConn, nil, c.Context().QueryArgs().GetUintOrZero("deep"))
+		// deep := c.Context().QueryArgs().GetUintOrZero("deep")
+		tree, err := matcher.Tree.GetBranch(ctx.DBConn, nil)
 		if err != nil {
 			return err
 		}
@@ -39,7 +39,7 @@ var routeAddMatcherLeaf = routeBuilder.R{
 
 		ctx := ctx.Get(c)
 
-		deep := c.Context().QueryArgs().GetUintOrZero("deep")
+		// deep := c.Context().QueryArgs().GetUintOrZero("deep")
 
 		idParamStr := c.Params("id")
 		var idParam *primitive.ObjectID
@@ -50,12 +50,12 @@ var routeAddMatcherLeaf = routeBuilder.R{
 			}
 			idParam = &id
 		}
-		tree, err := matcher.GetTree(ctx.DBConn, idParam, deep)
+		tree, err := matcher.Tree.GetBranch(ctx.DBConn, idParam)
 		if err != nil {
 			return err
 		}
 
-		_, err = tree.AddLeaf(ctx.DBConn, body, deep != 1)
+		_, err = tree.AddLeaf(ctx.DBConn, body, true /* deep != 1*/)
 		if err != nil {
 			return err
 		}
@@ -76,7 +76,8 @@ var routeGetPartOfMatcherTree = routeBuilder.R{
 
 		ctx := ctx.Get(c)
 
-		tree, err := matcher.GetTree(ctx.DBConn, &id, c.Context().QueryArgs().GetUintOrZero("deep"))
+		// deep := c.Context().QueryArgs().GetUintOrZero("deep")
+		tree, err := matcher.Tree.GetBranch(ctx.DBConn, &id)
 		if err != nil {
 			return err
 		}
@@ -104,7 +105,8 @@ var routePutMatcherBranch = routeBuilder.R{
 
 		ctx := ctx.Get(c)
 
-		tree, err := matcher.GetTree(ctx.DBConn, &id, c.Context().QueryArgs().GetUintOrZero("deep"))
+		// deep := c.Context().QueryArgs().GetUintOrZero("deep")
+		tree, err := matcher.Tree.GetBranch(ctx.DBConn, &id)
 		if err != nil {
 			return err
 		}
@@ -120,8 +122,8 @@ var routePutMatcherBranch = routeBuilder.R{
 
 // RouteDeleteMatcherBranchResult gives some information about the removal process
 type RouteDeleteMatcherBranchResult struct {
-	UpdatedParent   bool `json:"updatedParent"`
-	DeletedBranches int  `json:"deletedBranches"`
+	UpdatedParents  int `json:"updatedParent"`
+	DeletedBranches int `json:"deletedBranches"`
 }
 
 var routeDeleteMatcherBranch = routeBuilder.R{
@@ -136,59 +138,43 @@ var routeDeleteMatcherBranch = routeBuilder.R{
 
 		ctx := ctx.Get(c)
 
-		branches, err := matcher.GetInTree(ctx.DBConn, &id)
+		// invalidate the cache as after this the cache will contain stuff that issn't correct
+		defer matcher.Tree.Invalidate()
+
+		// Firstly lets remove the parents as if this fails the database isn't broken and if the remaining code fails at least the data won't show up annymore
+		parents, err := matcher.FindParents(ctx.DBConn, id)
 		if err != nil {
 			return err
 		}
-		if len(branches) == 0 {
-			return errors.New("branch not found")
-		}
-		var parentID primitive.ObjectID
-		found := false
-		for _, v := range branches {
-			if v.ID == id {
-				parentsLen := len(v.Parents)
-				if parentsLen != 0 {
-					parentID = v.Parents[parentsLen-1]
-				}
-				found = true
-				break
-			}
-		}
-		if !found {
-			return errors.New("branch not found")
-		}
-
-		if !parentID.IsZero() {
-			parent, err := matcher.GetBranch(ctx.DBConn, parentID)
-			if err != nil {
-				return errors.New("parent of branch not found")
-			}
-			// Remove in reverse the ID from this branch as it no longer exsists
-			for idx := len(parent.Branches) - 1; idx >= 0; idx-- {
-				if parent.Branches[idx] == id {
+		for _, parent := range parents {
+			for idx, branchID := range parent.Branches {
+				if branchID == id {
 					parent.Branches = append(parent.Branches[:idx], parent.Branches[idx+1:]...)
+					break
 				}
 			}
-			err = ctx.DBConn.UpdateByID(parent)
+			err = ctx.DBConn.UpdateByID(&parent)
 			if err != nil {
 				return err
 			}
 		}
 
-		branchesToRemove := []db.Entry{}
-		for idx := range branches {
-			branchesToRemove = append(branchesToRemove, &branches[idx])
+		// delete the branch and all it's child branches
+		branchIDs, err := matcher.Tree.GetIDsForBranch(ctx.DBConn, id)
+		if err != nil {
+			return err
 		}
-
-		err = ctx.DBConn.DeleteByID(branchesToRemove...)
+		if len(branchIDs) == 0 {
+			return errors.New("branch not found")
+		}
+		err = ctx.DBConn.DeleteByID(&matcher.Branch{}, branchIDs...)
 		if err != nil {
 			return err
 		}
 
 		return c.JSON(RouteDeleteMatcherBranchResult{
-			UpdatedParent:   !parentID.IsZero(),
-			DeletedBranches: len(branchesToRemove),
+			UpdatedParents:  len(parents),
+			DeletedBranches: len(branchIDs),
 		})
 	},
 }

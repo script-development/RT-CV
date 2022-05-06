@@ -283,7 +283,7 @@ var routeDeleteProfile = routeBuilder.R{
 	Res:         models.Profile{},
 	Fn: func(c *fiber.Ctx) error {
 		ctx := ctxPkg.Get(c)
-		err := ctx.DBConn.DeleteByID(ctx.Profile)
+		err := ctx.DBConn.DeleteByID(&models.Profile{}, ctx.Profile.ID)
 		if err != nil {
 			return err
 		}

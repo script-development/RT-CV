@@ -117,7 +117,7 @@ var routeDeleteOnMatchHook = routeBuilder.R{
 	Res:         models.OnMatchHook{},
 	Fn: func(c *fiber.Ctx) error {
 		ctx := ctx.Get(c)
-		err := ctx.DBConn.DeleteByID(ctx.OnMatchHook)
+		err := ctx.DBConn.DeleteByID(&models.OnMatchHook{}, ctx.OnMatchHook.ID)
 		if err != nil {
 			return err
 		}

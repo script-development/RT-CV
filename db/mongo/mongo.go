@@ -136,27 +136,25 @@ func (c *Connection) UpdateByID(e db.Entry) error {
 }
 
 // DeleteByID deletes an entry by its id
-func (c *Connection) DeleteByID(e ...db.Entry) error {
-	if len(e) == 0 {
+func (c *Connection) DeleteByID(e db.Entry, ids ...primitive.ObjectID) error {
+	if len(ids) == 0 {
 		return nil
 	}
 
-	collection := c.collection(e[0])
+	collection := c.collection(e)
 
-	idsToRemove := make([]primitive.ObjectID, len(e))
-	for idx, entry := range e {
-		idsToRemove[idx] = entry.GetID()
-		if idsToRemove[idx].IsZero() {
+	for _, id := range ids {
+		if id.IsZero() {
 			return errors.New("cannot update item without id")
 		}
 	}
 
-	if len(idsToRemove) == 1 {
-		_, err := collection.DeleteOne(dbHelpers.Ctx(), bson.M{"_id": idsToRemove[0]})
+	if len(ids) == 1 {
+		_, err := collection.DeleteOne(dbHelpers.Ctx(), bson.M{"_id": ids[0]})
 		return err
 	}
 
-	_, err := collection.DeleteMany(dbHelpers.Ctx(), bson.M{"_id": bson.M{"$in": idsToRemove}})
+	_, err := collection.DeleteMany(dbHelpers.Ctx(), bson.M{"_id": bson.M{"$in": ids}})
 	return err
 }
 

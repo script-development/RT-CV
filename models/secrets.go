@@ -144,7 +144,7 @@ func DeleteSecretByKey(conn db.Connection, keyID primitive.ObjectID, key string)
 		return err
 	}
 
-	return conn.DeleteByID(secret)
+	return conn.DeleteByID(&Secret{}, secret.ID)
 }
 
 // Decrypt decrypts the value of a secret

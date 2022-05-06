@@ -118,7 +118,7 @@ var routeDeleteKey = routeBuilder.R{
 			return errors.New("you are not allowed to remove system keys")
 		}
 
-		err := ctx.DBConn.DeleteByID(ctx.APIKeyFromParam)
+		err := ctx.DBConn.DeleteByID(&models.APIKey{}, ctx.APIKeyFromParam.ID)
 		if err != nil {
 			return err
 		}
