@@ -80,7 +80,7 @@ type Branch struct {
 	ParsedBranches []*Branch `bson:"-" json:"branches,omitempty"`
 
 	// Used by the tree to find the root branches
-	refs uint16 `json:"-" bson:"-"`
+	HasParents bool `json:"-" bson:"-"`
 }
 
 // CollectionName implements db.Entry

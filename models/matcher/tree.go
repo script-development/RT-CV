@@ -82,33 +82,38 @@ func (tc *Tree) build(dbConn db.Connection) error {
 	tc.branches = map[primitive.ObjectID]*Branch{}
 	tc.rootBranches = []primitive.ObjectID{}
 
-	referencesToBranch := map[primitive.ObjectID]uint16{}
-	// fill the branches for branches
-	for idx, branch := range branches {
-		tc.branches[branch.ID] = &branches[idx]
+	// fill the branches map and set the HasParents property
+	for idx := range branches {
+		branch := branches[idx]
+
 		for _, id := range branch.Branches {
-			referencesToBranch[id]++
+			referencedBranch := tc.branches[id]
+			if referencedBranch == nil {
+				tc.branches[id] = &Branch{HasParents: true}
+			} else {
+				referencedBranch.HasParents = true
+			}
 		}
 
-		_, ok := referencesToBranch[branch.ID]
-		if !ok {
-			referencesToBranch[branch.ID] = 0
-		}
-	}
-
-	// Find the root branches
-	for id, count := range referencesToBranch {
-		if count == 0 {
-			tc.rootBranches = append(tc.rootBranches, id)
+		if exsitingBranch, ok := tc.branches[branch.ID]; ok {
+			branch.HasParents = exsitingBranch.HasParents
+			*exsitingBranch = branch
+		} else {
+			tc.branches[branch.ID] = &branch
 		}
 	}
 
 	// Link the branches to their parents
+	// And find the root branches
 	for _, branch := range tc.branches {
 		branch.ParsedBranches = make([]*Branch, len(branch.Branches))
 		for idx := 0; idx < len(branch.Branches); idx++ {
 			// TODO what do we do when a branch cannot be found?
-			branch.ParsedBranches[idx] = tc.branches[branch.Branches[idx]]
+			referencedBranch := tc.branches[branch.Branches[idx]]
+			branch.ParsedBranches[idx] = referencedBranch
+		}
+		if !branch.HasParents {
+			tc.rootBranches = append(tc.rootBranches, branch.ID)
 		}
 	}
 

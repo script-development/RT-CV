@@ -119,7 +119,7 @@ func Routes(app *fiber.App, appVersion string, testing bool) {
 			b.Get(``, routeGetMatcherTree)
 			b.Post(`/addLeaf`, routeAddMatcherLeaf)
 			b.Group(`/:id`, func(b *routeBuilder.Router) {
-				b.Get(``, routeGetPartOfMatcherTree)
+				b.Get(``, routeGetMatcherTree)
 				b.Put(``, routePutMatcherBranch)
 				b.Delete(``, routeDeleteMatcherBranch)
 				b.Post(`/addLeaf`, routeAddMatcherLeaf)

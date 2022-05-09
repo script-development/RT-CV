@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"encoding/json"
 	"errors"
 
 	"github.com/gofiber/fiber/v2"
@@ -11,18 +12,37 @@ import (
 )
 
 var routeGetMatcherTree = routeBuilder.R{
-	Description: "get the full matcher tree",
+	Description: "get the matcher tree or a spesific part of the matcher tree defined by it's id",
 	Res:         matcher.Branch{},
 	Fn: func(c *fiber.Ctx) error {
+		var branchID *primitive.ObjectID
+		idParam := c.Params("id")
+		if idParam != "" {
+			id, err := primitive.ObjectIDFromHex(idParam)
+			if err != nil {
+				return err
+			}
+			branchID = &id
+		}
+
 		ctx := ctx.Get(c)
 
 		// deep := c.Context().QueryArgs().GetUintOrZero("deep")
-		tree, err := (&matcher.Tree{}).GetBranch(ctx.DBConn, nil)
+		tree, err := (&matcher.Tree{}).GetBranch(ctx.DBConn, branchID)
 		if err != nil {
 			return err
 		}
 
-		return c.JSON(tree)
+		jsonTree, err := json.Marshal(tree)
+		if err != nil {
+			return err
+		}
+
+		// TODO: cache the json tree
+		resp := c.Response()
+		resp.SetBodyRaw(jsonTree)
+		resp.Header.SetContentType(fiber.MIMEApplicationJSON)
+		return nil
 	},
 }
 
@@ -56,28 +76,6 @@ var routeAddMatcherLeaf = routeBuilder.R{
 		}
 
 		_, err = tree.AddLeaf(ctx.DBConn, body, true /* deep != 1*/)
-		if err != nil {
-			return err
-		}
-
-		return c.JSON(tree)
-	},
-}
-
-var routeGetPartOfMatcherTree = routeBuilder.R{
-	Description: "get a spesific part of the matcher tree defined by it's id",
-	Res:         matcher.Branch{},
-	Fn: func(c *fiber.Ctx) error {
-		idParam := c.Params("id")
-		id, err := primitive.ObjectIDFromHex(idParam)
-		if err != nil {
-			return err
-		}
-
-		ctx := ctx.Get(c)
-
-		// deep := c.Context().QueryArgs().GetUintOrZero("deep")
-		tree, err := (&matcher.Tree{}).GetBranch(ctx.DBConn, &id)
 		if err != nil {
 			return err
 		}
