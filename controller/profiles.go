@@ -157,9 +157,7 @@ type UpdateProfileReq struct {
 	MustDesiredProfession *bool                      `json:"mustDesiredProfession"`
 	DesiredProfessions    []models.ProfileProfession `json:"desiredProfessions"`
 
-	UpdateYearsSinceWork *struct {
-		YearsSinceWork *int `json:"yearsSinceWork"`
-	} `json:"updateYearsSinceWork"`
+	YearsSinceWork *int `json:"yearsSinceWork"`
 
 	MustExpProfession     *bool                      `json:"mustExpProfession"`
 	ProfessionExperienced []models.ProfileProfession `json:"professionExperienced"`
@@ -188,8 +186,6 @@ var routeModifyProfile = routeBuilder.R{
 	Body: UpdateProfileReq{},
 	Fn: func(c *fiber.Ctx) error {
 		ctx := ctxPkg.Get(c)
-		// profile := ctx.GetProfile(c)
-		// dbConn := ctx.GetDbConn(c)
 
 		var body UpdateProfileReq
 		err := c.BodyParser(&body)
@@ -225,11 +221,12 @@ var routeModifyProfile = routeBuilder.R{
 		if body.DesiredProfessions != nil {
 			ctx.Profile.DesiredProfessions = body.DesiredProfessions
 		}
-		if body.UpdateYearsSinceWork != nil {
-			if body.UpdateYearsSinceWork.YearsSinceWork != nil {
-				ctx.Profile.YearsSinceWork = &*body.UpdateYearsSinceWork.YearsSinceWork
-			} else {
+
+		if body.YearsSinceWork != nil {
+			if *body.YearsSinceWork == 0 {
 				ctx.Profile.YearsSinceWork = nil
+			} else {
+				ctx.Profile.YearsSinceWork = &*body.YearsSinceWork
 			}
 		}
 		if body.MustExpProfession != nil {
@@ -251,7 +248,11 @@ var routeModifyProfile = routeBuilder.R{
 			ctx.Profile.MustEducation = *body.MustEducation
 		}
 		if body.YearsSinceEducation != nil {
-			ctx.Profile.YearsSinceEducation = *body.YearsSinceEducation
+			if *body.YearsSinceEducation == 0 {
+				ctx.Profile.YearsSinceEducation = nil
+			} else {
+				ctx.Profile.YearsSinceEducation = &*body.YearsSinceEducation
+			}
 		}
 		if body.Educations != nil {
 			ctx.Profile.Educations = body.Educations

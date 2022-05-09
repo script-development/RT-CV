@@ -32,7 +32,7 @@ type Profile struct {
 
 	MustEducationFinished bool               `json:"mustEducationFinished" bson:"mustEducationFinished"`
 	MustEducation         bool               `json:"mustEducation" bson:"mustEducation" description:"Should a found CV at least have one education regardless of if it's complete"`
-	YearsSinceEducation   int                `json:"yearsSinceEducation" bson:"yearsSinceEducation"`
+	YearsSinceEducation   *int               `json:"yearsSinceEducation" bson:"yearsSinceEducation"`
 	Educations            []ProfileEducation `json:"educations" bson:"educations"`
 
 	Zipcodes []ProfileDutchZipcode `json:"zipCodes" bson:"zipCodes"`

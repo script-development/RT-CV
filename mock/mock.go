@@ -56,6 +56,7 @@ func init() {
 	}
 
 	// Profile1 contains the first example profile
+	yearsSinceEducation := 1
 	Profile1 = &models.Profile{
 		M:                     db.NewM(),
 		Name:                  "Mock profile 1",
@@ -67,7 +68,7 @@ func init() {
 		MustEducation:         true,
 		MustEducationFinished: true,
 		MustDriversLicense:    true,
-		YearsSinceEducation:   1,
+		YearsSinceEducation:   &yearsSinceEducation,
 		DesiredProfessions: []models.ProfileProfession{{
 			Name: "Rapper",
 		}},
@@ -103,7 +104,7 @@ func init() {
 		MustEducation:         false,
 		MustEducationFinished: false,
 		MustDriversLicense:    false,
-		YearsSinceEducation:   0,
+		YearsSinceEducation:   nil,
 		DesiredProfessions:    nil,
 		ProfessionExperienced: nil,
 		DriversLicenses:       nil,

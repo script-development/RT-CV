@@ -61,7 +61,7 @@ func Match(scraperKeyID, requestID primitive.ObjectID, profiles []*models.Profil
 		}
 
 		// Check years since education
-		if profile.YearsSinceEducation > 0 {
+		if profile.YearsSinceEducation != nil && *profile.YearsSinceEducation > 0 {
 			lastEducation := time.Date(1980, time.January, 1, 0, 0, 0, 0, time.Local)
 
 			for _, cvEducation := range cv.Educations {
@@ -76,7 +76,7 @@ func Match(scraperKeyID, requestID primitive.ObjectID, profiles []*models.Profil
 			}
 
 			yearsSinceEducation := yearSince(nowAsMonths, totalMonths(lastEducation))
-			if yearsSinceEducation > profile.YearsSinceEducation {
+			if yearsSinceEducation > *profile.YearsSinceEducation {
 				continue
 			}
 
