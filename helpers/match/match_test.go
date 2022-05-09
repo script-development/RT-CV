@@ -148,10 +148,11 @@ func TestMatchEducationMustFinish(t *testing.T) {
 }
 
 func TestMatchEducationYearsSinceEducation(t *testing.T) {
+	yearsSinceEdu := 2
 	MustMatchSingle(
 		t,
 		models.Profile{
-			YearsSinceEducation: 2,
+			YearsSinceEducation: &yearsSinceEdu,
 		},
 		models.CV{
 			Educations: []models.Education{{
@@ -164,7 +165,7 @@ func TestMatchEducationYearsSinceEducation(t *testing.T) {
 	MustMatchSingle(
 		t,
 		models.Profile{
-			YearsSinceEducation: 2,
+			YearsSinceEducation: &yearsSinceEdu,
 		},
 		models.CV{
 			Educations: []models.Education{
@@ -184,10 +185,11 @@ func TestMatchEducationYearsSinceEducation(t *testing.T) {
 		},
 	)
 
+	yearsSinceEdu = 1
 	MustNotMatchSingle(
 		t,
 		models.Profile{
-			YearsSinceEducation: 1,
+			YearsSinceEducation: &yearsSinceEdu,
 		},
 		models.CV{
 			Educations: []models.Education{{

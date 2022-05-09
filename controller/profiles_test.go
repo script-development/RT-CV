@@ -172,10 +172,10 @@ func TestRouteUpdateProfile(t *testing.T) {
 		},
 		{
 			"Set YearsSinceWork",
-			M{"updateYearsSinceWork": M{"yearsSinceWork": 5}},
+			M{"yearsSinceWork": 5},
 			func(t *testing.T, before, after models.Profile) {
 				yearsSinceWork := 5
-				Equal(t, &yearsSinceWork, after.YearsSinceWork)
+				Equal(t, yearsSinceWork, *after.YearsSinceWork)
 			},
 		},
 		{
@@ -224,7 +224,7 @@ func TestRouteUpdateProfile(t *testing.T) {
 			"Set YearsSinceEducation",
 			M{"yearsSinceEducation": 5},
 			func(t *testing.T, before, after models.Profile) {
-				Equal(t, 5, after.YearsSinceEducation)
+				Equal(t, 5, *after.YearsSinceEducation)
 			},
 		},
 		{
