@@ -46,6 +46,11 @@ func StringBytes(length int) []byte {
 	return b
 }
 
+// SliceIndex returns a random slice index
+func SliceIndex[T any](arr []T) T {
+	return arr[rand.Intn(len(arr))]
+}
+
 // GenerateKey generates a good random key
 func GenerateKey() []byte {
 	return StringBytes(32)

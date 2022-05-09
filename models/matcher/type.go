@@ -158,12 +158,22 @@ func (b *Branch) AddLeaf(dbConn db.Connection, props AddLeafProps, injectIntoSou
 		}
 	}
 
+	err = NukeCache()
+	if err != nil {
+		return nil, err
+	}
+
 	return newBranch, nil
 }
 
 // Update updates a spesific branches data
 func (b *Branch) Update(dbConn db.Connection, props AddLeafProps) error {
 	err := props.validate()
+	if err != nil {
+		return err
+	}
+
+	err = NukeCache()
 	if err != nil {
 		return err
 	}

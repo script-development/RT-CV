@@ -3,6 +3,7 @@ package controller
 import (
 	"encoding/json"
 	"errors"
+	"os"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/script-development/RT-CV/controller/ctx"
@@ -25,7 +26,22 @@ var routeGetMatcherTree = routeBuilder.R{
 			branchID = &id
 		}
 
+		resp := c.Response()
+		resp.Header.SetContentType(fiber.MIMEApplicationJSON)
+
+		fileInfo, file, err := matcher.ObtainCachedTree(branchID)
+		if err == nil {
+			resp.SetBodyStream(file, int(fileInfo.Size()))
+			return nil
+		}
+
 		ctx := ctx.Get(c)
+
+		if os.IsNotExist(err) {
+			ctx.Logger.WithError(err).Warn("obtaining cached matcher tree failed, falling back to database")
+		} else {
+			ctx.Logger.Info("matcher tree is not cached (yet) for this id")
+		}
 
 		// deep := c.Context().QueryArgs().GetUintOrZero("deep")
 		tree, err := (&matcher.Tree{}).GetBranch(ctx.DBConn, branchID)
@@ -37,11 +53,12 @@ var routeGetMatcherTree = routeBuilder.R{
 		if err != nil {
 			return err
 		}
+		err = matcher.CacheTree(branchID, jsonTree)
+		if err != nil {
+			return err
+		}
 
-		// TODO: cache the json tree
-		resp := c.Response()
 		resp.SetBodyRaw(jsonTree)
-		resp.Header.SetContentType(fiber.MIMEApplicationJSON)
 		return nil
 	},
 }
@@ -135,6 +152,8 @@ var routeDeleteMatcherBranch = routeBuilder.R{
 		}
 
 		ctx := ctx.Get(c)
+
+		defer matcher.NukeCache()
 
 		// Firstly lets remove the parents as if this fails the database isn't broken and if the remaining code fails at least the data won't show up annymore
 		parents, err := matcher.FindParents(ctx.DBConn, id)
