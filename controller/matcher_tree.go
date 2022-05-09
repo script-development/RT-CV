@@ -17,7 +17,7 @@ var routeGetMatcherTree = routeBuilder.R{
 		ctx := ctx.Get(c)
 
 		// deep := c.Context().QueryArgs().GetUintOrZero("deep")
-		tree, err := matcher.Tree.GetBranch(ctx.DBConn, nil)
+		tree, err := (&matcher.Tree{}).GetBranch(ctx.DBConn, nil)
 		if err != nil {
 			return err
 		}
@@ -50,7 +50,7 @@ var routeAddMatcherLeaf = routeBuilder.R{
 			}
 			idParam = &id
 		}
-		tree, err := matcher.Tree.GetBranch(ctx.DBConn, idParam)
+		tree, err := (&matcher.Tree{}).GetBranch(ctx.DBConn, idParam)
 		if err != nil {
 			return err
 		}
@@ -77,7 +77,7 @@ var routeGetPartOfMatcherTree = routeBuilder.R{
 		ctx := ctx.Get(c)
 
 		// deep := c.Context().QueryArgs().GetUintOrZero("deep")
-		tree, err := matcher.Tree.GetBranch(ctx.DBConn, &id)
+		tree, err := (&matcher.Tree{}).GetBranch(ctx.DBConn, &id)
 		if err != nil {
 			return err
 		}
@@ -106,7 +106,7 @@ var routePutMatcherBranch = routeBuilder.R{
 		ctx := ctx.Get(c)
 
 		// deep := c.Context().QueryArgs().GetUintOrZero("deep")
-		tree, err := matcher.Tree.GetBranch(ctx.DBConn, &id)
+		tree, err := (&matcher.Tree{}).GetBranch(ctx.DBConn, &id)
 		if err != nil {
 			return err
 		}
@@ -138,9 +138,6 @@ var routeDeleteMatcherBranch = routeBuilder.R{
 
 		ctx := ctx.Get(c)
 
-		// invalidate the cache as after this the cache will contain stuff that issn't correct
-		defer matcher.Tree.Invalidate()
-
 		// Firstly lets remove the parents as if this fails the database isn't broken and if the remaining code fails at least the data won't show up annymore
 		parents, err := matcher.FindParents(ctx.DBConn, id)
 		if err != nil {
@@ -160,7 +157,7 @@ var routeDeleteMatcherBranch = routeBuilder.R{
 		}
 
 		// delete the branch and all it's child branches
-		branchIDs, err := matcher.Tree.GetIDsForBranch(ctx.DBConn, id)
+		branchIDs, err := (&matcher.Tree{}).GetIDsForBranch(ctx.DBConn, id)
 		if err != nil {
 			return err
 		}

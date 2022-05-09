@@ -78,6 +78,9 @@ type Branch struct {
 
 	// ParsedBranches can be set when building a tree that is send to a user over the api in JSON format
 	ParsedBranches []*Branch `bson:"-" json:"branches,omitempty"`
+
+	// Used by the tree to find the root branches
+	refs uint16 `json:"-" bson:"-"`
 }
 
 // CollectionName implements db.Entry
@@ -153,12 +156,6 @@ func (b *Branch) AddLeaf(dbConn db.Connection, props AddLeafProps, injectIntoSou
 		if err != nil {
 			return nil, err
 		}
-	}
-
-	if bIsRoot {
-		Tree.AddLeaf(newBranch.ID, nil)
-	} else {
-		Tree.AddLeaf(newBranch.ID, &b.ID)
 	}
 
 	return newBranch, nil
