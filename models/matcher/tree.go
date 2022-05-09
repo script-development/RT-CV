@@ -52,7 +52,7 @@ func (tc *Tree) GetIDsForBranch(dbConn db.Connection, branchID primitive.ObjectI
 	return resp, err
 }
 
-// findIDsForBranch adds a spesific branches child branches their ids to ids
+// findIDsForBranch adds a spesific branches child branches their ids to addTo parameter
 func (tc *Tree) findIDsForBranch(branchID primitive.ObjectID, addTo *[]primitive.ObjectID) error {
 	*addTo = append(*addTo, branchID)
 
