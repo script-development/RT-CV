@@ -12,17 +12,21 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import Edit from '@mui/icons-material/Edit'
 import Add from '@mui/icons-material/Add'
 import Delete from '@mui/icons-material/Delete'
+import VpnKey from '@mui/icons-material/VpnKey'
 import React, { useEffect, useState } from 'react'
+import { Roles } from '../src/roles'
 import Card from './card'
 import { getKeys } from '../src/auth'
 import { ApiKey } from '../src/types'
 import { ModalKind } from './modal'
 import { KeyModal } from './keyModal'
+import { ScraperAuthFileModal } from './ScraperAuthFileModal'
 
 export default function KeysCard() {
     const [loading, setLoading] = useState(true)
     const [keys, setKeys] = useState(undefined as Array<ApiKey> | undefined)
     const [modal, setModal] = useState({ kind: ModalKind.Closed, key: undefined as (undefined | ApiKey) })
+    const [scraperAuthFileModal, setScraperAuthFileModal] = useState<undefined | ApiKey>(undefined)
 
     const fetchData = async () => {
         try {
@@ -71,6 +75,11 @@ export default function KeysCard() {
                 }}
             />
 
+            <ScraperAuthFileModal
+                apiKey={scraperAuthFileModal}
+                onClose={() => setScraperAuthFileModal(undefined)}
+            />
+
             {keys?.map(key =>
                 <Accordion key={key.id}>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -112,9 +121,16 @@ export default function KeysCard() {
                         <Button
                             onClick={() => setModal({ kind: ModalKind.Edit, key: key })}
                         ><Edit fontSize="small" style={{ marginRight: 6 }} />Edit</Button>
+                        {(Roles.Scraper & key.roles) != 0
+                            ? <Button
+                                onClick={() => setScraperAuthFileModal(key)}
+                            ><VpnKey fontSize="small" style={{ marginRight: 6 }} />Scraper Auth File</Button>
+                            : undefined
+                        }
                     </AccordionActions>
                 </Accordion>
-            )}
+            )
+            }
 
             <style jsx>{`
                 .accordionSummary {
@@ -138,6 +154,6 @@ export default function KeysCard() {
                     text-overflow: ellipsis;
                 }
             `}</style>
-        </Card>
+        </Card >
     )
 }
