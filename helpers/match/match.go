@@ -7,7 +7,6 @@ import (
 	"time"
 
 	fuzzymatcher "github.com/mjarkk/fuzzy-matcher"
-	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/jsonHelpers"
 	"github.com/script-development/RT-CV/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -38,7 +37,6 @@ func Match(scraperKeyID, requestID primitive.ObjectID, profiles []*models.Profil
 		}
 
 		match := models.Match{
-			M:           db.NewM(),
 			RequestID:   requestID,
 			ProfileID:   profile.ID,
 			KeyID:       scraperKeyID,

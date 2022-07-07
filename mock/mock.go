@@ -119,7 +119,6 @@ func init() {
 
 	// mockMatch1 contains a example match between profile 1 and a cv
 	mockMatch1 = &models.Match{
-		M:                     db.NewM(),
 		RequestID:             primitive.NewObjectID(),
 		ProfileID:             Profile1.ID,
 		KeyID:                 Key1.ID,
@@ -131,7 +130,6 @@ func init() {
 		DriversLicense:        true,
 	}
 	mockMatch2 = &models.Match{
-		M:           db.NewM(),
 		RequestID:   primitive.NewObjectID(),
 		ProfileID:   Profile2.ID,
 		KeyID:       Key2.ID,
@@ -205,12 +203,6 @@ func NewMockDB() *testingdb.TestConnection {
 	conn.UnsafeInsert(
 		Profile1,
 		Profile2,
-	)
-
-	// Insert matches
-	conn.UnsafeInsert(
-		mockMatch1,
-		mockMatch2,
 	)
 
 	return conn

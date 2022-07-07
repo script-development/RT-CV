@@ -66,15 +66,6 @@ func Routes(app *fiber.App, appVersion string, testing bool) {
 			})
 		})
 
-		b.Group(`/analytics`, func(b *routeBuilder.Router) {
-			b.Group(`/matches`, func(b *routeBuilder.Router) {
-				b.Get(`/perProfile/period/:from/:to`, routeGetMatchesPeriodPerProfile)
-				b.Get(`/period/:from/:to`, routeGetMatchesPeriod)
-				b.Get(`/profile/:profile/period/:from/:to`, routeGetMatchesPeroidForProfile, middlewareBindProfile())
-				b.Post(`/profilesQuery/period/:from/:to`, routeGetMatchesPeroidForProfilesQuery)
-			})
-		}, requiresAuth(models.APIKeyRoleInformationObtainer|models.APIKeyRoleDashboard))
-
 		b.Group(`/profiles`, func(b *routeBuilder.Router) {
 			// Profile routes that required the information obtainer role
 			b.Group(``, func(b *routeBuilder.Router) {

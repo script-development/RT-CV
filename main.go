@@ -100,7 +100,6 @@ func main() {
 		&models.APIKey{},
 		&models.Profile{},
 		&models.Secret{},
-		&models.Match{},
 		&models.Backup{},
 		&models.OnMatchHook{},
 		&matcher.Branch{},

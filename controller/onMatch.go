@@ -167,7 +167,6 @@ var routeTestOnMatchHook = routeBuilder.R{
 		dummyData := DataSendToHook{
 			MatchedProfiles: []match.FoundMatch{{
 				Matches: models.Match{
-					M:                 db.NewM(),
 					RequestID:         ctx.RequestID,
 					ProfileID:         mock.Profile1.ID,
 					KeyID:             mock.Key1.ID,

@@ -282,43 +282,6 @@ func TestMatchDriversLicense(t *testing.T) {
 	)
 }
 
-func TestGetMatchSentence(t *testing.T) {
-	sentence := (&models.Match{}).GetMatchSentence()
-	Equal(t, "", sentence)
-
-	yearsSinceWork := 3
-	sentence = (&models.Match{YearsSinceWork: &yearsSinceWork}).GetMatchSentence()
-	Equal(t, "3 jaren sinds laatste werkervaring", sentence)
-
-	sentence = (&models.Match{YearsSinceWork: &yearsSinceWork, YearsSinceEducation: &yearsSinceWork}).GetMatchSentence()
-	Equal(t, "3 jaren sinds laatste werkervaring en 3 jaren sinds laatste opleiding", sentence)
-
-	zipCode := models.ProfileDutchZipcode{
-		From: 2000,
-		To:   5000,
-	}
-	education := "beeing smart"
-	profession := "gangster"
-
-	sentence = (&models.Match{
-		YearsSinceWork:        &yearsSinceWork,
-		YearsSinceEducation:   &yearsSinceWork,
-		Education:             &education,
-		DesiredProfession:     &profession,
-		ProfessionExperienced: &profession,
-		DriversLicense:        true,
-		ZipCode:               &zipCode,
-	}).GetMatchSentence()
-	expectedResult := "3 jaren sinds laatste werkervaring" +
-		", 3 jaren sinds laatste opleiding" +
-		", opleiding beeing smart" +
-		", gewenste werkveld gangster" +
-		", gewerkt als gangster" +
-		", gewenste rijbewijs" +
-		" en postcode in range 2000 - 5000"
-	Equal(t, expectedResult, sentence)
-}
-
 func TestTotalMonths(t *testing.T) {
 	now := time.Now()
 	totalMonths := totalMonths(now)

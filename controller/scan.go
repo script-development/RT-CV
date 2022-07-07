@@ -181,41 +181,13 @@ func (args ProcessMatches) Process() {
 		return
 	}
 
-	// Get earlier matches on this reference number
-	earlierMatches, err := models.GetMatchesOnReferenceNr(args.DBConn, args.CV.ReferenceNumber, &args.KeyID)
-	if err != nil {
-		args.Logger.WithError(err).Error("unable to execute query to get earlier made matches to this reference number")
-		earlierMatches = []models.Match{}
-	}
-
-	// Remove matches that where already made earlier
-	// We loop in reverse so we can remove items from the slice
-	for idx := len(args.MatchedProfiles) - 1; idx >= 0; idx-- {
-		for _, earlierMatche := range earlierMatches {
-			if args.MatchedProfiles[idx].Profile.ID == earlierMatche.ProfileID {
-				args.MatchedProfiles = append(args.MatchedProfiles[:idx], args.MatchedProfiles[idx+1:]...)
-				break
-			}
-		}
-	}
-
 	// Re-check the amount of matched profiles as we might have filtered out at the step above
 	if len(args.MatchedProfiles) == 0 {
 		return
 	}
 
-	analyticsData := make([]db.Entry, len(args.MatchedProfiles))
-	for idx := range args.MatchedProfiles {
-		args.MatchedProfiles[idx].Matches.Debug = args.Debug
-		analyticsData[idx] = &args.MatchedProfiles[idx].Matches
-	}
-	err = args.DBConn.Insert(analyticsData...)
-	if err != nil {
-		args.Logger.WithField("analytics_entries_count", len(analyticsData)).WithError(err).Error("analytics data insertion failed")
-	}
-
 	hooks := []models.OnMatchHook{}
-	err = args.DBConn.Find(&models.OnMatchHook{}, &hooks, nil)
+	err := args.DBConn.Find(&models.OnMatchHook{}, &hooks, nil)
 	if err != nil {
 		args.Logger.WithError(err).Error("Finding on match hooks failed")
 		return
