@@ -2,6 +2,7 @@ package match
 
 import (
 	"math"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -24,6 +25,9 @@ func Match(scraperKeyID, requestID primitive.ObjectID, profiles []*models.Profil
 
 	now := time.Now()
 	nowAsMonths := totalMonths(now)
+
+	sort.Sort(cv.Educations)
+	sort.Sort(cv.WorkExperiences)
 
 	for _, profile := range profiles {
 		if !profile.Active {
@@ -58,40 +62,20 @@ func Match(scraperKeyID, requestID primitive.ObjectID, profiles []*models.Profil
 			}
 		}
 
-		// Check years since education
-		if profile.YearsSinceEducation != nil && *profile.YearsSinceEducation > 0 {
-			lastEducation := time.Date(1980, time.January, 1, 0, 0, 0, 0, time.Local)
-
-			for _, cvEducation := range cv.Educations {
-				if len(cvEducation.Name) == 0 || cvEducation.EndDate == nil {
-					continue
-				}
-
-				t := cvEducation.EndDate.Time()
-				if t.After(lastEducation) {
-					lastEducation = t
-				}
-			}
-
-			yearsSinceEducation := yearSince(nowAsMonths, totalMonths(lastEducation))
-			if yearsSinceEducation > *profile.YearsSinceEducation {
-				continue
-			}
-
-			match.YearsSinceEducation = &yearsSinceEducation
-		}
+		checkYearsSinceEducation := profile.YearsSinceEducation != nil && *profile.YearsSinceEducation > 0
 
 		// Check education and courses
 		matchedAnEducationOrCourse := false
 		checkedForEducationOrCourse := len(profile.Educations) > 0
+		var matchedAnEducationOrCourseDate *time.Time
 		if checkedForEducationOrCourse {
-			if len(cv.Educations) > 0 && profile.EducationFuzzyMatcher == nil {
+			if len(cv.Educations) > 0 && profile.EducationFuzzyMatcherCache == nil {
 				// The fuzzy matcher is not yet setup, lets set it up here
 				names := make([]string, len(profile.Educations))
 				for idx, education := range profile.Educations {
 					names[idx] = education.Name
 				}
-				profile.EducationFuzzyMatcher = fuzzymatcher.NewMatcher(names...)
+				profile.EducationFuzzyMatcherCache = fuzzymatcher.NewMatcher(names...)
 			}
 
 			if len(cv.Educations) > 0 {
@@ -104,13 +88,24 @@ func Match(scraperKeyID, requestID primitive.ObjectID, profiles []*models.Profil
 						continue
 					}
 
-					educationIdx := profile.EducationFuzzyMatcher.Match(cvEducation.Name)
+					educationIdx := profile.EducationFuzzyMatcherCache.Match(cvEducation.Name)
 					if educationIdx == -1 {
 						continue
 					}
 
-					match.Education = &profile.Educations[educationIdx].Name
-					matchedAnEducationOrCourse = true
+					if !matchedAnEducationOrCourse {
+						match.Education = &profile.Educations[educationIdx].Name
+						matchedAnEducationOrCourse = true
+					}
+					if checkYearsSinceEducation {
+						date := cvEducation.Date()
+						if date != nil {
+							dateTime := date.Time()
+							matchedAnEducationOrCourseDate = &dateTime
+						} else {
+							continue
+						}
+					}
 					break
 				}
 			}
@@ -121,16 +116,44 @@ func Match(scraperKeyID, requestID primitive.ObjectID, profiles []*models.Profil
 			}
 		}
 
+		// Check years since education
+		if checkYearsSinceEducation {
+			lastEducation := time.Date(1980, time.January, 1, 0, 0, 0, 0, time.Local)
+
+			if matchedAnEducationOrCourseDate != nil {
+				lastEducation = *matchedAnEducationOrCourseDate
+			} else {
+				for _, cvEducation := range cv.Educations {
+					date := cvEducation.Date()
+					if len(cvEducation.Name) == 0 || date == nil {
+						continue
+					}
+
+					dateTime := date.Time()
+					if dateTime.After(lastEducation) {
+						lastEducation = dateTime
+					}
+				}
+			}
+
+			yearsSinceEducation := yearSince(nowAsMonths, totalMonths(lastEducation))
+			if yearsSinceEducation > *profile.YearsSinceEducation {
+				continue
+			}
+
+			match.YearsSinceEducation = &yearsSinceEducation
+		}
+
 		// Check profession
 		matchedADesiredProfession := false
 		checkedForDesiredProfession := len(profile.DesiredProfessions) > 0
 		if checkedForDesiredProfession {
-			if profile.DesiredProfessionsFuzzyMatcher == nil {
+			if profile.DesiredProfessionsFuzzyMatcherCache == nil {
 				profileProfessionNames := make([]string, len(profile.DesiredProfessions))
 				for idx, p := range profile.DesiredProfessions {
 					profileProfessionNames[idx] = p.Name
 				}
-				profile.DesiredProfessionsFuzzyMatcher = fuzzymatcher.NewMatcher(profileProfessionNames...)
+				profile.DesiredProfessionsFuzzyMatcherCache = fuzzymatcher.NewMatcher(profileProfessionNames...)
 			}
 
 			for _, cvPreferredJob := range cv.PreferredJobs {
@@ -138,7 +161,7 @@ func Match(scraperKeyID, requestID primitive.ObjectID, profiles []*models.Profil
 					continue
 				}
 
-				matchedDesiredProfession := profile.DesiredProfessionsFuzzyMatcher.Match(cvPreferredJob)
+				matchedDesiredProfession := profile.DesiredProfessionsFuzzyMatcherCache.Match(cvPreferredJob)
 				if matchedDesiredProfession != -1 {
 					match.DesiredProfession = &profile.DesiredProfessions[matchedDesiredProfession].Name
 					matchedADesiredProfession = true
@@ -152,29 +175,46 @@ func Match(scraperKeyID, requestID primitive.ObjectID, profiles []*models.Profil
 			}
 		}
 
+		checkYearsSinceWork := profile.YearsSinceWork != nil && *profile.YearsSinceWork > 0
+
 		// check profession experienced
 		matchedAProfile := false
 		checkedForProfessionExperienced := len(profile.ProfessionExperienced) > 0
+		matchedProfileIdx := -1
+		var matchedProfileLastWorkExp *time.Time
 		if checkedForProfessionExperienced {
-			matchedProfileIdx := -1
 			for _, workExp := range cv.WorkExperiences {
-				if profile.ProfessionExperiencedFuzzyMatcher == nil {
+				if profile.ProfessionExperiencedFuzzyMatcherCache == nil {
 					// The fuzzy matcher is not yet setup, lets set it up here
 					names := make([]string, len(profile.ProfessionExperienced))
 					for idx, profile := range profile.ProfessionExperienced {
 						names[idx] = profile.Name
 					}
 
-					profile.ProfessionExperiencedFuzzyMatcher = fuzzymatcher.NewMatcher(names...)
+					profile.ProfessionExperiencedFuzzyMatcherCache = fuzzymatcher.NewMatcher(names...)
 				}
 
 				if len(workExp.Profession) == 0 {
 					continue
 				}
 
-				match := profile.ProfessionExperiencedFuzzyMatcher.Match(workExp.Profession)
-				if match != -1 {
+				match := profile.ProfessionExperiencedFuzzyMatcherCache.Match(workExp.Profession)
+				if match == -1 {
+					continue
+				}
+
+				if matchedProfileIdx == -1 {
 					matchedProfileIdx = match
+				}
+
+				if !checkYearsSinceWork {
+					break
+				}
+
+				workExpDate := workExp.Date()
+				if workExpDate != nil {
+					newValue := workExpDate.Time()
+					matchedProfileLastWorkExp = &newValue
 					break
 				}
 			}
@@ -188,18 +228,22 @@ func Match(scraperKeyID, requestID primitive.ObjectID, profiles []*models.Profil
 		}
 
 		// Check years since work
-		if profile.YearsSinceWork != nil && *profile.YearsSinceWork > 0 {
+		if checkYearsSinceWork {
 			profileMustYearsSinceWork := *profile.YearsSinceWork
 			lastWorkExp := time.Date(1980, time.January, 1, 0, 0, 0, 0, time.Local)
 
-			for _, cvWorkExp := range cv.WorkExperiences {
-				if cvWorkExp.EndDate == nil {
-					continue
-				}
-
-				endDate := cvWorkExp.EndDate.Time()
-				if endDate.After(lastWorkExp) {
-					lastWorkExp = endDate
+			if matchedProfileLastWorkExp != nil {
+				lastWorkExp = *matchedProfileLastWorkExp
+			} else {
+				for _, cvWorkExp := range cv.WorkExperiences {
+					date := cvWorkExp.Date()
+					if date == nil {
+						continue
+					}
+					dateTime := date.Time()
+					if dateTime.After(lastWorkExp) {
+						lastWorkExp = dateTime
+					}
 				}
 			}
 

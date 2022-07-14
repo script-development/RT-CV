@@ -22,8 +22,8 @@ type CV struct {
 	Link            *string                      `json:"link" description:"A link to the page on the site where this cv was found"`
 	CreatedAt       *jsonHelpers.RFC3339Nano     `json:"createdAt,omitempty"`
 	LastChanged     *jsonHelpers.RFC3339Nano     `json:"lastChanged,omitempty"`
-	Educations      []Education                  `json:"educations,omitempty"`
-	WorkExperiences []WorkExperience             `json:"workExperiences,omitempty"`
+	Educations      Educations                   `json:"educations,omitempty"`
+	WorkExperiences WorkExperiences              `json:"workExperiences,omitempty"`
 	PreferredJobs   []string                     `json:"preferredJobs,omitempty"`
 	Languages       []Language                   `json:"languages,omitempty"`
 	Competences     []Competence                 `json:"-"` // Not supported yet
@@ -31,6 +31,25 @@ type CV struct {
 	PersonalDetails PersonalDetails              `json:"personalDetails" jsonSchema:"notRequired"`
 	Presentation    string                       `json:"presentation" description:"How this person would present him/her self"`
 	DriversLicenses []jsonHelpers.DriversLicense `json:"driversLicenses,omitempty"`
+}
+
+func lessFnDates(iDate, jDate *jsonHelpers.RFC3339Nano) bool {
+	if jDate == nil {
+		return false
+	}
+	if iDate == nil {
+		return true
+	}
+	return jDate.Time().Before(iDate.Time())
+}
+
+// Educations conatins a list of educations and makes it sortable
+type Educations []Education
+
+func (l Educations) Len() int      { return len(l) }
+func (l Educations) Swap(i, j int) { l[i], l[j] = l[j], l[i] }
+func (l Educations) Less(i, j int) bool {
+	return lessFnDates(l[i].Date(), l[j].Date())
 }
 
 // Education is something a user has followed
@@ -47,6 +66,24 @@ type Education struct {
 	EndDate     *jsonHelpers.RFC3339Nano `json:"endDate"`
 }
 
+// Date returns the EndDate if it is set, otherwise the StartDate
+// If both are not set it returns nil
+func (e *Education) Date() *jsonHelpers.RFC3339Nano {
+	if e.EndDate != nil {
+		return e.EndDate
+	}
+	return e.StartDate
+}
+
+// WorkExperiences conatins a list of Work experiences and makes it sortable
+type WorkExperiences []WorkExperience
+
+func (l WorkExperiences) Len() int      { return len(l) }
+func (l WorkExperiences) Swap(i, j int) { l[i], l[j] = l[j], l[i] }
+func (l WorkExperiences) Less(i, j int) bool {
+	return lessFnDates(l[i].Date(), l[j].Date())
+}
+
 // WorkExperience is experience in work
 type WorkExperience struct {
 	Description       string                   `json:"description"`
@@ -56,6 +93,15 @@ type WorkExperience struct {
 	StillEmployed     bool                     `json:"stillEmployed"`
 	Employer          string                   `json:"employer"`
 	WeeklyHoursWorked int                      `json:"weeklyHoursWorked"`
+}
+
+// Date returns the EndDate if it is set, otherwise the StartDate
+// If both are not set it returns nil
+func (we *WorkExperience) Date() *jsonHelpers.RFC3339Nano {
+	if we.EndDate != nil {
+		return we.EndDate
+	}
+	return we.StartDate
 }
 
 // LanguageLevel is something that i'm not sure what it is

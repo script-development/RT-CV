@@ -48,11 +48,11 @@ type Profile struct {
 	// Variables set by the matching process only when they needed
 	// These are mainly used for caching so we don't have to calculate values twice
 	// There values where detected using the -profile flag, see main.go for more info
-	EducationFuzzyMatcher             *fuzzymatcher.Matcher        `bson:"-" json:"-"`
-	ProfessionExperiencedFuzzyMatcher *fuzzymatcher.Matcher        `bson:"-" json:"-"`
-	DesiredProfessionsFuzzyMatcher    *fuzzymatcher.Matcher        `bson:"-" json:"-"`
-	DomainPartsCache                  [][]string                   `bson:"-" json:"-"`
-	NormalizedDriversLicensesCache    []jsonHelpers.DriversLicense `bson:"-" json:"-"`
+	EducationFuzzyMatcherCache             *fuzzymatcher.Matcher        `bson:"-" json:"-"`
+	ProfessionExperiencedFuzzyMatcherCache *fuzzymatcher.Matcher        `bson:"-" json:"-"`
+	DesiredProfessionsFuzzyMatcherCache    *fuzzymatcher.Matcher        `bson:"-" json:"-"`
+	DomainPartsCache                       [][]string                   `bson:"-" json:"-"`
+	NormalizedDriversLicensesCache         []jsonHelpers.DriversLicense `bson:"-" json:"-"`
 }
 
 // CollectionName returns the collection name of the Profile
