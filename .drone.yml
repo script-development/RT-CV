@@ -54,36 +54,21 @@ steps:
     image: docker
     environment:
       DOCKER_BUILDKIT: 1 # This enables the docker build cache (this is NOT the dockerfile layers cache)
+      REGISTERY_PASSWORD:
+        from_secret: registery_password
     commands:
       - docker build --memory 1.5GB -t rtcv:latest .
+      - echo $REGISTERY_PASSWORD | docker login -u root --password-stdin https://registery.unknownclouds.com
+      - docker tag rtcv registery.unknownclouds.com/rtcv:latest
+      - docker push registery.unknownclouds.com/rtcv:latest
     volumes:
       - name: dockerSocket
         path: /var/run/docker.sock
-
-  - name: Deploy Docker container
-    pull: if-not-exists
-    image: docker
-    commands:
-      - docker rm -f rtcv # Remove the old container
-      - /root/dockerRunScript # Run the script to deploy the container
-    volumes:
-      - name: dockerSocket
-        path: /var/run/docker.sock
-      - name: dockerRunEnv
-        path: /root/rtcv.env
-      - name: dockerRunScript
-        path: /root/dockerRunScript
 
 volumes:
   - name: dockerSocket
     host:
       path: /var/run/docker.sock
-  - name: dockerRunEnv
-    host:
-      path: /root/rtcv.env
-  - name: dockerRunScript
-    host:
-      path: /root/rtcv.sh
 
 ---
 kind: pipeline
