@@ -35,43 +35,6 @@ volumes:
 
 ---
 kind: pipeline
-name: build_staging
-type: docker
-
-node:
-  location: staging
-
-depends_on:
-  - test
-
-trigger:
-  branch:
-    - main
-
-steps:
-  - name: Build Docker container
-    pull: if-not-exists
-    image: docker
-    environment:
-      DOCKER_BUILDKIT: 1 # This enables the docker build cache (this is NOT the dockerfile layers cache)
-      REGISTERY_PASSWORD:
-        from_secret: registery_password
-    commands:
-      - docker build --memory 1.5GB -t rtcv:latest .
-      - echo $REGISTERY_PASSWORD | docker login -u root --password-stdin https://registery.unknownclouds.com
-      - docker tag rtcv registery.unknownclouds.com/rtcv:latest
-      - docker push registery.unknownclouds.com/rtcv:latest
-    volumes:
-      - name: dockerSocket
-        path: /var/run/docker.sock
-
-volumes:
-  - name: dockerSocket
-    host:
-      path: /var/run/docker.sock
-
----
-kind: pipeline
 name: deploy_production
 type: docker
 
