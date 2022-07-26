@@ -42,7 +42,7 @@ jobs:
           outputs: type=docker,dest=/tmp/docker-image.tar
       - name: Push docker image
         run: |
-          docker push registery.unknownclouds.com/rtcv:$(git rev-parse --short HEAD)
+          docker push "registery.unknownclouds.com/rtcv:$(git rev-parse --short HEAD)"
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
