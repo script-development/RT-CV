@@ -41,10 +41,8 @@ jobs:
           tags: registery.unknownclouds.com/rtcv:${{ steps.vars.outputs.sha_short }}
           outputs: type=docker,dest=/tmp/docker-image.tar
       - name: Push docker image
-        env:
-          COMMIT_SHA_SHORT: ${{ steps.vars.outputs.sha_short }}
         run: |
-          docker push registery.unknownclouds.com/rtcv:$COMMIT_SHA_SHORT
+          docker push registery.unknownclouds.com/rtcv:$(git rev-parse --short HEAD)
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
