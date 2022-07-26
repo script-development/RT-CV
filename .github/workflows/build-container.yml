@@ -28,9 +28,11 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v3
         with:
-          push: true
           tags: registery.unknownclouds.com/rtcv:${{ steps.vars.outputs.sha_short }}
           outputs: type=docker,dest=/tmp/docker-image.tar
+      - name: Push docker image
+        run: |
+          docker push registery.unknownclouds.com/rtcv:${{ steps.vars.outputs.sha_short }}
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
