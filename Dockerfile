@@ -1,5 +1,5 @@
 # build backend
-FROM golang:1.18-buster AS backend
+FROM golang:1.18-alpine3.16 AS backend
 
 RUN mkdir /project
 WORKDIR /project
@@ -18,18 +18,18 @@ RUN npm ci \
     && npm run build
 
 # Setup the runtime
-FROM ubuntu AS runtime
+FROM alpine:3.16 AS runtime
 
-RUN ln -fs /usr/share/zoneinfo/Europe/Amsterdam /etc/localtime \
-    && mkdir -p /project/dashboard \
-    && rm -rf /var/lib/apt/lists/*
+RUN mkdir -p /project/dashboard \
+    && apk add --no-cache tzdata
+
+ENV TZ="Europe/Amsterdam"
+WORKDIR /project
+EXPOSE 4000
 
 COPY --from=backend /project/rtcv /project/rtcv
 COPY --from=dashboard /app/out /project/dashboard/out
 COPY assets /project/assets
 
-WORKDIR /project
-
-EXPOSE 4000
 
 CMD [ "sh", "-c", "./rtcv" ]
