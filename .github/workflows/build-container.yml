@@ -13,9 +13,7 @@ jobs:
       - name: Get short commit sha
         id: vars
         shell: bash
-        run: |
-          git rev-parse --short HEAD
-          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
