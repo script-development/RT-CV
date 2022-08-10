@@ -26,8 +26,16 @@ jobs:
           username: ${{ secrets.DOCKER_REGISTERY_USERNAME }}
           password: ${{ secrets.DOCKER_REGISTERY_PASSWORD }}
       - name: Build docker image
+        if: github.ref_type == 'tag'
         uses: docker/build-push-action@v3
         with:
           push: true
           platforms: linux/amd64
           tags: registery.unknownclouds.com/rtcv:${{ github.ref_name }}
+      - name: Build docker image
+        if: github.ref_type == 'branch'
+        uses: docker/build-push-action@v3
+        with:
+          push: true
+          platforms: linux/amd64
+          tags: registery.unknownclouds.com/rtcv:${{ steps.vars.outputs.sha_short }}
