@@ -29,8 +29,11 @@ enableAllRules = true
 [rule.line-length-limit]
   Disabled = true
 [rule.unhandled-error]
-  arguments = ["fmt.Printf", "fmt.Println"]
+  arguments = ["fmt.Printf", "fmt.Println", "fmt.Print", "w.Write", "backupFile.Close", "os.Remove", "hasher.Write", "zw.Close"]
 [rule.argument-limit]
   arguments = [6]
 [rule.function-result-limit]
   arguments = [3]
+[rule.package-comments]
+  Disabled = true
+

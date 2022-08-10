@@ -46,8 +46,12 @@ func lessFnDates(iDate, jDate *jsonHelpers.RFC3339Nano) bool {
 // Educations conatins a list of educations and makes it sortable
 type Educations []Education
 
-func (l Educations) Len() int      { return len(l) }
-func (l Educations) Swap(i, j int) { l[i], l[j] = l[j], l[i] }
+func (l Educations) Len() int {
+	return len(l)
+}
+func (l Educations) Swap(i, j int) {
+	l[i], l[j] = l[j], l[i]
+}
 func (l Educations) Less(i, j int) bool {
 	return lessFnDates(l[i].Date(), l[j].Date())
 }
@@ -78,8 +82,12 @@ func (e *Education) Date() *jsonHelpers.RFC3339Nano {
 // WorkExperiences conatins a list of Work experiences and makes it sortable
 type WorkExperiences []WorkExperience
 
-func (l WorkExperiences) Len() int      { return len(l) }
-func (l WorkExperiences) Swap(i, j int) { l[i], l[j] = l[j], l[i] }
+func (l WorkExperiences) Len() int {
+	return len(l)
+}
+func (l WorkExperiences) Swap(i, j int) {
+	l[i], l[j] = l[j], l[i]
+}
 func (l WorkExperiences) Less(i, j int) bool {
 	return lessFnDates(l[i].Date(), l[j].Date())
 }

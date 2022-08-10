@@ -218,8 +218,8 @@ func (n *PhoneNumber) UnmarshalJSON(b []byte) error {
 // DriversLicense contains a European drivers license
 //
 // Why a 4 byte array?
-//  - Fixed byte arrays are much faster than strings
-//  - The drivers license code is never longer than 4 bytes
+//   - Fixed byte arrays are much faster than strings
+//   - The drivers license code is never longer than 4 bytes
 type DriversLicense [4]byte
 
 // NewDriversLicense creates a DriversLicense from a string
@@ -267,7 +267,9 @@ var DriversLicenses = []DriversLicense{
 
 // Strings converts a drivers license identifier into a string
 func (dl DriversLicense) String() string {
-	return string(bytes.TrimRightFunc(dl[:], func(r rune) bool { return r == 0 }))
+	return string(bytes.TrimRightFunc(dl[:], func(r rune) bool {
+		return r == 0
+	}))
 }
 
 // JSONSchemaDescribe implements jsonschema.Describe
