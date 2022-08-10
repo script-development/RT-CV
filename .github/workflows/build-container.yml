@@ -2,7 +2,8 @@ name: Build and push container
 
 on:
   push:
-    branches: [main]
+    tags:
+      - "v*.*.*"
 
 jobs:
   docker:
@@ -28,4 +29,5 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           push: true
-          tags: registery.unknownclouds.com/rtcv:${{ steps.vars.outputs.sha_short }}
+          platforms: linux/amd64
+          tags: registery.unknownclouds.com/rtcv:${{ github.ref_name }}
