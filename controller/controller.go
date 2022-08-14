@@ -65,6 +65,11 @@ func Routes(app *fiber.App, appVersion string, testing bool) {
 				)
 			})
 		})
+		b.Group(`/scraperUsers/:keyID`, func(b *routeBuilder.Router) {
+			b.Get(``, routeGetScraperUsers)
+			b.Patch(``, routePatchScraperUser, requiresAuth(models.APIKeyRoleAdmin|models.APIKeyRoleDashboard|models.APIKeyRoleController))
+			b.Delete(``, routeDeleteScraperUser, requiresAuth(models.APIKeyRoleAdmin|models.APIKeyRoleDashboard|models.APIKeyRoleController))
+		}, middlewareBindKey(), requiresAuth(models.APIKeyRoleAll))
 
 		b.Group(`/profiles`, func(b *routeBuilder.Router) {
 			// Profile routes that required the information obtainer role

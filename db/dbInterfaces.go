@@ -46,15 +46,16 @@ type Connection interface {
 // Entry are the functions required to put/get things in/from the database
 // To implement use:
 //
-// type User struct {
-//     // Adds the _id field and implements the remaining functions from Entry
-//     M `bson:",inline"`
+//	type User struct {
+//	    // Adds the _id field and implements the remaining functions from Entry
+//	    M `bson:",inline"`
 //
-//     Username string
-// }
-// func (*User) CollectionName() {
-//     return "users"
-// }
+//	    Username string
+//	}
+//
+//	func (*User) CollectionName() {
+//	    return "users"
+//	}
 type Entry interface {
 	// Get the _id field of the entry
 	GetID() primitive.ObjectID
@@ -62,7 +63,7 @@ type Entry interface {
 	// Set the _id field of the entry
 	SetID(primitive.ObjectID)
 
-	// CollectionName should yield the collection name for the entre
+	// CollectionName should yield the collection name for the entry
 	CollectionName() string
 
 	// DefaultFindFilters can return a default filter used in find queries

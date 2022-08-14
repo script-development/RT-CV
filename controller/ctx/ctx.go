@@ -21,7 +21,7 @@ type Ctx struct {
 	RequestID            primitive.ObjectID
 	Profile              *models.Profile
 	Auth                 *auth.Helper
-	Key                  *models.APIKey
+	Key                  *models.APIKey // The key used to make the request
 	APIKeyFromParam      *models.APIKey
 	Logger               *log.Entry
 	DBConn               db.Connection

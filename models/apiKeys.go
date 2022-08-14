@@ -29,9 +29,7 @@ func (*APIKey) CollectionName() string {
 
 // DefaultFindFilters sets the default filters for the db connection find
 func (*APIKey) DefaultFindFilters() bson.M {
-	return bson.M{
-		"enabled": true,
-	}
+	return bson.M{"enabled": true}
 }
 
 // APIKeyInfo contains information about an API key
@@ -84,7 +82,8 @@ func GetAPIKey(conn db.Connection, id primitive.ObjectID) (APIKey, error) {
 // APIKeyRole is a role that tells what someone can and can't do
 // Roles can be combined together using bit sifting
 // For example:
-//   APIKeyRoleScraper | APIKeyRoleInformationObtainer // Is a valid APIKeyRole that represends 2 rules
+//
+//	APIKeyRoleScraper | APIKeyRoleInformationObtainer // Is a valid APIKeyRole that represends 2 rules
 type APIKeyRole uint64
 
 const (

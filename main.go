@@ -27,7 +27,8 @@ import (
 
 // AppVersion is used for the X-App-Version header and in the /health route
 // This variable can be set by:
-//   go build -ldflags "-X main.AppVersion=1.0.0"
+//
+//	go build -ldflags "-X main.AppVersion=1.0.0"
 var AppVersion = "LOCAL"
 
 func main() {
@@ -103,6 +104,7 @@ func main() {
 		&models.Backup{},
 		&models.OnMatchHook{},
 		&matcher.Branch{},
+		&models.ScraperLoginUsers{},
 	)
 
 	backupEnabled := strings.ToLower(os.Getenv("MONGODB_BACKUP_ENABLED")) == "true"
