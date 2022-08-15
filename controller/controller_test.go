@@ -12,6 +12,7 @@ import (
 	"github.com/script-development/RT-CV/helpers/auth"
 	"github.com/script-development/RT-CV/helpers/routeBuilder"
 	"github.com/script-development/RT-CV/mock"
+	"github.com/script-development/RT-CV/models"
 	. "github.com/stretchr/testify/assert"
 )
 
@@ -42,6 +43,10 @@ func newTestingRouter(t *testing.T) *testingRouter {
 type TestReqOpts struct {
 	NoAuth bool
 	Body   []byte
+}
+
+func (r *testingRouter) ChangeAuthKey(key *models.APIKey) {
+	r.authHeader = auth.GenAuthHeaderKey(key.ID.Hex(), key.Key)
 }
 
 func (r *testingRouter) MakeRequest(method routeBuilder.Method, route string, opts TestReqOpts) (res *http.Response, resBody []byte) {

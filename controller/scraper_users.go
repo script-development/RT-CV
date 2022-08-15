@@ -12,6 +12,20 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+func sendScraperLoginUsers(resp models.ScraperLoginUsers, userContext *ctx.Ctx, c *fiber.Ctx) error {
+	if !userContext.Key.Roles.ContainsAll(models.APIKeyRoleScraper) {
+		// Only the scrapers should be able to see the password of the login credentials
+		// We copy the users slice here to prevent an issue with the testing db
+		respUsers := make([]models.ScraperLoginUser, len(resp.Users))
+		for idx, user := range resp.Users {
+			user.Password = ""
+			respUsers[idx] = user
+		}
+		resp.Users = respUsers
+	}
+	return c.JSON(resp)
+}
+
 var routeGetScraperUsers = routeBuilder.R{
 	Description: "Get the login users of a specific scraper",
 	Res:         models.ScraperLoginUsers{},
@@ -33,14 +47,7 @@ var routeGetScraperUsers = routeBuilder.R{
 			return err
 		}
 
-		if !ctx.Key.Roles.ContainsAll(models.APIKeyRoleScraper) {
-			// Only the scrapers should be able to see the password of the login credentials
-			for idx := range resp.Users {
-				resp.Users[idx].Password = ""
-			}
-		}
-
-		return c.JSON(resp)
+		return sendScraperLoginUsers(resp, ctx, c)
 	},
 }
 
@@ -90,7 +97,7 @@ var routeDeleteScraperUser = routeBuilder.R{
 			return err
 		}
 
-		return c.JSON(scraperUsers)
+		return sendScraperLoginUsers(scraperUsers, ctx, c)
 	},
 }
 
@@ -131,7 +138,7 @@ var routePatchScraperUser = routeBuilder.R{
 				return err
 			}
 
-			return c.JSON(resp)
+			return sendScraperLoginUsers(resp, ctx, c)
 		} else if err != nil {
 			return err
 		}
@@ -155,6 +162,6 @@ var routePatchScraperUser = routeBuilder.R{
 			return err
 		}
 
-		return c.JSON(alreadyExistingSet)
+		return sendScraperLoginUsers(alreadyExistingSet, ctx, c)
 	},
 }

@@ -43,10 +43,10 @@ func Routes(app *fiber.App, appVersion string, testing bool) {
 		secretsRoutes := func(b *routeBuilder.Router) {
 			b.Get(``, routeGetSecrets)
 			b.Group(`/:key`, func(b *routeBuilder.Router) {
-				b.Delete(``, routeDeleteSecret)
+				b.Delete(``, routeDeleteSecret, validKeyMiddleware())
 				b.Put(``, routeUpdateOrCreateSecret)
-				b.Get(`/:encryptionKey`, routeGetSecret)
-			}, validKeyMiddleware())
+				b.Get(`/:encryptionKey`, routeGetSecret, validKeyMiddleware())
+			})
 		}
 		b.Group(`/secrets`, func(b *routeBuilder.Router) {
 			b.Group(`/myKey`,

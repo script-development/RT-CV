@@ -2,7 +2,6 @@ package controller
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/script-development/RT-CV/helpers/routeBuilder"
@@ -26,7 +25,7 @@ func TestSecretRoutes(t *testing.T) {
 	createBodyJSON, _ := json.Marshal(createBody)
 
 	// Insert key works
-	route := fmt.Sprintf("/api/v1/secrets/myKey/%v", valueKey)
+	route := "/api/v1/secrets/myKey/" + valueKey
 	_, body := app.MakeRequest(routeBuilder.Put, route, TestReqOpts{
 		Body: createBodyJSON,
 	})

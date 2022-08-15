@@ -133,15 +133,17 @@ func New(app *fiber.App) *Router {
 			fiber:  app,
 			routes: []Route{},
 		},
+		middlewares: []func(*fiber.Ctx) error{},
 	}
 }
 
 // Router can be used to define routes and middlwares
 type Router struct {
-	prefix string
-	fiber  fiber.Router
-	base   *BaseBuilder
-	tags   []Tag
+	prefix      string
+	fiber       fiber.Router
+	base        *BaseBuilder
+	tags        []Tag
+	middlewares []func(*fiber.Ctx) error
 }
 
 func (r *Router) appendPrefix(add string) string {
@@ -221,10 +223,11 @@ func getHandlers(middleware []M, route *R) []func(*fiber.Ctx) error {
 // Group prefixes the routes within the group with a route and adds a middleware to them if specified
 func (r *Router) Group(prefix string, group func(*Router), middlewares ...M) {
 	group(&Router{
-		tags:   r.appendTags(middlewares),
-		prefix: r.appendPrefix(prefix),
-		fiber:  r.fiber.Group(prefix, getHandlers(middlewares, nil)...),
-		base:   r.base,
+		tags:        r.appendTags(middlewares),
+		prefix:      r.appendPrefix(prefix),
+		fiber:       r.fiber.Group(prefix),
+		base:        r.base,
+		middlewares: append(r.middlewares, getHandlers(middlewares, nil)...),
 	})
 }
 
@@ -232,35 +235,35 @@ func (r *Router) Group(prefix string, group func(*Router), middlewares ...M) {
 func (r *Router) Get(prefix string, routeDefinition R, middlewares ...M) {
 	routeDefinition.check()
 	r.newRoute(prefix, Get, routeDefinition, middlewares)
-	r.fiber.Get(prefix, getHandlers(middlewares, &routeDefinition)...)
+	r.fiber.Get(prefix, append(r.middlewares, getHandlers(middlewares, &routeDefinition)...)...)
 }
 
 // Post defines a POST route
 func (r *Router) Post(prefix string, routeDefinition R, middlewares ...M) {
 	routeDefinition.check()
 	r.newRoute(prefix, Post, routeDefinition, middlewares)
-	r.fiber.Post(prefix, getHandlers(middlewares, &routeDefinition)...)
+	r.fiber.Post(prefix, append(r.middlewares, getHandlers(middlewares, &routeDefinition)...)...)
 }
 
 // Put defines a PUT route
 func (r *Router) Put(prefix string, routeDefinition R, middlewares ...M) {
 	routeDefinition.check()
 	r.newRoute(prefix, Put, routeDefinition, middlewares)
-	r.fiber.Put(prefix, getHandlers(middlewares, &routeDefinition)...)
+	r.fiber.Put(prefix, append(r.middlewares, getHandlers(middlewares, &routeDefinition)...)...)
 }
 
 // Patch defines a PATCH route
 func (r *Router) Patch(prefix string, routeDefinition R, middlewares ...M) {
 	routeDefinition.check()
 	r.newRoute(prefix, Patch, routeDefinition, middlewares)
-	r.fiber.Patch(prefix, getHandlers(middlewares, &routeDefinition)...)
+	r.fiber.Patch(prefix, append(r.middlewares, getHandlers(middlewares, &routeDefinition)...)...)
 }
 
 // Delete defines a DELETE route
 func (r *Router) Delete(prefix string, routeDefinition R, middlewares ...M) {
 	routeDefinition.check()
 	r.newRoute(prefix, Delete, routeDefinition, middlewares)
-	r.fiber.Delete(prefix, getHandlers(middlewares, &routeDefinition)...)
+	r.fiber.Delete(prefix, append(r.middlewares, getHandlers(middlewares, &routeDefinition)...)...)
 }
 
 // Static defines a static file path
