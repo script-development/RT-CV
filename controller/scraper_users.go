@@ -12,6 +12,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// TODO maybe encrypt the passwords stored in the database?
+
 const keyParamDocs = "\nThe keyId url parameter should be the id of the scraper key that you want to have access to these credentials"
 
 func sendScraperLoginUsers(resp models.ScraperLoginUsers, userContext *ctx.Ctx, c *fiber.Ctx) error {
