@@ -12,6 +12,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+const keyParamDocs = "\nThe keyId url parameter should be the id of the scraper key that you want to have access to these credentials"
+
 func sendScraperLoginUsers(resp models.ScraperLoginUsers, userContext *ctx.Ctx, c *fiber.Ctx) error {
 	if !userContext.Key.Roles.ContainsAll(models.APIKeyRoleScraper) {
 		// Only the scrapers should be able to see the password of the login credentials
@@ -27,7 +29,7 @@ func sendScraperLoginUsers(resp models.ScraperLoginUsers, userContext *ctx.Ctx, 
 }
 
 var routeGetScraperUsers = routeBuilder.R{
-	Description: "Get the login users of a specific scraper",
+	Description: "Get the login users of a specific scraper." + keyParamDocs,
 	Res:         models.ScraperLoginUsers{},
 	Fn: func(c *fiber.Ctx) error {
 		ctx := ctx.Get(c)
@@ -57,7 +59,7 @@ type RouteDeleteScraperUserBody struct {
 }
 
 var routeDeleteScraperUser = routeBuilder.R{
-	Description: "remove a scraper user from a scraper",
+	Description: "remove a scraper user from a scraper." + keyParamDocs,
 	Body:        RouteDeleteScraperUserBody{},
 	Res:         models.ScraperLoginUsers{},
 	Fn: func(c *fiber.Ctx) error {
@@ -102,7 +104,7 @@ var routeDeleteScraperUser = routeBuilder.R{
 }
 
 var routePatchScraperUser = routeBuilder.R{
-	Description: "Update or insert a new scraper user",
+	Description: "Update or insert a new scraper user." + keyParamDocs,
 	Body:        models.ScraperLoginUser{},
 	Res:         models.ScraperLoginUsers{},
 	Fn: func(c *fiber.Ctx) error {
