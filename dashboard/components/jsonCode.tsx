@@ -14,6 +14,7 @@ export default function JSONCode({ json }: { json: any }) {
                 wrapLongLines={true}
                 language="json"
                 style={monokaiSublime}
+                customStyle={{ fontSize: 12 }}
             >{jsonString}</SyntaxHighlighter>
         </div>
     )

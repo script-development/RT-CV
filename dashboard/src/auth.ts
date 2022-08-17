@@ -80,7 +80,7 @@ class AuthenticatedFetcher {
         return `${protocol}//${window.location.hostname}:4000${path}`
     }
 
-    async fetch(path: string, method: 'POST' | 'GET' | 'PUT' | 'DELETE' = 'GET', data?: any) {
+    async fetch(path: string, method: 'POST' | 'GET' | 'PUT' | 'PATCH' | 'DELETE' = 'GET', data?: any) {
         try {
             const r = await this.fetchNoJsonMarshal(path, method, data)
             const resJsonData = await r.json()
@@ -104,7 +104,7 @@ class AuthenticatedFetcher {
         }
     }
 
-    async fetchNoJsonMarshal(path: string, method: 'POST' | 'GET' | 'PUT' | 'DELETE' = 'GET', data?: any) {
+    async fetchNoJsonMarshal(path: string, method: 'POST' | 'GET' | 'PUT' | 'PATCH' | 'DELETE' = 'GET', data?: any) {
         try {
             if (path.replace(/http(s?):\/\//, '').indexOf('//') != -1)
                 throw 'invalid path, path cannot contains empty parts, path: ' + path

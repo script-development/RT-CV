@@ -1,4 +1,4 @@
-import { Button } from "@mui/material"
+import { Button, DialogContentText } from "@mui/material"
 import dynamic from 'next/dynamic'
 
 import { ApiKey } from "../src/types"
@@ -21,8 +21,6 @@ export function ScraperAuthFileModal({ apiKey, onClose }: ScraperAuthFileModalPr
             api_key_id: apiKey.id,
             api_key: apiKey.key,
         },
-        alternative_servers: [],
-        login_users: [],
     } : {}
 
     const download = () => {
@@ -51,6 +49,9 @@ export function ScraperAuthFileModal({ apiKey, onClose }: ScraperAuthFileModalPr
         >{
                 _ => <div>
                     <JSONCode json={fileContents} />
+                    <DialogContentText>
+                        Note that this file has more options defined in <a target="_blank" rel="noopener noreferrer" href="https://github.com/script-development/rtcv_scraper_client#2-obtain-a-envjson">rtcv_scraper_client README.md</a>
+                    </DialogContentText>
                     <Button onClick={() => download()} >Download env.json</Button>
                 </div>
             }</Modal>
