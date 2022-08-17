@@ -3,7 +3,6 @@ import Head from 'next/head'
 import Link from 'next/link'
 import React from 'react'
 import KeysCard from '../components/keysCard'
-import SecretsCard from '../components/secretsCard'
 import Statistics from '../components/statistics'
 import OnMatchHooksCard from '../components/onMatchHooksCard'
 
@@ -24,8 +23,6 @@ export default function Home() {
 				</div>
 
 				<KeysCard />
-
-				<SecretsCard />
 
 				<OnMatchHooksCard />
 
