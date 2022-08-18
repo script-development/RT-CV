@@ -216,10 +216,10 @@ func middlewareBindMyKey() routeBuilder.M {
 	}
 }
 
-func middlewareBindKey() routeBuilder.M {
+func middlewareBindKey(urlParamName string) routeBuilder.M {
 	return routeBuilder.M{
 		Fn: func(c *fiber.Ctx) error {
-			keyParam := c.Params(`keyID`)
+			keyParam := c.Params(urlParamName)
 			keyID, err := primitive.ObjectIDFromHex(keyParam)
 			if err != nil {
 				return err

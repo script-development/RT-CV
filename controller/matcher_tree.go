@@ -143,7 +143,7 @@ type RouteDeleteMatcherBranchResult struct {
 
 var routeDeleteMatcherBranch = routeBuilder.R{
 	Description: `remove a spesific branch and it's children`,
-	Res:         RouteDeleteSecretOkRes{},
+	Res:         RouteDeleteMatcherBranchResult{},
 	Fn: func(c *fiber.Ctx) error {
 		idParam := c.Params("id")
 		id, err := primitive.ObjectIDFromHex(idParam)

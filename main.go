@@ -100,7 +100,6 @@ func main() {
 	dbConn.RegisterEntries(
 		&models.APIKey{},
 		&models.Profile{},
-		&models.Secret{},
 		&models.Backup{},
 		&models.OnMatchHook{},
 		&matcher.Branch{},

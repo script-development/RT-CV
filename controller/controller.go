@@ -40,36 +40,11 @@ func Routes(app *fiber.App, appVersion string, testing bool) {
 			})
 		}, requiresAuth(models.APIKeyRoleScraper|models.APIKeyRoleDashboard))
 
-		secretsRoutes := func(b *routeBuilder.Router) {
-			b.Get(``, routeGetSecrets)
-			b.Group(`/:key`, func(b *routeBuilder.Router) {
-				b.Delete(``, routeDeleteSecret, validKeyMiddleware())
-				b.Put(``, routeUpdateOrCreateSecret)
-				b.Get(`/:encryptionKey`, routeGetSecret, validKeyMiddleware())
-			})
-		}
-		b.Group(`/secrets`, func(b *routeBuilder.Router) {
-			b.Group(`/myKey`,
-				secretsRoutes,
-				requiresAuth(models.APIKeyRoleAll),
-				middlewareBindMyKey(),
-			)
-			b.Group(`/otherKey`, func(b *routeBuilder.Router) {
-				// This route exposes a lot of user information that's why only the dashboard role can access it
-				b.Get(``, routeGetAllSecretsFromAllKeys, requiresAuth(models.APIKeyRoleDashboard))
-				b.Group(
-					`/:keyID`,
-					secretsRoutes,
-					middlewareBindKey(),
-					requiresAuth(models.APIKeyRoleInformationObtainer|models.APIKeyRoleDashboard),
-				)
-			})
-		})
-		b.Group(`/scraperUsers/:keyID`, func(b *routeBuilder.Router) {
+		b.Group(`/scraperUsers/:scraperKeyID`, func(b *routeBuilder.Router) {
 			b.Get(``, routeGetScraperUsers)
 			b.Patch(``, routePatchScraperUser, requiresAuth(models.APIKeyRoleAdmin|models.APIKeyRoleDashboard|models.APIKeyRoleController))
 			b.Delete(``, routeDeleteScraperUser, requiresAuth(models.APIKeyRoleAdmin|models.APIKeyRoleDashboard|models.APIKeyRoleController))
-		}, middlewareBindKey(), requiresAuth(models.APIKeyRoleAll))
+		}, middlewareBindKey("scraperKeyID"), requiresAuth(models.APIKeyRoleAll))
 
 		b.Group(`/profiles`, func(b *routeBuilder.Router) {
 			// Profile routes that required the information obtainer role
@@ -98,7 +73,7 @@ func Routes(app *fiber.App, appVersion string, testing bool) {
 				b.Get(``, routeGetKey)
 				b.Put(``, routeUpdateKey)
 				b.Delete(``, routeDeleteKey)
-			}, middlewareBindKey())
+			}, middlewareBindKey("keyID"))
 		}, requiresAuth(models.APIKeyRoleDashboard))
 
 		b.Group(`/onMatchHooks`, func(b *routeBuilder.Router) {
