@@ -1,6 +1,8 @@
 package controller
 
 import (
+	crypto_rand "crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"testing"
 
@@ -8,6 +10,7 @@ import (
 	"github.com/script-development/RT-CV/mock"
 	"github.com/script-development/RT-CV/models"
 	. "github.com/stretchr/testify/assert"
+	"golang.org/x/crypto/nacl/box"
 )
 
 func TestScraperUsers(t *testing.T) {
@@ -22,6 +25,29 @@ func TestScraperUsers(t *testing.T) {
 	err := json.Unmarshal(body, &scraperUsers)
 	NoError(t, err, string(body))
 	Equal(t, 0, len(scraperUsers.Users))
+
+	// ---
+	// Add public key used for encryption
+
+	pubKey, privKey, err := box.GenerateKey(crypto_rand.Reader)
+	NoError(t, err)
+
+	testDecrypt := func(cipherBase64, expected string) {
+		cipherBytes, err := base64.StdEncoding.DecodeString(cipherBase64)
+		NoError(t, err)
+		decrypted, ok := box.OpenAnonymous(nil, cipherBytes, pubKey, privKey)
+		True(t, ok)
+		Equal(t, expected, string(decrypted[32:]))
+	}
+
+	pubKeyStr := base64.StdEncoding.EncodeToString(pubKey[:])
+	res, body = r.MakeRequest(routeBuilder.Patch, path+"/setPublicKey", TestReqOpts{Body: []byte(`{"publicKey":"` + pubKeyStr + `"}`)})
+	Equal(t, 200, res.StatusCode, string(body))
+
+	scraperUsers = models.ScraperLoginUsers{}
+	err = json.Unmarshal(body, &scraperUsers)
+	NoError(t, err, string(body))
+	Equal(t, pubKeyStr, scraperUsers.ScraperPubKey)
 
 	// ---
 	// Add user
@@ -43,7 +69,9 @@ func TestScraperUsers(t *testing.T) {
 	err = json.Unmarshal(body, &scraperUsers)
 	NoError(t, err, string(body))
 	Equal(t, 1, len(scraperUsers.Users))
-	Equal(t, scraperUsers.Users[0], models.ScraperLoginUser{Username: "username", Password: "password"})
+	usr := scraperUsers.Users[0]
+	Equal(t, "username", usr.Username)
+	testDecrypt(usr.EncryptedPassword, "password")
 
 	// ---
 	// Check if requesting the user using a non scraper key hides the passwords
@@ -82,10 +110,8 @@ func TestScraperUsers(t *testing.T) {
 	err = json.Unmarshal(body, &scraperUsers)
 	NoError(t, err, string(body))
 	Equal(t, 2, len(scraperUsers.Users))
-	Equal(t, scraperUsers.Users, []models.ScraperLoginUser{
-		{Username: "username", Password: "password"},
-		{Username: "username2", Password: "password2"},
-	}, string(body))
+	Equal(t, "username", scraperUsers.Users[0].Username)
+	Equal(t, "username2", scraperUsers.Users[1].Username)
 
 	// ---
 	// Update a user
@@ -118,10 +144,9 @@ func TestScraperUsers(t *testing.T) {
 	err = json.Unmarshal(body, &scraperUsers)
 	NoError(t, err, string(body))
 	Equal(t, 1, len(scraperUsers.Users))
-	Equal(t, scraperUsers.Users[0], models.ScraperLoginUser{
-		Username: "username",
-		Password: "updated password",
-	})
+	usr = scraperUsers.Users[0]
+	Equal(t, "username", usr.Username)
+	testDecrypt(usr.EncryptedPassword, "updated password")
 
 	// ---
 	// Check if requesting the login users of another scraper returns an empty array
