@@ -53,5 +53,10 @@ func SliceIndex[T any](arr []T) T {
 
 // GenerateKey generates a good random key
 func GenerateKey() []byte {
+	return Generate32Bytes()
+}
+
+// Generate32Bytes generates a good random 32 byte slice
+func Generate32Bytes() []byte {
 	return StringBytes(32)
 }

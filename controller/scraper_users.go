@@ -1,7 +1,9 @@
 package controller
 
 import (
+	"encoding/base64"
 	"errors"
+	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/script-development/RT-CV/controller/ctx"
@@ -23,6 +25,7 @@ func sendScraperLoginUsers(resp models.ScraperLoginUsers, userContext *ctx.Ctx, 
 		respUsers := make([]models.ScraperLoginUser, len(resp.Users))
 		for idx, user := range resp.Users {
 			user.Password = ""
+			user.EncryptedPassword = ""
 			respUsers[idx] = user
 		}
 		resp.Users = respUsers
@@ -105,9 +108,15 @@ var routeDeleteScraperUser = routeBuilder.R{
 	},
 }
 
+// PatchScraperUserBody is the body of the routePatchScraperUser route
+type PatchScraperUserBody struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 var routePatchScraperUser = routeBuilder.R{
 	Description: "Update or insert a new scraper user." + keyParamDocs,
-	Body:        models.ScraperLoginUser{},
+	Body:        PatchScraperUserBody{},
 	Res:         models.ScraperLoginUsers{},
 	Fn: func(c *fiber.Ctx) error {
 		ctx := ctx.Get(c)
@@ -116,7 +125,7 @@ var routePatchScraperUser = routeBuilder.R{
 			return errors.New("param key id must have the scraper role")
 		}
 
-		body := models.ScraperLoginUser{}
+		body := PatchScraperUserBody{}
 		err := c.BodyParser(&body)
 		if err != nil {
 			return err
@@ -131,20 +140,21 @@ var routePatchScraperUser = routeBuilder.R{
 		var alreadyExistingSet models.ScraperLoginUsers
 		err = ctx.DBConn.FindOne(&alreadyExistingSet, bson.M{"scraperId": ctx.APIKeyFromParam.ID})
 		if err == mongo.ErrNoDocuments {
-			// Create a new entry
-			resp := models.ScraperLoginUsers{
-				M:         db.NewM(),
-				ScraperID: ctx.APIKeyFromParam.ID,
-				Users:     []models.ScraperLoginUser{body},
-			}
-			err = ctx.DBConn.Insert(&resp)
-			if err != nil {
-				return err
-			}
-
-			return sendScraperLoginUsers(resp, ctx, c)
+			// There are no scrapers users for this scraper yet thus also no public key used to encrypt the newly inserted user's password
+			return models.ErrScraperNoPublicKey
 		} else if err != nil {
 			return err
+		}
+
+		encryptedPassword, err := alreadyExistingSet.EncryptPassword(body.Password)
+		if err != nil {
+			return err
+		}
+
+		scraperUserUpdateInsert := models.ScraperLoginUser{
+			Username:          body.Username,
+			Password:          body.Password,
+			EncryptedPassword: encryptedPassword,
 		}
 
 		// Update or insert the existing set
@@ -153,12 +163,12 @@ var routePatchScraperUser = routeBuilder.R{
 		for idx, usr := range alreadyExistingSet.Users {
 			if usr.Username == body.Username {
 				insert = false
-				alreadyExistingSet.Users[idx] = body
+				alreadyExistingSet.Users[idx] = scraperUserUpdateInsert
 				break
 			}
 		}
 		if insert {
-			alreadyExistingSet.Users = append(alreadyExistingSet.Users, body)
+			alreadyExistingSet.Users = append(alreadyExistingSet.Users, scraperUserUpdateInsert)
 		}
 
 		err = ctx.DBConn.UpdateByID(&alreadyExistingSet)
@@ -167,5 +177,96 @@ var routePatchScraperUser = routeBuilder.R{
 		}
 
 		return sendScraperLoginUsers(alreadyExistingSet, ctx, c)
+	},
+}
+
+// SetPublicKeyForScraperUsersBody is the request body for routeSetPublicKeyForScraperUsers
+type SetPublicKeyForScraperUsersBody struct {
+	PublicKey string `json:"publicKey"`
+}
+
+var routeSetPublicKeyForScraperUsers = routeBuilder.R{
+	Description: "Set the public key of a scraper user",
+	Body:        SetPublicKeyForScraperUsersBody{},
+	Res:         models.ScraperLoginUsers{},
+	Fn: func(c *fiber.Ctx) error {
+		ctx := ctx.Get(c)
+
+		if !ctx.APIKeyFromParam.Roles.ContainsAll(models.APIKeyRoleScraper) {
+			return errors.New("param key id must have the scraper role")
+		}
+
+		body := SetPublicKeyForScraperUsersBody{}
+		err := c.BodyParser(&body)
+		if err != nil {
+			return err
+		}
+
+		if body.PublicKey == "" {
+			return errors.New("public key cannot be empty")
+		}
+		if len(body.PublicKey) != 44 {
+			return errors.New("public key should have a length of 44")
+		}
+		base64Decoded, err := base64.StdEncoding.DecodeString(body.PublicKey)
+		if err != nil {
+			return err
+		}
+		if len(base64Decoded) != 32 {
+			return errors.New("base64 decoded public key should have a length of 32")
+		}
+
+		var resp models.ScraperLoginUsers
+		err = ctx.DBConn.FindOne(&resp, bson.M{"scraperId": ctx.APIKeyFromParam.ID})
+		if err == mongo.ErrNoDocuments {
+			resp = models.ScraperLoginUsers{
+				M:             db.NewM(),
+				ScraperID:     ctx.APIKeyFromParam.ID,
+				ScraperPubKey: body.PublicKey,
+				Users:         []models.ScraperLoginUser{},
+			}
+			err = ctx.DBConn.Insert(&resp)
+			if err != nil {
+				return err
+			}
+			return sendScraperLoginUsers(resp, ctx, c)
+		} else if err != nil {
+			return err
+		}
+
+		if resp.ScraperPubKey == "" {
+			// The previous scraper pub key did not have a pub key set yet, set it now
+			resp.ScraperPubKey = body.PublicKey
+
+			// Encrypt the current users stored in the database
+			for idx, user := range resp.Users {
+				encryptedPassword, err := resp.EncryptPassword(user.Password)
+				if err != nil {
+					return fmt.Errorf("unable to encrypt user `%s`, error: %s", user.Username, err.Error())
+				}
+				resp.Users[idx] = models.ScraperLoginUser{
+					Username:          user.Username,
+					Password:          user.Password,
+					EncryptedPassword: encryptedPassword,
+				}
+			}
+
+			err = ctx.DBConn.UpdateByID(&resp)
+			if err != nil {
+				return err
+			}
+		} else if resp.ScraperPubKey != body.PublicKey {
+			resp.ScraperPubKey = body.PublicKey
+			// The public key changed, now we cannot know the users anymore that are encrypted using the old key
+			// So we delete all the users
+			resp.Users = []models.ScraperLoginUser{}
+
+			err = ctx.DBConn.UpdateByID(&resp)
+			if err != nil {
+				return err
+			}
+		}
+
+		return sendScraperLoginUsers(resp, ctx, c)
 	},
 }

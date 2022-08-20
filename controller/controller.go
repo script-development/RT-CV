@@ -44,6 +44,7 @@ func Routes(app *fiber.App, appVersion string, testing bool) {
 			b.Get(``, routeGetScraperUsers)
 			b.Patch(``, routePatchScraperUser, requiresAuth(models.APIKeyRoleAdmin|models.APIKeyRoleDashboard|models.APIKeyRoleController))
 			b.Delete(``, routeDeleteScraperUser, requiresAuth(models.APIKeyRoleAdmin|models.APIKeyRoleDashboard|models.APIKeyRoleController))
+			b.Patch(`/setPublicKey`, routeSetPublicKeyForScraperUsers)
 		}, middlewareBindKey("scraperKeyID"), requiresAuth(models.APIKeyRoleAll))
 
 		b.Group(`/profiles`, func(b *routeBuilder.Router) {
