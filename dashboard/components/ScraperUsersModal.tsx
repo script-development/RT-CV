@@ -85,7 +85,6 @@ function ManagePublicKey({ currentPublicKey, usersCount, apiKeyId, updatePublicK
         setFormStatus({ uploading: true, error: undefined })
         try {
             const resp = await fetcher.fetch(`/api/v1/scraperUsers/${apiKeyId}/setPublicKey`, 'PATCH', { publicKey })
-            console.log(resp.scraperPubKey)
             updatePublicKey(resp.scraperPubKey)
             setFormStatus({ uploading: false, error: undefined })
         } catch (e) {
