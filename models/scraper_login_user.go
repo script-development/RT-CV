@@ -70,6 +70,5 @@ func (*ScraperLoginUsers) Indexes() []mongo.IndexModel {
 // ScraperLoginUser defines a user that can be used by a scraper to login into a scraped website
 type ScraperLoginUser struct {
 	Username          string `json:"username"`
-	Password          string `json:"password,omitempty"`
 	EncryptedPassword string `json:"encryptedPassword,omitempty" bson:"encryptedPassword"`
 }

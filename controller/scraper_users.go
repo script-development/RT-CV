@@ -3,7 +3,6 @@ package controller
 import (
 	"encoding/base64"
 	"errors"
-	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/script-development/RT-CV/controller/ctx"
@@ -24,7 +23,6 @@ func sendScraperLoginUsers(resp models.ScraperLoginUsers, userContext *ctx.Ctx, 
 		// We copy the users slice here to prevent an issue with the testing db
 		respUsers := make([]models.ScraperLoginUser, len(resp.Users))
 		for idx, user := range resp.Users {
-			user.Password = ""
 			user.EncryptedPassword = ""
 			respUsers[idx] = user
 		}
@@ -153,7 +151,6 @@ var routePatchScraperUser = routeBuilder.R{
 
 		scraperUserUpdateInsert := models.ScraperLoginUser{
 			Username:          body.Username,
-			Password:          body.Password,
 			EncryptedPassword: encryptedPassword,
 		}
 
@@ -234,29 +231,9 @@ var routeSetPublicKeyForScraperUsers = routeBuilder.R{
 			return err
 		}
 
-		if resp.ScraperPubKey == "" {
-			// The previous scraper pub key did not have a pub key set yet, set it now
+		if resp.ScraperPubKey != body.PublicKey {
 			resp.ScraperPubKey = body.PublicKey
 
-			// Encrypt the current users stored in the database
-			for idx, user := range resp.Users {
-				encryptedPassword, err := resp.EncryptPassword(user.Password)
-				if err != nil {
-					return fmt.Errorf("unable to encrypt user `%s`, error: %s", user.Username, err.Error())
-				}
-				resp.Users[idx] = models.ScraperLoginUser{
-					Username:          user.Username,
-					Password:          user.Password,
-					EncryptedPassword: encryptedPassword,
-				}
-			}
-
-			err = ctx.DBConn.UpdateByID(&resp)
-			if err != nil {
-				return err
-			}
-		} else if resp.ScraperPubKey != body.PublicKey {
-			resp.ScraperPubKey = body.PublicKey
 			// The public key changed, now we cannot know the users anymore that are encrypted using the old key
 			// So we delete all the users
 			resp.Users = []models.ScraperLoginUser{}
