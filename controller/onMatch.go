@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"net/http"
 	"strings"
 	"time"
 
@@ -83,7 +84,7 @@ func (data *CreateOrUpdateOnMatchHookRequestData) applyToHook(hook *models.OnMat
 }
 
 var routeCreateOnMatchHooks = routeBuilder.R{
-	Description: "Set a on match hook, called when a cv is matched with one or more profiles",
+	Description: "Set a on match hook, called when a cv is matched with one or more profiles or when a list of cvs is scanned and matched to list profiles",
 	Body:        CreateOrUpdateOnMatchHookRequestData{},
 	Res:         models.OnMatchHook{},
 	Fn: func(c *fiber.Ctx) error {
@@ -150,21 +151,22 @@ var routeUpdateOnMatchHook = routeBuilder.R{
 	},
 }
 
-// ExplainDataSendToHook tells what data is send to the hook
-type ExplainDataSendToHook struct {
-	DataSendToHook DataSendToHook `json:"dataSendToHook"`
+// RouteTestOnMatchHookExplainSendToHook explains what is send to the hook
+type RouteTestOnMatchHookExplainSendToHook struct {
+	DataSendToHook    HookMatchedCVData `json:"dataSendToHook"`
+	HeadersSendToHook http.Header       `json:"headers"`
 }
 
 var routeTestOnMatchHook = routeBuilder.R{
 	Description: "Test a on match hook",
-	Res:         ExplainDataSendToHook{},
+	Res:         RouteTestOnMatchHookExplainSendToHook{},
 	Fn: func(c *fiber.Ctx) error {
 		ctx := ctx.Get(c)
 		cv := *models.ExampleCV()
 
 		yearsSinceWork := 3
 
-		dummyData := DataSendToHook{
+		dummyData := HookMatchedCVData{
 			MatchedProfiles: []match.FoundMatch{{
 				Matches: models.Match{
 					RequestID:         ctx.RequestID,
@@ -190,12 +192,51 @@ var routeTestOnMatchHook = routeBuilder.R{
 			return err
 		}
 
-		err = ctx.OnMatchHook.Call(bytes.NewReader(dummyDataAsJSON))
+		headers, err := ctx.OnMatchHook.Call(bytes.NewReader(dummyDataAsJSON), models.DataKindMatch)
 		if err != nil {
 			return err
 		}
 
-		return c.JSON(ExplainDataSendToHook{DataSendToHook: dummyData})
+		return c.JSON(RouteTestOnMatchHookExplainSendToHook{DataSendToHook: dummyData, HeadersSendToHook: headers})
+	},
+}
+
+// RouteTestOnListHookExplainSendToHook explains what is send to the hook
+type RouteTestOnListHookExplainSendToHook struct {
+	DataSendToHook    CVListsHookData `json:"dataSendToHook"`
+	HeadersSendToHook http.Header     `json:"headers"`
+}
+
+var routeTestOnListHook = routeBuilder.R{
+	Description: "Test a on list hook",
+	Res:         RouteTestOnMatchHookExplainSendToHook{},
+	Fn: func(c *fiber.Ctx) error {
+		ctx := ctx.Get(c)
+		cv := *models.ExampleCV()
+
+		dummyData := CVListsHookData{
+			CVs: map[string]models.CV{
+				cv.ReferenceNumber: cv,
+			},
+			ProfilesMatchCVs: map[primitive.ObjectID][]string{
+				mock.Profile1.ID: {cv.ReferenceNumber},
+			},
+			KeyID:   mock.Key1.ID,
+			KeyName: "example.com",
+			IsTest:  true,
+		}
+
+		dummyDataAsJSON, err := json.Marshal(dummyData)
+		if err != nil {
+			return err
+		}
+
+		headers, err := ctx.OnMatchHook.Call(bytes.NewReader(dummyDataAsJSON), models.DataKindList)
+		if err != nil {
+			return err
+		}
+
+		return c.JSON(RouteTestOnListHookExplainSendToHook{DataSendToHook: dummyData, HeadersSendToHook: headers})
 	},
 }
 

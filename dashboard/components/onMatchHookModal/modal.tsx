@@ -34,7 +34,6 @@ export function SecretModal({ kind, onClose: onCloseArg, hook }: ModalProps) {
     const [headers, setHeaders] = useState<Array<{ key: string, value: string }>>([])
     const [method, setMethod] = useState('POST')
     const [url, setUrl] = useState('https://')
-    const [stopRemainingActions, setStopRemainingActions] = useState(false)
 
     const canSubmit = url.length != 0
     const viewState = { value: undefined }
@@ -62,7 +61,6 @@ export function SecretModal({ kind, onClose: onCloseArg, hook }: ModalProps) {
         setHeaders([])
         setMethod('POST')
         setUrl('https://')
-        setStopRemainingActions(false)
         onCloseArg()
     }
 
@@ -74,7 +72,6 @@ export function SecretModal({ kind, onClose: onCloseArg, hook }: ModalProps) {
                         method,
                         url,
                         addHeaders: formatHeadersToApi(),
-                        stopRemainingActions,
                     })
                     onClose()
                     break
@@ -83,7 +80,6 @@ export function SecretModal({ kind, onClose: onCloseArg, hook }: ModalProps) {
                         method,
                         url,
                         addHeaders: formatHeadersToApi(),
-                        stopRemainingActions,
                     })
                     onClose()
                     break
@@ -105,7 +101,6 @@ export function SecretModal({ kind, onClose: onCloseArg, hook }: ModalProps) {
             setHeaders((hook.addHeaders || []).map(h => ({ key: h.key, value: h.value.join(',') })) || [])
             setMethod(hook.method)
             setUrl(hook.url)
-            setStopRemainingActions(hook.stopRemainingActions)
         }
     }, [kind, hook])
 
@@ -201,11 +196,6 @@ export function SecretModal({ kind, onClose: onCloseArg, hook }: ModalProps) {
                                 <Button onClick={removeHeader} disabled={selectedHeaders.length == 0}>Remove selected</Button>
                             </ButtonGroup>
                         </div>
-
-                        <FormControlLabel
-                            control={<Checkbox checked={stopRemainingActions} onChange={() => setStopRemainingActions(!stopRemainingActions)} name="stopRemainingActions" />}
-                            label="Stop further actions after the hooks are executed, this stop the sending of emails"
-                        />
 
                         <style jsx>{`
                             .padTop {

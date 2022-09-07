@@ -53,5 +53,4 @@ export interface OnMatchHook {
     url: string
     method: string
     addHeaders: Array<{ key: string, value: Array<string> }>
-    stopRemainingActions: boolean
 }

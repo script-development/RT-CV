@@ -118,7 +118,7 @@ func main() {
 	models.CheckDashboardKeyExists(dbConn)
 
 	// Create a new fiber instance (http server)
-	// do not use fiber Prefork!, this app is not written to support it
+	// do not use fiber Prefork!, this service is not written to support it
 	app := fiber.New(fiber.Config{
 		ErrorHandler: controller.FiberErrorHandler,
 

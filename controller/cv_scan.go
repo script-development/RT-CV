@@ -3,9 +3,7 @@ package controller
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"sync"
-	"time"
 
 	"github.com/apex/log"
 	"github.com/gofiber/fiber/v2"
@@ -19,15 +17,13 @@ import (
 
 // RouteScraperScanCVBody is the request body of the routeScraperScanCV
 type RouteScraperScanCVBody struct {
-	CV    models.CV `json:"cv"`
-	Debug bool      `json:"debug" jsonSchema:"hidden"`
+	CV models.CV `json:"cv"`
 }
 
 // RouteScraperScanCVRes contains the response data of routeScraperScanCV
 type RouteScraperScanCVRes struct {
-	Success    bool               `json:"success"`
-	HasMatches bool               `json:"hasMatches"`
-	Matches    []match.FoundMatch `json:"matches" jsonSchema:"hidden" description:"Only contains matches if the debug property is set to true"`
+	Success    bool `json:"success"`
+	HasMatches bool `json:"hasMatches"`
 }
 
 var routeScraperScanCV = routeBuilder.R{
@@ -43,15 +39,6 @@ var routeScraperScanCV = routeBuilder.R{
 			return err
 		}
 
-		// Debug flag can only be set by the dashboard rule
-		if body.Debug && !ctx.Key.Roles.ContainsSome(models.APIKeyRoleDashboard) {
-			return ErrorRes(
-				c,
-				fiber.StatusForbidden,
-				errors.New("you are not allowed to set the debug field, only api keys with the Dashboard role can set it"),
-			)
-		}
-
 		err = body.CV.Validate()
 		if err != nil {
 			return ErrorRes(
@@ -63,34 +50,21 @@ var routeScraperScanCV = routeBuilder.R{
 
 		// Get the profiles we can use for matching
 		// If they are not cached yet or the cache it outdated, set the cache
-		profiles := ctx.MatcherProfilesCache.Profiles
-		if profiles == nil || ctx.MatcherProfilesCache.InsertionTime.Add(time.Hour*24).Before(time.Now()) {
-			ctx.Logger.Info("updating the profiles cache")
-			// Update the cache
-			profilesFromDB, err := models.GetActualActiveProfiles(ctx.DBConn)
-			if err != nil {
-				return err
-			}
-			profiles = make([]*models.Profile, len(profilesFromDB))
-			for idx := range profilesFromDB {
-				profiles[idx] = &profilesFromDB[idx]
-			}
-			*ctx.MatcherProfilesCache = reqPkg.MatcherProfilesCache{
-				Profiles:      profiles,
-				InsertionTime: time.Now(),
-			}
+		profilesCache, err := ctx.GetOrGenMatcherProfilesCache()
+		if err != nil {
+			return err
 		}
+		profiles := profilesCache.ScanProfiles
 
 		// Try to match a profile to a CV
 		matchedProfiles := match.Match(ctx.Key.ID, ctx.RequestID, profiles, body.CV)
 
-		resp := RouteScraperScanCVRes{Success: true, Matches: []match.FoundMatch{}}
+		resp := RouteScraperScanCVRes{Success: true}
 		if len(matchedProfiles) == 0 {
 			return c.JSON(resp)
 		}
 
 		MatchesProcess.AppendMatchesToProcess(ProcessMatches{
-			Debug:           body.Debug,
 			MatchedProfiles: matchedProfiles,
 			CV:              body.CV,
 			Logger:          *ctx.Logger,
@@ -100,9 +74,6 @@ var routeScraperScanCV = routeBuilder.R{
 		})
 
 		resp.HasMatches = true
-		if body.Debug {
-			resp.Matches = matchedProfiles
-		}
 
 		return c.JSON(resp)
 	},
@@ -154,7 +125,6 @@ func (p *MatchesProcessor) processMatches() {
 
 // ProcessMatches contains the content for processing a match
 type ProcessMatches struct {
-	Debug           bool
 	MatchedProfiles []match.FoundMatch
 	CV              models.CV
 	Logger          log.Entry
@@ -163,8 +133,8 @@ type ProcessMatches struct {
 	KeyName         string
 }
 
-// DataSendToHook contains the content for processing a match
-type DataSendToHook struct {
+// HookMatchedCVData contains the content for processing a match
+type HookMatchedCVData struct {
 	MatchedProfiles []match.FoundMatch `json:"matchedProfiles"`
 	CV              models.CV          `json:"cv"`
 	KeyID           primitive.ObjectID `json:"keyId" description:"The ID of the API key that was used to upload this CV"`
@@ -186,19 +156,13 @@ func (args ProcessMatches) Process() {
 		return
 	}
 
-	hooks := []models.OnMatchHook{}
-	err := args.DBConn.Find(&models.OnMatchHook{}, &hooks, nil)
+	hooks, err := models.GetOnMatchHooks(args.DBConn, true)
 	if err != nil {
 		args.Logger.WithError(err).Error("Finding on match hooks failed")
 		return
 	}
 
-	if len(hooks) == 0 {
-		log.Error("no on match hooks configured")
-		return
-	}
-
-	hookData, err := json.Marshal(DataSendToHook{
+	hookData, err := json.Marshal(HookMatchedCVData{
 		MatchedProfiles: args.MatchedProfiles,
 		CV:              args.CV,
 		KeyID:           args.KeyID,
@@ -210,16 +174,6 @@ func (args ProcessMatches) Process() {
 	}
 
 	for _, hook := range hooks {
-		if err != nil {
-			args.Logger.WithError(err).Error("creating hook data failed")
-			continue
-		}
-
-		err = hook.Call(bytes.NewBuffer(hookData))
-		if err != nil {
-			args.Logger.WithError(err).Error("creating hook data failed")
-		} else {
-			args.Logger.WithField("hook", hook.URL).WithField("hook_id", hook.ID.Hex()).Info("hook called")
-		}
+		hook.CallAndLogResult(bytes.NewBuffer(hookData), models.DataKindMatch, &args.Logger)
 	}
 }

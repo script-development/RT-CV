@@ -8,6 +8,7 @@ import (
 	"html/template"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/mjarkk/jsonschema"
@@ -200,6 +201,24 @@ type PersonalDetails struct {
 	Country           string                   `json:"country,omitempty" jsonSchema:"notRequired"`
 	PhoneNumber       *jsonHelpers.PhoneNumber `json:"phoneNumber,omitempty" jsonSchema:"notRequired"`
 	Email             string                   `json:"email,omitempty" jsonSchema:"notRequired"`
+}
+
+// ZipAsNr returns the zip code as an uint16 if possible
+// Returns only the 4 digits of a zip code as a number
+// The second argument is a success boolean, if false the zip code is not parsable
+func (pd *PersonalDetails) ZipAsNr() (uint16, bool) {
+	zipStr := strings.TrimSpace(pd.Zip)
+	zipStrLen := len(zipStr)
+	if zipStrLen != 4 && zipStrLen != 6 {
+		// Client has invalid zipcode
+		return 0, false
+	}
+	cvZipNr, err := strconv.Atoi(zipStr[:4])
+	if err != nil {
+		// Client has invalid zipcode
+		return 0, false
+	}
+	return uint16(cvZipNr), true
 }
 
 func getTemplateFromFile(funcs template.FuncMap, filename string) (*template.Template, error) {

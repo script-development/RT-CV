@@ -42,6 +42,8 @@ type Profile struct {
 
 	Lables map[string]any `json:"labels" description:"custom labels that can be used by API users to identify profiles, the key needs to be a string and the value can be anything"`
 
+	ListsAllowed bool `json:"listsAllowed" bson:"listsAllowed"`
+
 	// OldID is used to keep track of converted old profiles
 	OldID *uint64 `bson:"_old_id" json:"-"`
 
@@ -70,11 +72,13 @@ func (*Profile) Indexes() []mongo.IndexModel {
 		{Keys: bson.M{"educations": 1}},
 		{Keys: bson.M{"zipCodes": 1}},
 		{Keys: bson.M{"onMatch.sendMail": 1}},
+		{Keys: bson.M{"listsAllowed": 1}},
 	}
 }
 
+var isArrayWContent = bson.M{"$not": bson.M{"$size": 0}, "$type": "array"}
+
 func actualActiveProfilesFilter() bson.M {
-	isArrayWContent := bson.M{"$not": bson.M{"$size": 0}, "$type": "array"}
 	return bson.M{
 		"active": true,
 		"$and": []bson.M{
@@ -89,6 +93,17 @@ func actualActiveProfilesFilter() bson.M {
 			{"onMatch.sendMail": isArrayWContent},
 		},
 	}
+}
+
+// GetListsProfiles returns all profiles that can be used for the cv lists functionality
+func GetListsProfiles(conn db.Connection) ([]Profile, error) {
+	profiles := []Profile{}
+	err := conn.Find(&Profile{}, &profiles, bson.M{
+		"active":           true,
+		"onMatch.sendMail": isArrayWContent,
+		"zipCodes":         isArrayWContent,
+	})
+	return profiles, err
 }
 
 // GetActualActiveProfiles returns that we can actually use

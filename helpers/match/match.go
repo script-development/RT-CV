@@ -3,7 +3,6 @@ package match
 import (
 	"math"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -306,22 +305,14 @@ func Match(scraperKeyID, requestID primitive.ObjectID, profiles []*models.Profil
 
 		// Check zipcodes
 		if len(profile.Zipcodes) != 0 {
-			zipStr := strings.TrimSpace(cv.PersonalDetails.Zip)
-			zipStrLen := len(zipStr)
-			if zipStrLen != 4 && zipStrLen != 6 {
-				// Client has invalid zipcode
+			cvZip, validCVZip := cv.PersonalDetails.ZipAsNr()
+			if !validCVZip {
 				continue
 			}
-			cvZipNr, err := strconv.Atoi(zipStr[:4])
-			if err != nil {
-				// Client has invalid zipcode
-				continue
-			}
-			cvZipNrUint16 := uint16(cvZipNr)
 
 			cvZipInRange := false
 			for idx, zipcode := range profile.Zipcodes {
-				if zipcode.IsWithinCithAndArea(cvZipNrUint16) {
+				if zipcode.IsWithinCithAndArea(cvZip) {
 					match.ZipCode = &profile.Zipcodes[idx]
 					cvZipInRange = true
 					break

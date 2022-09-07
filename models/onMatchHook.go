@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"io"
 	"net/http"
 
@@ -30,15 +31,66 @@ func (*OnMatchHook) CollectionName() string {
 	return "onMatchHooks"
 }
 
+// GetOnMatchHooks returns all the onMatchHooks
+func GetOnMatchHooks(dbConn db.Connection, expectAtLeastOne bool) ([]OnMatchHook, error) {
+	hooks := []OnMatchHook{}
+	err := dbConn.Find(&OnMatchHook{}, &hooks, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if expectAtLeastOne && len(hooks) == 0 {
+		return nil, errors.New("no on match hooks configured")
+	}
+
+	return hooks, err
+}
+
+// DataKind deinfes the kind of data that is being sent to the hook
+type DataKind uint8
+
+const (
+	// DataKindMatch is the data kind for when a match is found
+	DataKindMatch DataKind = iota
+	// DataKindList is the data kind for when a list of cvs is matched
+	DataKindList
+)
+
+func (k DataKind) contentTypeAndDataKind() (contentType string, dataKind string) {
+	switch k {
+	case DataKindMatch:
+		contentType, dataKind = "application/json", "match"
+	case DataKindList:
+		contentType, dataKind = "application/json", "list"
+	}
+	return contentType, dataKind
+}
+
+// CallAndLogResult calls the hook defined in OnMatchHook and logs the result
+func (h *OnMatchHook) CallAndLogResult(body io.Reader, dataKind DataKind, logger *log.Entry) {
+	_, err := h.Call(body, dataKind)
+
+	loggerWithFields := logger.WithField("hook", h.URL).WithField("hook_id", h.ID.Hex())
+	if err != nil {
+		loggerWithFields.WithError(err).Error("calling hook failed")
+	} else {
+		loggerWithFields.Info("hook called")
+	}
+}
+
 // Call calls the hook defined in OnMatchHook
-func (h *OnMatchHook) Call(body io.Reader) error {
+func (h *OnMatchHook) Call(body io.Reader, dataKind DataKind) (http.Header, error) {
 	req, err := http.NewRequest(h.Method, h.URL, body)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", "RT-CV")
+
+	contentTypeHeader, dataKindHeader := dataKind.contentTypeAndDataKind()
+	req.Header.Set("Content-Type", contentTypeHeader)
+	req.Header.Set("Data-Kind", dataKindHeader)
 
 	for _, header := range h.AddHeaders {
 		for _, value := range header.Value {
@@ -52,5 +104,5 @@ func (h *OnMatchHook) Call(body io.Reader) error {
 		log.WithError(err).WithField("url", h.URL).WithField("id", h.ID.Hex()).Warnf("Failed calling hook")
 	}
 
-	return nil
+	return req.Header, nil
 }

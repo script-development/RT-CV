@@ -30,15 +30,8 @@ func Routes(app *fiber.App, appVersion string, testing bool) {
 
 		b.Group(`/scraper`, func(b *routeBuilder.Router) {
 			b.Post(`/scanCV`, routeScraperScanCV)
-			b.Group(`/scannedReferenceNrs`, func(b *routeBuilder.Router) {
-				b.Get(``, scannedReferenceNrs)
-				b.Group(`/since`, func(b *routeBuilder.Router) {
-					b.Get(`/hours/:hours`, scannedReferenceNrs)
-					b.Get(`/days/:days`, scannedReferenceNrs)
-					b.Get(`/weeks/:weeks`, scannedReferenceNrs)
-				})
-			})
-		}, requiresAuth(models.APIKeyRoleScraper|models.APIKeyRoleDashboard))
+			b.Post(`/allCVs`, routeScraperListCVs)
+		}, requiresAuth(models.APIKeyRoleScraper))
 
 		b.Group(`/scraperUsers/:scraperKeyID`, func(b *routeBuilder.Router) {
 			b.Get(``, routeGetScraperUsers)
@@ -83,7 +76,8 @@ func Routes(app *fiber.App, appVersion string, testing bool) {
 			b.Group(`/:hookID`, func(b *routeBuilder.Router) {
 				b.Delete(``, routeDeleteOnMatchHook)
 				b.Put(``, routeUpdateOnMatchHook)
-				b.Post(`/test`, routeTestOnMatchHook)
+				b.Post(`/testMatch`, routeTestOnMatchHook)
+				b.Post(`/testList`, routeTestOnListHook)
 			}, middlewareBindHook())
 		}, requiresAuth(models.APIKeyRoleController|models.APIKeyRoleInformationObtainer|models.APIKeyRoleDashboard))
 

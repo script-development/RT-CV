@@ -39,10 +39,44 @@ func Get(c *fiber.Ctx) *Ctx {
 	return c.UserContext().Value(ctxKey).(*Ctx)
 }
 
+// GetOrGenMatcherProfilesCache returns the cached profiles or creates a new cache content
+func (c *Ctx) GetOrGenMatcherProfilesCache() (*MatcherProfilesCache, error) {
+	if c.MatcherProfilesCache.ScanProfiles != nil && c.MatcherProfilesCache.ListProfiles != nil && c.MatcherProfilesCache.InsertionTime.Add(time.Hour*24).After(time.Now()) {
+		return c.MatcherProfilesCache, nil
+	}
+
+	// Update the cache
+	c.Logger.Info("updating the profiles cache")
+	scanProfiles, err := models.GetActualActiveProfiles(c.DBConn)
+	if err != nil {
+		return nil, err
+	}
+	listProfiles, err := models.GetListsProfiles(c.DBConn)
+	if err != nil {
+		return nil, err
+	}
+
+	*c.MatcherProfilesCache = MatcherProfilesCache{
+		ScanProfiles:  profilesListToPtrs(scanProfiles),
+		ListProfiles:  profilesListToPtrs(listProfiles),
+		InsertionTime: time.Now(),
+	}
+	return c.MatcherProfilesCache, nil
+}
+
+func profilesListToPtrs(in []models.Profile) []*models.Profile {
+	out := make([]*models.Profile, len(in))
+	for idx := range in {
+		out[idx] = &in[idx]
+	}
+	return out
+}
+
 // MatcherProfilesCache contains the matcher profiles cache
 type MatcherProfilesCache struct {
 	InsertionTime time.Time
-	Profiles      []*models.Profile
+	ScanProfiles  []*models.Profile
+	ListProfiles  []*models.Profile
 }
 
 // ResetMatcherProfilesCache sets the profiles cache to an empty object
