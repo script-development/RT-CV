@@ -209,7 +209,7 @@ type RouteTestOnListHookExplainSendToHook struct {
 
 var routeTestOnListHook = routeBuilder.R{
 	Description: "Test a on list hook",
-	Res:         RouteTestOnMatchHookExplainSendToHook{},
+	Res:         RouteTestOnListHookExplainSendToHook{},
 	Fn: func(c *fiber.Ctx) error {
 		ctx := ctx.Get(c)
 		cv := *models.ExampleCV()
