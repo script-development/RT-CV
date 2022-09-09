@@ -8,7 +8,7 @@ import {
     FormControlLabel,
     Radio,
     ButtonGroup,
-    Checkbox,
+    Chip,
 } from '@mui/material'
 import { DataGrid } from '@mui/x-data-grid'
 import React, { useState, useEffect } from 'react'
@@ -146,6 +146,11 @@ export function SecretModal({ kind, onClose: onCloseArg, hook }: ModalProps) {
             else if (kind == ModalKind.Edit || kind == ModalKind.Create)
                 return (
                     <div>
+                        <DialogContentText>A hook is called when a CV has been matched to a profile and when a list of CVs is matched to list profiles.</DialogContentText>
+                        <DialogContentText>The kind of data send to a hook can be checked via the <Chip label='Data-Kind' size="small" /> header.</DialogContentText>
+                        <DialogContentText>the value of the <Chip label='Data-Kind' size="small" /> header will be <Chip label='match' size="small" /> for single cv to profile matches and <Chip label='list' size="small" /> for list profiles matching a list of cvs</DialogContentText>
+                        <br />
+
                         <FormControl component="fieldset" fullWidth>
                             <FormLabel component="legend">Method</FormLabel>
                             <RadioGroup aria-label="method" name="method" value={method} onChange={e => setMethod(e.target.value)}>
