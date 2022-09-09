@@ -81,16 +81,11 @@ var isArrayWContent = bson.M{"$not": bson.M{"$size": 0}, "$type": "array"}
 func actualActiveProfilesFilter() bson.M {
 	return bson.M{
 		"active": true,
-		"$and": []bson.M{
-			{
-				"$or": []bson.M{
-					{"desiredProfessions": isArrayWContent},
-					{"professionExperienced": isArrayWContent},
-					{"driversLicenses": isArrayWContent},
-					{"educations": isArrayWContent},
-				},
-			},
-			{"onMatch.sendMail": isArrayWContent},
+		"$or": []bson.M{
+			{"desiredProfessions": isArrayWContent},
+			{"professionExperienced": isArrayWContent},
+			{"driversLicenses": isArrayWContent},
+			{"educations": isArrayWContent},
 		},
 	}
 }
@@ -99,9 +94,9 @@ func actualActiveProfilesFilter() bson.M {
 func GetListsProfiles(conn db.Connection) ([]Profile, error) {
 	profiles := []Profile{}
 	err := conn.Find(&Profile{}, &profiles, bson.M{
-		"active":           true,
-		"onMatch.sendMail": isArrayWContent,
-		"zipCodes":         isArrayWContent,
+		"active":       true,
+		"listsAllowed": true,
+		"zipCodes":     isArrayWContent,
 	})
 	return profiles, err
 }

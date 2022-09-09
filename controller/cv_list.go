@@ -3,6 +3,7 @@ package controller
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/script-development/RT-CV/controller/ctx"
@@ -40,20 +41,18 @@ var routeScraperListCVs = routeBuilder.R{
 		}
 
 		if len(body.CVs) == 0 {
-			return c.JSON(RouteScraperListCVsResp{})
+			return errors.New("no CVs where provided in body")
 		}
 
 		reqCtx := ctx.Get(c)
 
-		hooks, err := models.GetOnMatchHooks(reqCtx.DBConn, true)
-		if err != nil {
-			reqCtx.Logger.WithError(err).Error("Finding on match hooks failed")
-			return c.JSON(RouteScraperListCVsResp{})
-		}
-
 		profilesCache, err := reqCtx.GetOrGenMatcherProfilesCache()
 		if err != nil {
 			return err
+		}
+		if len(profilesCache.ListProfiles) == 0 {
+			// No list profiles to use for matching, so we can just return
+			return c.JSON(RouteScraperListCVsResp{})
 		}
 
 		hookData := CVListsHookData{
@@ -88,14 +87,30 @@ var routeScraperListCVs = routeBuilder.R{
 			}
 		}
 
-		jsonEncodedHookData, err := json.Marshal(hookData)
+		if len(hookData.CVs) == 0 {
+			return c.JSON(RouteScraperListCVsResp{})
+		}
+
+		dataForHook, err := json.Marshal(hookData)
 		if err != nil {
 			return err
 		}
 
-		for _, hook := range hooks {
-			hook.CallAndLogResult(bytes.NewReader(jsonEncodedHookData), models.DataKindList, reqCtx.Logger)
-		}
+		go func(dataForHook []byte) {
+			hooks, err := models.GetOnMatchHooks(reqCtx.DBConn, true)
+			if err != nil {
+				reqCtx.Logger.WithError(err).Error("Finding on match hooks failed")
+				return
+			}
+			if len(hooks) == 0 {
+				reqCtx.Logger.Info("No hooks configured to send matched list CVs to")
+				return
+			}
+
+			for _, hook := range hooks {
+				hook.CallAndLogResult(bytes.NewReader(dataForHook), models.DataKindList, reqCtx.Logger)
+			}
+		}(dataForHook)
 
 		return c.JSON(RouteScraperListCVsResp{})
 	},
