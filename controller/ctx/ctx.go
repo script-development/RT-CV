@@ -47,7 +47,7 @@ func (c *Ctx) GetOrGenMatcherProfilesCache() (*MatcherProfilesCache, error) {
 
 	// Update the cache
 	c.Logger.Info("updating the profiles cache")
-	scanProfiles, err := models.GetActualActiveProfiles(c.DBConn)
+	scanProfiles, err := models.GetActualMatchActiveProfiles(c.DBConn)
 	if err != nil {
 		return nil, err
 	}

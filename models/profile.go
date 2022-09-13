@@ -78,18 +78,6 @@ func (*Profile) Indexes() []mongo.IndexModel {
 
 var isArrayWContent = bson.M{"$not": bson.M{"$size": 0}, "$type": "array"}
 
-func actualActiveProfilesFilter() bson.M {
-	return bson.M{
-		"active": true,
-		"$or": []bson.M{
-			{"desiredProfessions": isArrayWContent},
-			{"professionExperienced": isArrayWContent},
-			{"driversLicenses": isArrayWContent},
-			{"educations": isArrayWContent},
-		},
-	}
-}
-
 // GetListsProfiles returns all profiles that can be used for the cv lists functionality
 func GetListsProfiles(conn db.Connection) ([]Profile, error) {
 	profiles := []Profile{}
@@ -101,18 +89,32 @@ func GetListsProfiles(conn db.Connection) ([]Profile, error) {
 	return profiles, err
 }
 
-// GetActualActiveProfiles returns that we can actually use
+func actualActiveMatchProfilesFilter() bson.M {
+	return bson.M{
+		"active": true,
+		"$or": []bson.M{
+			{"desiredProfessions": isArrayWContent},
+			{"professionExperienced": isArrayWContent},
+			{"driversLicenses": isArrayWContent},
+			{"educations": isArrayWContent},
+		},
+		// we use $not here as there are properties without this property and with `$not: true` we match `false`, `undefined` and `null
+		"listsAllowed": bson.M{"$not": bson.M{"$eq": true}},
+	}
+}
+
+// GetActualMatchActiveProfiles returns that we can actually use
 // Matches are not really helpfull if no desiredProfessions, professionExperienced, driversLicenses or educations is set
 // Matches without an onMatch property are useless as we can't send the match anywhere
-func GetActualActiveProfiles(conn db.Connection) ([]Profile, error) {
+func GetActualMatchActiveProfiles(conn db.Connection) ([]Profile, error) {
 	profiles := []Profile{}
-	err := conn.Find(&Profile{}, &profiles, actualActiveProfilesFilter())
+	err := conn.Find(&Profile{}, &profiles, actualActiveMatchProfilesFilter())
 	return profiles, err
 }
 
-// GetActualActiveProfilesCount does the same as GetActualActiveProfiles but only returns the number of found profiles
-func GetActualActiveProfilesCount(conn db.Connection) (uint64, error) {
-	return conn.Count(&Profile{}, actualActiveProfilesFilter())
+// GetActualMatchActiveProfilesCount does the same as GetActualMatchActiveProfiles but only returns the number of found profiles
+func GetActualMatchActiveProfilesCount(conn db.Connection) (uint64, error) {
+	return conn.Count(&Profile{}, actualActiveMatchProfilesFilter())
 }
 
 // GetProfiles returns all profiles from the database

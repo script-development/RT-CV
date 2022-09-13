@@ -68,7 +68,7 @@ var routeGetProfilesCount = routeBuilder.R{
 			return err
 		}
 
-		usableProfilesCount, err := models.GetActualActiveProfilesCount(ctx.DBConn)
+		usableProfilesCount, err := models.GetActualMatchActiveProfilesCount(ctx.DBConn)
 		if err != nil {
 			return err
 		}
