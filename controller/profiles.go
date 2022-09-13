@@ -172,6 +172,8 @@ type UpdateProfileReq struct {
 
 	Zipcodes []models.ProfileDutchZipcode `json:"zipCodes"`
 
+	ListsAllowed *bool `json:"listsAllowed"`
+
 	Lables map[string]any `json:"labels" description:"custom labels that can be used by API users to identify profiles, the key needs to be a string and the value can be anything"`
 
 	OnMatch *models.ProfileOnMatch `json:"onMatch"`
@@ -265,6 +267,9 @@ var routeModifyProfile = routeBuilder.R{
 		}
 		if body.Lables != nil {
 			ctx.Profile.Lables = body.Lables
+		}
+		if body.ListsAllowed != nil {
+			ctx.Profile.ListsAllowed = *body.ListsAllowed
 		}
 
 		err = ctx.DBConn.UpdateByID(ctx.Profile)
