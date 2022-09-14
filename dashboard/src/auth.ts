@@ -1,21 +1,21 @@
 import { Roles } from './roles'
-import { ApiKey } from './types';
+import { ApiKey } from './types'
 
 class AuthenticatedFetcher {
     private triedToRestoreCredentials = false;
     private apiKeyHashed = '';
     private apiKeyId = '';
 
-    async login(key: string, keyId: string) {
+    async login({ id, key }: { id: string, key: string }) {
         if (!this.triedToRestoreCredentials) this.tryRestoreCredentials();
 
         if (key == '')
             throw 'api key not set'
-        if (keyId == '')
+        if (id == '')
             throw 'api key id not set'
 
         this.apiKeyHashed = await this.hash(key)
-        this.apiKeyId = keyId
+        this.apiKeyId = id
         try {
             const keyInfo = await this.fetch('/api/v1/auth/keyinfo')
 
@@ -150,14 +150,11 @@ class AuthenticatedFetcher {
     }
 
     private async hash(data: string): Promise<string> {
-        return Buffer.from(
-            new Uint8Array(
-                await crypto.subtle.digest(
-                    'SHA-512',
-                    new TextEncoder().encode(data),
-                ),
-            ),
-        ).toString('hex')
+        const textEncoder = new TextEncoder()
+        const dataBuffer = textEncoder.encode(data)
+        const hashedData = await crypto.subtle.digest('SHA-512', dataBuffer)
+        const hashedDataAsUint8 = new Uint8Array(hashedData)
+        return Buffer.from(hashedDataAsUint8).toString('hex')
     }
 }
 

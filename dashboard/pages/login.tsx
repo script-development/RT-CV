@@ -9,8 +9,7 @@ import React, { useEffect, useState } from 'react'
 import { fetcher } from '../src/auth'
 
 export default function Home() {
-	const [apiKeyId, setApiKeyId] = useState('')
-	const [apiKey, setApiKey] = useState('')
+	const [form, setForm] = useState({ id: '', key: '' })
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState('')
 	const router = useRouter()
@@ -20,7 +19,7 @@ export default function Home() {
 		try {
 			setLoading(true)
 			setError('')
-			await fetcher.login(apiKey, apiKeyId)
+			await fetcher.login(form)
 
 			const url = new URL(location.href)
 			const redirectTo = url.searchParams.get('redirectTo')
@@ -37,8 +36,10 @@ export default function Home() {
 	}
 
 	useEffect(() => {
-		setApiKeyId(fetcher.getApiKeyId)
-		setApiKey(fetcher.getApiKey)
+		setForm({
+			id: fetcher.getApiKeyId,
+			key: fetcher.getApiKey,
+		})
 	}, [])
 
 	return (
@@ -51,23 +52,23 @@ export default function Home() {
 			<form noValidate onSubmit={submit} >
 				<p>Insert a api key with the <b>Dashboard</b> role</p>
 				<TextField
-					value={apiKeyId}
+					value={form.id}
 					fullWidth
 					id="id"
 					label="API Key ID"
 					variant="filled"
-					onChange={e => setApiKeyId(e.target.value)}
+					onChange={e => setForm(f => ({ ...f, id: e.target.value }))}
 					disabled={loading}
 					error={!!error}
 				/>
 				<div className="marginTop" >
 					<TextField
-						value={apiKey}
+						value={form.key}
 						fullWidth
 						id="key"
 						label="API Key"
 						variant="filled"
-						onChange={e => setApiKey(e.target.value)}
+						onChange={e => setForm(f => ({ ...f, key: e.target.value }))}
 						disabled={loading}
 						error={!!error}
 						helperText={error}
