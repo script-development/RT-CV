@@ -107,6 +107,8 @@ var routeScraperListCVs = routeBuilder.R{
 				return
 			}
 
+			reqCtx.Logger.Info("Sending matched cv lists to hook")
+
 			for _, hook := range hooks {
 				hook.CallAndLogResult(bytes.NewReader(dataForHook), models.DataKindList, reqCtx.Logger)
 			}
