@@ -102,7 +102,7 @@ func (h *OnMatchHook) Call(body io.Reader, dataKind DataKind) (http.Header, erro
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.WithError(err).WithField("url", h.URL).WithField("id", h.ID.Hex()).Warnf("Failed calling hook")
+		return req.Header, err
 	}
 
 	if resp.StatusCode >= 400 {
