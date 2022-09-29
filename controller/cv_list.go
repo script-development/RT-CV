@@ -56,6 +56,9 @@ var routeScraperListCVs = routeBuilder.R{
 		}
 
 		hookData := CVListsHookData{
+			KeyID:            reqCtx.Key.ID,
+			KeyName:          reqCtx.Key.Name,
+			IsTest:           false,
 			CVs:              map[string]models.CV{},
 			ProfilesMatchCVs: map[primitive.ObjectID][]string{},
 		}
