@@ -2,7 +2,9 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/apex/log"
@@ -98,10 +100,18 @@ func (h *OnMatchHook) Call(body io.Reader, dataKind DataKind) (http.Header, erro
 		}
 	}
 
-	// We don't really care about what the response is
-	_, err = http.DefaultClient.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.WithError(err).WithField("url", h.URL).WithField("id", h.ID.Hex()).Warnf("Failed calling hook")
+	}
+
+	if resp.StatusCode >= 400 {
+		respBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return req.Header, fmt.Errorf("hook returned status code \"%s\" with a unreadable message, error: %s", resp.Status, err.Error())
+		}
+
+		return req.Header, fmt.Errorf("hook returned status code \"%s\" with message: %s", resp.Status, string(respBody))
 	}
 
 	return req.Header, nil
