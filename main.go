@@ -20,6 +20,7 @@ import (
 	"github.com/script-development/RT-CV/db/mongo/backup"
 	"github.com/script-development/RT-CV/helpers/random"
 	"github.com/script-development/RT-CV/helpers/requestLogger"
+	"github.com/script-development/RT-CV/helpers/slack"
 	"github.com/script-development/RT-CV/mock"
 	"github.com/script-development/RT-CV/models"
 	"github.com/script-development/RT-CV/models/matcher"
@@ -78,6 +79,11 @@ func main() {
 		}
 	} else {
 		log.Info("No .env file found")
+	}
+
+	slackWebHookURL := strings.TrimSpace(os.Getenv("SLACK_WEBHOOK_URL"))
+	if slackWebHookURL != "" {
+		slack.SetupLogHandler(slackWebHookURL)
 	}
 
 	// Initialize the database
