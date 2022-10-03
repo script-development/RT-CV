@@ -50,6 +50,7 @@ export interface DutchZipCode {
 export interface OnMatchHook {
     id: string
     keyId: string
+    disabled: boolean
     url: string
     method: string
     addHeaders: Array<{ key: string, value: Array<string> }>

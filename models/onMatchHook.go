@@ -9,6 +9,7 @@ import (
 
 	"github.com/apex/log"
 	"github.com/script-development/RT-CV/db"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -20,8 +21,9 @@ type Header struct {
 
 // OnMatchHook can hook onto the matching process and call API calls in case of matches
 type OnMatchHook struct {
-	db.M  `bson:",inline"`
-	KeyID primitive.ObjectID `json:"keyId" bson:"keyId"`
+	db.M     `bson:",inline"`
+	KeyID    primitive.ObjectID `json:"keyId" bson:"keyId"`
+	Disabled bool               `json:"disabled" bson:"disabled"`
 
 	URL        string   `json:"url"`
 	Method     string   `json:"method" description:"the method to use when calling the url (GET, POST, PUT, PATCH, DELETE)"`
@@ -33,15 +35,30 @@ func (*OnMatchHook) CollectionName() string {
 	return "onMatchHooks"
 }
 
+// GetOnMatchHooksProps contains the properties for GetOnMatchHooks
+type GetOnMatchHooksProps struct {
+	AllowDisabled    bool
+	ExpectAtLeastOne bool
+}
+
 // GetOnMatchHooks returns all the onMatchHooks
-func GetOnMatchHooks(dbConn db.Connection, expectAtLeastOne bool) ([]OnMatchHook, error) {
+func GetOnMatchHooks(dbConn db.Connection, props GetOnMatchHooksProps) ([]OnMatchHook, error) {
+	query := bson.M{}
+	if !props.AllowDisabled {
+		// We do not allow disabled
+		//
+		// As disabled was later added to OnMatchHook it might be missing from the database
+		// Because of this we check for the opposite of disabled hence this bloated query
+		query["disabled"] = bson.M{"$not": bson.M{"$eq": true}}
+	}
+
 	hooks := []OnMatchHook{}
-	err := dbConn.Find(&OnMatchHook{}, &hooks, nil)
+	err := dbConn.Find(&OnMatchHook{}, &hooks, query)
 	if err != nil {
 		return nil, err
 	}
 
-	if expectAtLeastOne && len(hooks) == 0 {
+	if props.ExpectAtLeastOne && len(hooks) == 0 {
 		return nil, errors.New("no on match hooks configured")
 	}
 

@@ -48,7 +48,7 @@ export default function OnMatchHooksCard({ }: OnMatchHooksCardArgs) {
                 </div>
                 <div>
                     <ButtonGroup color="primary" variant="contained">
-                        <Tooltip title="Create secret">
+                        <Tooltip title="Create on match hook">
                             <Button
                                 onClick={() => setModal({ kind: ModalKind.Create, value: undefined })}
                             >
@@ -87,13 +87,18 @@ interface LineProps {
 }
 
 function Line({ value, isLastRow, openModal }: LineProps) {
-    const testOnMatchHook = () => fetcher.post(`/api/v1/onMatchHooks/${value.id}/test`)
+    const testOnMatchHook = () => fetcher.post(`/api/v1/onMatchHooks/${value.id}/testMatch`)
 
     return (
         <div key={value.id} className={"simpleRow" + (isLastRow ? ' last' : '')}>
             <div className="side">
                 <b style={{ color: "white" }}>{value.method}</b>
                 <span style={{ paddingLeft: 5 }}>{value.url}</span>
+                {value.disabled ?
+                    <Tooltip title="No request are made to this hook">
+                        <span className='isDisabled'>Disabled</span>
+                    </Tooltip>
+                    : undefined}
             </div>
             <div className="side">
                 <Tooltip title="Test on match hook">
@@ -130,6 +135,13 @@ function Line({ value, isLastRow, openModal }: LineProps) {
 					border-bottom-left-radius: 4px;
 					border-bottom-right-radius: 4px;
 				}
+                .isDisabled {
+                    margin-left: 5px;
+                    background-color: rgb(38, 38, 38);
+                    border: 2px solid gray;
+                    border-radius: 5px;
+                    padding: 0px 5px;
+                }
             `}</style>
         </div>
     )

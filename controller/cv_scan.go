@@ -156,7 +156,10 @@ func (args ProcessMatches) Process() {
 		return
 	}
 
-	hooks, err := models.GetOnMatchHooks(args.DBConn, true)
+	hooks, err := models.GetOnMatchHooks(args.DBConn, models.GetOnMatchHooksProps{
+		AllowDisabled:    false,
+		ExpectAtLeastOne: true,
+	})
 	if err != nil {
 		args.Logger.WithError(err).Error("Finding on match hooks failed")
 		return

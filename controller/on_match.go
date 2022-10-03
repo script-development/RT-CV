@@ -35,12 +35,17 @@ var routeGetOnMatchHooks = routeBuilder.R{
 
 // CreateOrUpdateOnMatchHookRequestData contains the post data for creating and modifiying a OnMatchHook
 type CreateOrUpdateOnMatchHookRequestData struct {
+	Disabled   *bool           `json:"disabled"`
 	Method     *string         `json:"method"`
 	URL        *string         `json:"url"`
 	AddHeaders []models.Header `json:"addHeaders"`
 }
 
 func (data *CreateOrUpdateOnMatchHookRequestData) applyToHook(hook *models.OnMatchHook, isCreate bool) error {
+	if data.Disabled != nil {
+		hook.Disabled = *data.Disabled
+	}
+
 	if data.Method != nil {
 		method := strings.ToUpper(*data.Method)
 		allowedMethods := []string{"GET", "POST", "PUT", "PATCH", "DELETE"}

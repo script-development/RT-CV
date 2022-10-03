@@ -100,7 +100,10 @@ var routeScraperListCVs = routeBuilder.R{
 		}
 
 		go func(dataForHook []byte) {
-			hooks, err := models.GetOnMatchHooks(reqCtx.DBConn, true)
+			hooks, err := models.GetOnMatchHooks(reqCtx.DBConn, models.GetOnMatchHooksProps{
+				AllowDisabled:    false,
+				ExpectAtLeastOne: true,
+			})
 			if err != nil {
 				reqCtx.Logger.WithError(err).Error("Finding on match hooks failed")
 				return

@@ -9,6 +9,7 @@ import {
     Radio,
     ButtonGroup,
     Chip,
+    Checkbox,
 } from '@mui/material'
 import { DataGrid } from '@mui/x-data-grid'
 import React, { useState, useEffect } from 'react'
@@ -31,6 +32,7 @@ export interface ModifyState {
 
 export function SecretModal({ kind, onClose: onCloseArg, hook }: ModalProps) {
     const [apiError, setApiError] = useState('')
+    const [enabled, setEnabled] = useState(true)
     const [headers, setHeaders] = useState<Array<{ key: string, value: string }>>([])
     const [method, setMethod] = useState('POST')
     const [url, setUrl] = useState('https://')
@@ -58,6 +60,7 @@ export function SecretModal({ kind, onClose: onCloseArg, hook }: ModalProps) {
 
     const onClose = () => {
         setApiError('')
+        setEnabled(true)
         setHeaders([])
         setMethod('POST')
         setUrl('https://')
@@ -72,6 +75,7 @@ export function SecretModal({ kind, onClose: onCloseArg, hook }: ModalProps) {
                         method,
                         url,
                         addHeaders: formatHeadersToApi(),
+                        disabled: !enabled,
                     })
                     onClose()
                     break
@@ -80,6 +84,7 @@ export function SecretModal({ kind, onClose: onCloseArg, hook }: ModalProps) {
                         method,
                         url,
                         addHeaders: formatHeadersToApi(),
+                        disabled: !enabled,
                     })
                     onClose()
                     break
@@ -88,7 +93,7 @@ export function SecretModal({ kind, onClose: onCloseArg, hook }: ModalProps) {
                     onClose()
                     break
                 default:
-                    throw 'TODO'
+                    throw 'Invalid modal kind'
             }
 
         } catch (e: any) {
@@ -98,6 +103,7 @@ export function SecretModal({ kind, onClose: onCloseArg, hook }: ModalProps) {
 
     useEffect(() => {
         if (kind == ModalKind.Edit && hook) {
+            setEnabled(!hook.disabled)
             setHeaders((hook.addHeaders || []).map(h => ({ key: h.key, value: h.value.join(',') })) || [])
             setMethod(hook.method)
             setUrl(hook.url)
@@ -149,6 +155,18 @@ export function SecretModal({ kind, onClose: onCloseArg, hook }: ModalProps) {
                         <DialogContentText>A hook is called when a CV has been matched to a profile and when a list of CVs is matched to list profiles.</DialogContentText>
                         <DialogContentText>The kind of data send to a hook can be checked via the <Chip label='Data-Kind' size="small" /> header.</DialogContentText>
                         <DialogContentText>the value of the <Chip label='Data-Kind' size="small" /> header will be <Chip label='match' size="small" /> for single cv to profile matches and <Chip label='list' size="small" /> for list profiles matching a list of cvs</DialogContentText>
+
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    checked={enabled}
+                                    onChange={() => setEnabled(v => !v)}
+                                    color="primary"
+                                />
+                            }
+                            label='Enabled'
+                        />
+
                         <br />
 
                         <FormControl component="fieldset" fullWidth>
