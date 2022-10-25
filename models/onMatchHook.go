@@ -111,11 +111,11 @@ func (h *OnMatchHook) CallWithRetry(body io.Reader, dataKind DataKind) (http.Hea
 		case 1:
 			time.Sleep(time.Millisecond * 100)
 		case 2:
-			time.Sleep(time.Second)
+			time.Sleep(time.Millisecond * 500)
 		case 3:
-			time.Sleep(time.Second * 2)
+			time.Sleep(time.Second)
 		case 4:
-			time.Sleep(time.Second * 3)
+			time.Sleep(time.Second * 2)
 		}
 
 		if body == nil {
