@@ -1,11 +1,13 @@
 package models
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/apex/log"
 	"github.com/script-development/RT-CV/db"
@@ -87,7 +89,7 @@ func (k DataKind) contentTypeAndDataKind() (contentType string, dataKind string)
 
 // CallAndLogResult calls the hook defined in OnMatchHook and logs the result
 func (h *OnMatchHook) CallAndLogResult(body io.Reader, dataKind DataKind, logger *log.Entry) {
-	_, err := h.Call(body, dataKind)
+	_, err := h.CallWithRetry(body, dataKind)
 
 	loggerWithFields := logger.WithField("hook", h.URL).WithField("hook_id", h.ID.Hex())
 	if err != nil {
@@ -97,8 +99,66 @@ func (h *OnMatchHook) CallAndLogResult(body io.Reader, dataKind DataKind, logger
 	}
 }
 
+// CallWithRetry executes (*OnMatchHook).Call() with a retry if it failes with spesific reasons
+func (h *OnMatchHook) CallWithRetry(body io.Reader, dataKind DataKind) (http.Header, error) {
+	reqID := primitive.NewObjectID().String()
+	// do 5 retries
+	var headers http.Header
+	var err error
+	for i := 0; i < 5; i++ {
+		// Is retry, do a backoff
+		switch i {
+		case 1:
+			time.Sleep(time.Millisecond * 100)
+		case 2:
+			time.Sleep(time.Second)
+		case 3:
+			time.Sleep(time.Second * 2)
+		case 4:
+			time.Sleep(time.Second * 3)
+		}
+
+		if body == nil {
+			body = bytes.NewReader(nil)
+		}
+		headers, err = h.Call(body, dataKind, reqID)
+		if err == nil {
+			break
+		}
+		statusCodeErr, ok := err.(*StatusCodeError)
+		if !ok {
+			break
+		}
+
+		retry := false
+		switch statusCodeErr.code {
+		case http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout:
+			retry = true
+		}
+
+		if !retry {
+			break
+		}
+	}
+	return headers, err
+}
+
+// StatusCodeError is an error thrown by (*OnMatchHook).Call() when the status code is >= 400
+type StatusCodeError struct {
+	status string
+	code   int
+	body   []byte
+}
+
+func (e *StatusCodeError) Error() string {
+	if len(e.body) == 0 {
+		return fmt.Sprintf("hook returned status code \"%s\" with a unreadable message", e.status)
+	}
+	return fmt.Sprintf("hook returned status code \"%s\" with message: %s", e.status, string(e.body))
+}
+
 // Call calls the hook defined in OnMatchHook
-func (h *OnMatchHook) Call(body io.Reader, dataKind DataKind) (http.Header, error) {
+func (h *OnMatchHook) Call(body io.Reader, dataKind DataKind, reqID string) (http.Header, error) {
 	req, err := http.NewRequest(h.Method, h.URL, body)
 	if err != nil {
 		return nil, err
@@ -106,6 +166,7 @@ func (h *OnMatchHook) Call(body io.Reader, dataKind DataKind) (http.Header, erro
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", "RT-CV")
+	req.Header.Set("X-Request-ID", reqID)
 
 	contentTypeHeader, dataKindHeader := dataKind.contentTypeAndDataKind()
 	req.Header.Set("Content-Type", contentTypeHeader)
@@ -123,12 +184,12 @@ func (h *OnMatchHook) Call(body io.Reader, dataKind DataKind) (http.Header, erro
 	}
 
 	if resp.StatusCode >= 400 {
-		respBody, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return req.Header, fmt.Errorf("hook returned status code \"%s\" with a unreadable message, error: %s", resp.Status, err.Error())
+		respBody, _ := ioutil.ReadAll(resp.Body)
+		return req.Header, &StatusCodeError{
+			status: resp.Status,
+			code:   resp.StatusCode,
+			body:   respBody,
 		}
-
-		return req.Header, fmt.Errorf("hook returned status code \"%s\" with message: %s", resp.Status, string(respBody))
 	}
 
 	return req.Header, nil

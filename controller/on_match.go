@@ -197,7 +197,7 @@ var routeTestOnMatchHook = routeBuilder.R{
 			return err
 		}
 
-		headers, err := ctx.OnMatchHook.Call(bytes.NewReader(dummyDataAsJSON), models.DataKindMatch)
+		headers, err := ctx.OnMatchHook.CallWithRetry(bytes.NewReader(dummyDataAsJSON), models.DataKindMatch)
 		if err != nil {
 			return err
 		}
@@ -236,7 +236,7 @@ var routeTestOnListHook = routeBuilder.R{
 			return err
 		}
 
-		headers, err := ctx.OnMatchHook.Call(bytes.NewReader(dummyDataAsJSON), models.DataKindList)
+		headers, err := ctx.OnMatchHook.CallWithRetry(bytes.NewReader(dummyDataAsJSON), models.DataKindList)
 		if err != nil {
 			return err
 		}
