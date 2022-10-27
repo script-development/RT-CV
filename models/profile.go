@@ -55,6 +55,8 @@ type Profile struct {
 	DesiredProfessionsFuzzyMatcherCache    *fuzzymatcher.Matcher        `bson:"-" json:"-"`
 	DomainPartsCache                       [][]string                   `bson:"-" json:"-"`
 	NormalizedDriversLicensesCache         []jsonHelpers.DriversLicense `bson:"-" json:"-"`
+
+	// Tell if this profile should use complex search
 }
 
 // CollectionName returns the collection name of the Profile
@@ -138,7 +140,8 @@ func GetProfile(conn db.Connection, id primitive.ObjectID) (Profile, error) {
 
 // ProfileProfession contains information about a proffession
 type ProfileProfession struct {
-	Name string `json:"name"`
+	Name   string `json:"name"`
+	LeafId primitive.ObjectID
 }
 
 // ProfileDriversLicense contains the drivers license name

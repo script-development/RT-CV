@@ -33,6 +33,7 @@ require (
 	github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/puzpuzpuz/xsync v1.5.2 // indirect
 	github.com/rogpeppe/go-internal v1.8.1 // indirect
 	github.com/rs/xid v1.4.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect

@@ -81,6 +81,9 @@ type Branch struct {
 
 	// Used by the tree to find the root branches
 	HasParents bool `json:"-" bson:"-"`
+
+	// Set by the countTotalSubBranches method
+	TotalSubBranches uint `json:"-" bson:"-"`
 }
 
 // CollectionName implements db.Entry
@@ -181,4 +184,16 @@ func (b *Branch) Update(dbConn db.Connection, props AddLeafProps) error {
 	b.Titles = props.Titles
 	b.TitleKind = props.TitleKind
 	return dbConn.UpdateByID(b)
+}
+
+// countTotalSubBranches counts all the children and sets the
+func (b *Branch) countTotalSubBranches() {
+	if b.TotalSubBranches != 0 {
+		return
+	}
+
+	for _, sb := range b.ParsedBranches {
+		sb.countTotalSubBranches()
+		b.TotalSubBranches += sb.TotalSubBranches + 1
+	}
 }

@@ -1,6 +1,7 @@
 package matcher
 
 import (
+	"encoding/gob"
 	"io/fs"
 	"io/ioutil"
 	"os"
@@ -17,7 +18,7 @@ TODO: Implement caching
 
 */
 
-func idName(id *primitive.ObjectID) string {
+func treeIDFileName(id *primitive.ObjectID) string {
 	if id == nil {
 		return "root.json"
 	}
@@ -52,13 +53,8 @@ func NukeCache() error {
 	return os.RemoveAll(cacheDir)
 }
 
-// CacheTree caches a tree
-func CacheTree(id *primitive.ObjectID, bytes []byte) error {
-	cacheDirPath, err := cacheDir(true)
-	if err != nil {
-		return err
-	}
-
+// checkCacheDirSize caches the
+func checkCacheDirSize(cacheDirPath string) error {
 	entries, err := os.ReadDir(cacheDirPath)
 	if err != nil {
 		return err
@@ -76,7 +72,22 @@ func CacheTree(id *primitive.ObjectID, bytes []byte) error {
 		}
 	}
 
-	return ioutil.WriteFile(path.Join(cacheDirPath, idName(id)), bytes, 0644)
+	return nil
+}
+
+// CacheTree caches a tree
+func CacheTree(id *primitive.ObjectID, bytes []byte) error {
+	cacheDirPath, err := cacheDir(true)
+	if err != nil {
+		return err
+	}
+
+	err = checkCacheDirSize(cacheDirPath)
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(path.Join(cacheDirPath, treeIDFileName(id)), bytes, 0644)
 }
 
 // ObtainCachedTree might return a cached tree
@@ -85,7 +96,7 @@ func ObtainCachedTree(id *primitive.ObjectID) (fs.FileInfo, *os.File, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	f, err := os.Open(path.Join(cacheDirPath, idName(id)))
+	f, err := os.Open(path.Join(cacheDirPath, treeIDFileName(id)))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -97,4 +108,65 @@ func ObtainCachedTree(id *primitive.ObjectID) (fs.FileInfo, *os.File, error) {
 	}
 
 	return inf, f, nil
+}
+
+// cacheSearch safes a list of optimized data for searching
+func cacheSearch(data []FuzzySearchCacheEntry) error {
+	cacheDirPath, err := cacheDir(true)
+	if err != nil {
+		return err
+	}
+
+	err = checkCacheDirSize(cacheDirPath)
+	if err != nil {
+		return err
+	}
+
+	f, err := os.OpenFile(path.Join(cacheDirPath, "search.gob"), os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	encoder := gob.NewEncoder(f)
+	for _, entry := range data {
+		err = encoder.Encode(entry)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// searchCache reads a optimized searching list
+func searchCache(found func(FuzzySearchCacheEntry) (stop bool)) error {
+	cacheDirPath, err := cacheDir(true)
+	if err != nil {
+		return err
+	}
+
+	f, err := os.Open(path.Join(cacheDirPath, "search.gob"))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	decoder := gob.NewDecoder(f)
+	first := true
+	for {
+		resp := FuzzySearchCacheEntry{}
+		err = decoder.Decode(&resp)
+		if err != nil {
+			if !first && err.Error() == "gob: unknown type id or corrupted data" {
+				// This error is thrown when we reached the end of the file / no bytes left over to read
+				return nil
+			}
+			return err
+		}
+		if found(resp) {
+			return nil
+		}
+		first = false
+	}
 }

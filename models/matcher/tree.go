@@ -2,7 +2,11 @@ package matcher
 
 import (
 	"errors"
+	"os"
+	"sort"
+	"strings"
 
+	"github.com/apex/log"
 	"github.com/script-development/RT-CV/db"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -71,16 +75,109 @@ func (tc *Tree) findIDsForBranch(branchID primitive.ObjectID, addTo *[]primitive
 	return nil
 }
 
+// SearchResult is a single search result found by the search method
+type SearchResult struct {
+	BranchID         primitive.ObjectID `json:"branchId"`
+	Title            string             `json:"title"`
+	TitleKind        TitleKind          `json:"kind"`
+	TotalSubBranches uint               `json:"totalSubBranches"`
+}
+
+// FuzzySearchCacheEntry is a single entry in the fuzzy search cache
+type FuzzySearchCacheEntry struct {
+	NormalizedTitle  string
+	TitleLetters     uint32
+	TitleLen         int
+	TotalSubBranches uint
+	Result           SearchResult
+}
+
+// Search searches for a leaf in the tree
+func (tc *Tree) Search(logger *log.Entry, dbConn db.Connection, query string) ([]SearchResult, error) {
+	// t1 := time.Now()
+
+	query, queryLetters := optimizeQuery(query)
+	querylen := len(query)
+
+	matches := []SearchResult{}
+	foundEntry := func(entry FuzzySearchCacheEntry) (stop bool) {
+		if entry.TitleLetters&queryLetters == queryLetters && entry.TitleLen > querylen && strings.Contains(entry.NormalizedTitle, query) {
+			matches = append(matches, entry.Result)
+			if len(matches) == 10 {
+				stop = true
+			}
+		}
+		return stop
+	}
+
+	err := searchCache(foundEntry)
+	if err != nil {
+		if os.IsNotExist(err) {
+			logger.Info("search cache is not present.. creating it")
+		} else {
+			logger.WithError(err).Warn("obtaining search cache failed.. re-creating it")
+		}
+
+		err := tc.build(dbConn)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, rootBranchID := range tc.rootBranches {
+			tc.branches[rootBranchID].countTotalSubBranches()
+		}
+
+		cache := []FuzzySearchCacheEntry{}
+		for id, b := range tc.branches {
+			for _, title := range b.Titles {
+				normalizeSearchTitle, lettersApearing := optimizeQuery(title)
+
+				cache = append(cache, FuzzySearchCacheEntry{
+					NormalizedTitle:  normalizeSearchTitle,
+					TitleLetters:     lettersApearing,
+					TitleLen:         len(normalizeSearchTitle),
+					TotalSubBranches: tc.branches[id].TotalSubBranches,
+					Result: SearchResult{
+						BranchID:         id,
+						Title:            title,
+						TitleKind:        tc.branches[id].TitleKind,
+						TotalSubBranches: tc.branches[id].TotalSubBranches,
+					},
+				})
+			}
+		}
+
+		sort.Slice(cache, func(i, j int) bool {
+			return cache[i].TotalSubBranches > cache[j].TotalSubBranches
+		})
+
+		err = cacheSearch(cache)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, entry := range cache {
+			if foundEntry(entry) {
+				break
+			}
+		}
+	}
+
+	// t2 := time.Now()
+	// fmt.Println("build", t2.Sub(t1).Milliseconds())
+
+	return matches, nil
+}
+
 // build builds the tree cache
 func (tc *Tree) build(dbConn db.Connection) error {
-	branches := []Branch{}
+	branches := []*Branch{}
 	err := dbConn.Find(&Branch{}, &branches, bson.M{})
 	if err != nil {
 		return err
 	}
 
 	tc.branches = map[primitive.ObjectID]*Branch{}
-	tc.rootBranches = []primitive.ObjectID{}
 
 	// fill the branches map and set the HasParents property
 	for idx := range branches {
@@ -97,11 +194,11 @@ func (tc *Tree) build(dbConn db.Connection) error {
 
 		if exsitingBranch, ok := tc.branches[branch.ID]; ok {
 			branch.HasParents = exsitingBranch.HasParents
-			*exsitingBranch = branch
-		} else {
-			tc.branches[branch.ID] = &branch
 		}
+		tc.branches[branch.ID] = branches[idx]
 	}
+
+	tc.rootBranches = []primitive.ObjectID{}
 
 	// Link the branches to their parents
 	// And find the root branches

@@ -3,9 +3,9 @@ package auth
 import (
 	"errors"
 	"strings"
-	"sync"
 	"time"
 
+	"github.com/puzpuzpuz/xsync"
 	"github.com/script-development/RT-CV/db"
 	"github.com/script-development/RT-CV/helpers/crypto"
 	"github.com/script-development/RT-CV/models"
@@ -15,25 +15,26 @@ import (
 
 // GenAuthHeaderKey generates a authentication header value
 func GenAuthHeaderKey(id, key string) string {
-	return "Basic " + id + ":" + crypto.HashSha512String(key)
+	return "Basic " + id + ":" + key
 }
 
 // Helper helps authenticate a user
 type Helper struct {
 	// the cache key is the key ID
-	cache  sync.Map // = map[string]cachedKey
+	cache  *xsync.MapOf[string, cachedKey]
 	dbConn db.Connection
 }
 
 type cachedKey struct {
-	validTil                           time.Time
-	KeyAsSha512Lower, KeyAsSha512Upper string
-	key                                *models.APIKey
+	validTil                                        time.Time
+	KeyAsString, KeyAsSha512Lower, KeyAsSha512Upper string
+	key                                             *models.APIKey
 }
 
 // NewHelper returns a new instance of AuthHelper
 func NewHelper(dbConn db.Connection) *Helper {
 	return &Helper{
+		cache:  xsync.NewMapOf[cachedKey](),
 		dbConn: dbConn,
 	}
 }
@@ -58,7 +59,15 @@ func (h *Helper) RemoveKeyCache(id string) {
 
 // Valid validates an authorizationHeader
 func (h *Helper) Valid(authorizationHeader string) (*models.APIKey, error) {
-	if len(authorizationHeader) != 159 {
+	var keyIsSha512Hashed bool
+	switch len(authorizationHeader) {
+	case 159:
+		// header with Sha512 key
+		keyIsSha512Hashed = true
+	case 63:
+		// header with raw key
+		keyIsSha512Hashed = false
+	default:
 		return nil, ErrAuthHeaderHasInvalidLen
 	}
 
@@ -75,14 +84,19 @@ func (h *Helper) Valid(authorizationHeader string) (*models.APIKey, error) {
 		return nil, ErrAuthHeaderInvalidFormat
 	}
 
-	keyAsSha512 := authorizationHeader[endID+1:]
-	keyCacheEntryInterf, ok := h.cache.Load(id)
+	authKey := authorizationHeader[endID+1:]
+	keyCacheEntry, ok := h.cache.Load(id)
 	if ok {
-		keyCacheEntry := keyCacheEntryInterf.(cachedKey)
 		if time.Now().Before(keyCacheEntry.validTil) {
 			// Yay a cache entry for this key exists and it's still valid
-			if keyCacheEntry.KeyAsSha512Lower == keyAsSha512 || keyCacheEntry.KeyAsSha512Upper == keyAsSha512 {
-				return keyCacheEntry.key, nil
+			if keyIsSha512Hashed {
+				if keyCacheEntry.KeyAsSha512Lower == authKey || keyCacheEntry.KeyAsSha512Upper == authKey {
+					return keyCacheEntry.key, nil
+				}
+			} else {
+				if keyCacheEntry.KeyAsString == authKey {
+					return keyCacheEntry.key, nil
+				}
 			}
 			return nil, ErrAuthHeaderInvalid
 		}
@@ -107,13 +121,20 @@ func (h *Helper) Valid(authorizationHeader string) (*models.APIKey, error) {
 
 	h.cache.Store(id, cachedKey{
 		validTil:         time.Now().Add(time.Hour * 12),
+		KeyAsString:      key.Key,
 		KeyAsSha512Lower: strings.ToLower(hashedKey),
 		KeyAsSha512Upper: hashedKeyUpper,
 		key:              &key,
 	})
 
-	if keyAsSha512 == hashedKey || keyAsSha512 == hashedKeyUpper {
-		return &key, nil
+	if keyIsSha512Hashed {
+		if authKey == hashedKey || authKey == hashedKeyUpper {
+			return &key, nil
+		}
+	} else {
+		if authKey == key.Key {
+			return &key, nil
+		}
 	}
 	return nil, ErrAuthHeaderInvalid
 }

@@ -29,7 +29,7 @@ Notes:
 ` + mdBlockCodeSample("js", `
 apiKey = getApiKey();
 apiKeyID = getApiKeyID();
-key = "Basic " + apiKeyID + ":" + sha512(apiKey);
+key = "Basic " + apiKeyID + ":" + apiKey;
 `) + `
 
 ## How to make a request

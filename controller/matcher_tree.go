@@ -31,6 +31,7 @@ var routeGetMatcherTree = routeBuilder.R{
 
 		fileInfo, file, err := matcher.ObtainCachedTree(branchID)
 		if err == nil {
+			// Yay we have a cache hit, lets return the cached response
 			resp.SetBodyStream(file, int(fileInfo.Size()))
 			return nil
 		}
@@ -38,9 +39,9 @@ var routeGetMatcherTree = routeBuilder.R{
 		ctx := ctx.Get(c)
 
 		if os.IsNotExist(err) {
-			ctx.Logger.WithError(err).Warn("obtaining cached matcher tree failed, falling back to database")
-		} else {
 			ctx.Logger.Info("matcher tree is not cached (yet) for this id")
+		} else {
+			ctx.Logger.WithError(err).Warn("obtaining cached matcher tree failed, falling back to database")
 		}
 
 		// deep := c.Context().QueryArgs().GetUintOrZero("deep")
@@ -60,6 +61,33 @@ var routeGetMatcherTree = routeBuilder.R{
 
 		resp.SetBodyRaw(jsonTree)
 		return nil
+	},
+}
+
+// SearchMatcherLeafsRequest is the request for the search matcher leafs route
+type SearchMatcherLeafsRequest struct {
+	Search string `json:"search"`
+}
+
+var routeSearchMatcherLeaf = routeBuilder.R{
+	Description: "search for a matcher leaf",
+	Res:         []matcher.SearchResult{},
+	Body:        SearchMatcherLeafsRequest{},
+	Fn: func(c *fiber.Ctx) error {
+		body := SearchMatcherLeafsRequest{}
+		err := c.BodyParser(&body)
+		if err != nil {
+			return err
+		}
+
+		ctx := ctx.Get(c)
+
+		matches, err := (&matcher.Tree{}).Search(ctx.Logger, ctx.DBConn, body.Search)
+		if err != nil {
+			return err
+		}
+
+		return c.JSON(matches)
 	},
 }
 
@@ -91,6 +119,8 @@ var routeAddMatcherLeaf = routeBuilder.R{
 		if err != nil {
 			return err
 		}
+
+		defer matcher.NukeCache()
 
 		_, err = tree.AddLeaf(ctx.DBConn, body, true /* deep != 1*/)
 		if err != nil {
@@ -126,6 +156,8 @@ var routePutMatcherBranch = routeBuilder.R{
 			return err
 		}
 
+		defer matcher.NukeCache()
+
 		err = tree.Update(ctx.DBConn, body)
 		if err != nil {
 			return err
@@ -153,8 +185,6 @@ var routeDeleteMatcherBranch = routeBuilder.R{
 
 		ctx := ctx.Get(c)
 
-		defer matcher.NukeCache()
-
 		// Firstly lets remove the parents as if this fails the database isn't broken and if the remaining code fails at least the data won't show up annymore
 		parents, err := matcher.FindParents(ctx.DBConn, id)
 		if err != nil {
@@ -181,6 +211,9 @@ var routeDeleteMatcherBranch = routeBuilder.R{
 		if len(branchIDs) == 0 {
 			return errors.New("branch not found")
 		}
+
+		defer matcher.NukeCache()
+
 		err = ctx.DBConn.DeleteByID(&matcher.Branch{}, branchIDs...)
 		if err != nil {
 			return err
