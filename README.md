@@ -1,3 +1,7 @@
+# DEPRECATED
+
+We have moved our development of this project to bitbucket
+
 # `RT-CV` matcher
 
 _Real time curriculum vitae matcher_
